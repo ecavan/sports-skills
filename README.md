@@ -29,7 +29,7 @@ Each connector is a SKILL.md file that any compatible AI agent can load and use 
 
 | Skill | Sport | Commands | Data Sources |
 |-------|-------|----------|-------------|
-| `football-data` | Football | 20 | ESPN, football-data.org, FPL, Understat, Transfermarkt |
+| `football-data` | Football | 20 | ESPN, FPL, Understat, Transfermarkt |
 | `fastf1` | Formula 1 | 6 | FastF1 (free library) |
 | `sports-news` | Multi-sport | 2 | Any RSS feed, Google News |
 
@@ -82,11 +82,46 @@ Once installed, your agent can call commands directly:
 
 ---
 
+## Python SDK
+
+Also available as a pip-installable Python package for programmatic use.
+
+```bash
+pip install sports-skills           # Football, Polymarket, Kalshi, News
+pip install sports-skills[f1]       # + Formula 1 (fastf1 + pandas)
+```
+
+```python
+from sports_skills import football, polymarket, kalshi, news
+
+standings = football.get_season_standings(season_id="premier-league-2025")
+matches = football.get_daily_schedule()
+xg = football.get_event_xg(event_id="401234567")
+player = football.get_player_profile(tm_player_id="433177")
+
+markets = polymarket.get_sports_markets(limit=20)
+articles = news.fetch_items(google_news=True, query="Arsenal transfer news", limit=10)
+```
+
+CLI included:
+
+```bash
+sports-skills football get_season_standings --season_id=premier-league-2025
+sports-skills polymarket get_sports_markets --limit=20
+sports-skills kalshi get_markets --series_ticker=KXNBA
+sports-skills news fetch_items --google_news --query="Arsenal" --limit=5
+sports-skills f1 get_race_schedule --year=2025
+```
+
+All commands output JSON with a consistent envelope: `{"status": true, "data": {...}, "message": ""}`.
+
+---
+
 ## Skills Reference
 
 ### football-data
 
-The most comprehensive open-source football data connector. Aggregates 5 sources with intelligent fallback and zero API keys required.
+The most comprehensive open-source football data connector. Aggregates 4 sources (ESPN, Understat, FPL, Transfermarkt) with zero API keys required.
 
 **Commands:**
 
@@ -176,18 +211,21 @@ Supports any RSS/Atom feed URL and Google News queries.
 
 ```
 sports-skills.sh
-├── skills/
-│   ├── football-data/          # 20 commands, 12 leagues, 5 sources
-│   │   └── SKILL.md
-│   ├── fastf1/                 # F1 sessions, laps, results
-│   │   └── SKILL.md
-│   ├── kalshi/                 # Prediction markets (public)
-│   │   └── SKILL.md
-│   ├── polymarket/             # Prediction markets (public)
-│   │   └── SKILL.md
-│   └── sports-news/            # RSS + Google News
-│       └── SKILL.md
-├── site/                       # Landing page (sports-skills.sh)
+├── skills/                            # SKILL.md files (agent instructions)
+│   ├── football-data/SKILL.md         # 20 commands, 12 leagues
+│   ├── fastf1/SKILL.md               # F1 sessions, laps, results
+│   ├── kalshi/SKILL.md               # Prediction markets (CFTC)
+│   ├── polymarket/SKILL.md           # Prediction markets (crypto)
+│   └── sports-news/SKILL.md          # RSS + Google News
+├── src/sports_skills/                 # Python SDK
+│   ├── football/                      # ESPN, Understat, FPL, Transfermarkt
+│   ├── f1/                            # FastF1 library
+│   ├── polymarket/                    # Gamma + CLOB APIs
+│   ├── kalshi/                        # Kalshi Trade API v2
+│   ├── news/                          # RSS/Atom + Google News
+│   └── cli.py                         # CLI entry point
+├── pyproject.toml
+├── site/                              # Landing page (sports-skills.sh)
 ├── LICENSE
 └── README.md
 ```
@@ -238,7 +276,7 @@ The open-source skills cover free public data. For production workloads with lic
 
 | What You Get | Open Source (Free) | Machina API (Licensed) |
 |-------------|-------------------|----------------------|
-| Football data | ESPN + community sources | Sportradar, Opta/Stats Perform |
+| Football data | ESPN, Understat, FPL, Transfermarkt | Sportradar, Opta/Stats Perform |
 | Coverage | 12 leagues | 1,200+ competitions |
 | Real-time latency | Best-effort | < 2s SLA |
 | Prediction markets | Kalshi + Polymarket (public) | Full depth + analytics |
@@ -272,4 +310,4 @@ MIT
 
 ---
 
-Built by [Machina Sports](https://machina.gg). The open-source entry point for sports AI agents.
+Built by [Machina Sports](https://machina.gg). The Operating System for sports AI.

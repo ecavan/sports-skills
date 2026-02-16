@@ -1,259 +1,299 @@
 ---
 name: football-data
-description: Live football/soccer data across 12 leagues including Premier League, La Liga, Bundesliga, Serie A, Champions League, and FIFA World Cup. Provides match scores, standings, lineups, player statistics, expected goals (xG), transfers, and injuries. Use when the user asks about football matches, soccer scores, league tables, player stats, team info, or any football/soccer data. Zero API keys required.
+description: |
+  Football (soccer) data across 12 leagues — standings, schedules, match stats, xG, transfers, player profiles. Zero config, no API keys.
+
+  Use when: user asks about football/soccer standings, fixtures, match stats, xG, lineups, player values, transfers, or injury news.
+  Don't use when: user asks about American football (NFL), basketball (NBA), baseball, or any non-soccer sport. Don't use for live/real-time scores — data updates post-match. Don't use get_season_leaders or get_missing_players for non-Premier League leagues (they return empty). Don't use get_event_xg for leagues outside the top 5 (EPL, La Liga, Bundesliga, Serie A, Ligue 1).
+triggers:
+  - football standings
+  - football schedule
+  - match stats
+  - xG data
+  - player profile
+  - transfer news
+  - league table
+  - daily fixtures
 ---
 
 # Football Data
 
-Open-source football data connector aggregating 5 sources with intelligent fallback. Covers 12 major leagues and competitions. No API key required.
+## Quick Start
 
-## Data Sources
+```bash
+npx skills add sports-skills
+```
 
-| Source | Coverage | Auth |
-|--------|----------|------|
-| ESPN | Primary source for all 12 leagues. Live scores, lineups, stats. | None |
-| football-data.org | Enrichment for match details, competitions, seasons. | Optional API key |
-| Fantasy Premier League | Premier League only: injuries, xG/xA, form, ICT index, prices. | None |
-| Understat | Top 5 European leagues: xG, xA, shot maps. | None |
-| Transfermarkt | Market values, transfer history. | None |
+```python
+from sports_skills import football
 
-ESPN is the primary fallback. All commands work with zero API keys.
+standings = football.get_season_standings(season_id="premier-league-2025")
+schedule = football.get_daily_schedule()
+```
 
-## Supported Competitions
+Or via CLI:
+```bash
+sports-skills football get_season_standings --season_id=premier-league-2025
+sports-skills football get_daily_schedule
+```
 
-| Competition | Slug | Country |
-|------------|------|---------|
-| Premier League | `premier-league` | England |
-| La Liga | `la-liga` | Spain |
-| Bundesliga | `bundesliga` | Germany |
-| Serie A | `serie-a` | Italy |
-| Ligue 1 | `ligue-1` | France |
-| Championship | `championship` | England |
-| Eredivisie | `eredivisie` | Netherlands |
-| Primeira Liga | `primeira-liga` | Portugal |
-| Serie A Brazil | `serie-a-brazil` | Brazil |
-| Champions League | `champions-league` | Europe |
-| European Championship | `european-championship` | Europe |
-| FIFA World Cup | `world-cup` | International |
+No API keys required. Everything works out of the box.
+
+## Data Coverage by League
+
+Not all data is available for every league. Use the right command for the right league.
+
+| Command | All 12 leagues | Top 5 only | PL only |
+|---------|:-:|:-:|:-:|
+| get_season_standings | x | | |
+| get_daily_schedule | x | | |
+| get_season_schedule | x | | |
+| get_season_teams | x | | |
+| get_team_schedule | x | | |
+| get_event_summary | x | | |
+| get_event_lineups | x | | |
+| get_event_statistics | x | | |
+| get_event_timeline | x | | |
+| get_current_season | x | | |
+| get_competitions | x | | |
+| get_event_xg | | x | |
+| get_event_players_statistics (with xG) | | x | |
+| get_season_leaders | | | x |
+| get_missing_players | | | x |
+| get_team_profile (with squad) | | | x |
+
+**Top 5 leagues** (Understat): EPL, La Liga, Bundesliga, Serie A, Ligue 1.
+**PL only** (FPL): Premier League — injury news, player stats, ownership, ICT index.
+**All leagues**: via ESPN — scores, standings, schedules, match summaries, lineups, team stats.
+**Transfermarkt**: Works for any player with a `tm_player_id` — market values and transfer history.
+
+## ID Conventions
+
+- **season_id**: `{league-slug}-{year}` e.g. `"premier-league-2025"`, `"la-liga-2025"`
+- **competition_id**: league slug e.g. `"premier-league"`, `"serie-a"`, `"champions-league"`
+- **team_id**: ESPN team ID (numeric string) e.g. `"359"` (Arsenal), `"86"` (Real Madrid)
+- **event_id**: ESPN event ID (numeric string) e.g. `"740847"`
+- **fpl_id**: FPL element ID or code (PL players only)
+- **tm_player_id**: Transfermarkt player ID e.g. `"433177"` (Saka), `"342229"` (Mbappe)
 
 ## Commands
 
-### Competition & Season
+### get_current_season
+Detect current season for a competition. Works for all leagues.
+- `competition_id` (str, required): Competition slug
 
-**get_competitions** - List all 12 supported competitions with current season info.
-
-```
-Params: none required
-Optional: api_key (string) - football-data.org key for enrichment
-Returns: { competitions: [...] }
-```
-
-**get_current_season** - Detect the current active season for a competition.
-
-```
-Params:
-  competition_id (string, required) - Competition slug (e.g. "premier-league")
-Returns: { competition: {...}, season: {...}, calendar_dates: int }
+Returns `data.competition` and `data.season`:
+```json
+{"competition": {"id": "premier-league", "name": "Premier League"}, "season": {"id": "premier-league-2025", "name": "2025-26 English Premier League", "year": "2025"}}
 ```
 
-**get_competition_seasons** - Get all available seasons for a competition.
+### get_competitions
+List available competitions with current season info. No params. Works for all leagues.
 
-```
-Params:
-  competition_id (string, required)
-Returns: { competition: {...}, seasons: [...] }
-```
+Returns `data.competitions[]` with `id`, `name`, `code`, `current_season`.
 
-### Schedule & Results
+### get_competition_seasons
+Get available seasons for a competition. Works for all leagues.
+- `competition_id` (str, required): Competition slug
 
-**get_season_schedule** - Get all fixtures for a season (paginated).
+### get_season_schedule
+Get full season match schedule. Works for all leagues.
+- `season_id` (str, required): Season slug (e.g., "premier-league-2025")
 
-```
-Params:
-  season_id (string, required)
-Returns: { schedules: [...] }
-```
+Returns `data.schedules[]` — same shape as events below.
 
-**get_daily_schedule** - Get all matches across all competitions for a specific date.
+### get_season_standings
+Get league table for a season. Works for all leagues.
+- `season_id` (str, required): Season slug
 
-```
-Params:
-  date (string, optional) - Format: YYYY-MM-DD. Defaults to today.
-Returns: { date: string, events: [...] }
-```
-
-**get_team_schedule** - Get upcoming and recent matches for a specific team.
-
-```
-Params:
-  team_id (string, required)
-  league_slug (string, optional)
-  season_year (string, optional)
-Returns: { team: {...}, events: [...] }
-```
-
-### Standings & Leaders
-
-**get_season_standings** - Get the league table with home/away/total groupings.
-
-```
-Params:
-  season_id (string, required)
-Returns: { standings: [{ name, type, entries: [...] }] }
-```
-
-**get_season_leaders** - Get top scorers, assist leaders, and card leaders.
-
-```
-Params:
-  season_id (string, required)
-Returns: { leaders: [{ player: {...}, goals: int, ... }] }
-```
-
-### Team Data
-
-**get_season_teams** - Get all teams participating in a season.
-
-```
-Params:
-  season_id (string, required)
-Returns: { teams: [...] }
-```
-
-**get_team_profile** - Get team details including squad roster, manager, and venue.
-
-```
-Params:
-  team_id (string, required)
-  league_slug (string, optional) - Helps with FPL enrichment for PL teams
-Returns: { team: {...}, players: [...], manager: {...}, venue: {...} }
-```
-
-**get_head_to_head** - Get head-to-head match history between two teams.
-
-```
-Params:
-  team_id (string, required)
-  team_id_2 (string, required)
-Returns: { teams: [...], events: [...] }
-Note: Requires football-data.org API key. No ESPN fallback for this command.
-```
-
-### Match/Event Data
-
-**get_event_summary** - Get match summary with scores, teams, and venue.
-
-```
-Params:
-  event_id (string, required)
-  league_slug (string, optional)
-Returns: { event: {...}, statistics: {...} }
-```
-
-**get_event_lineups** - Get starting lineups, formations, and substitutes.
-
-```
-Params:
-  event_id (string, required)
-Returns: { lineups: [{ team: {...}, formation: string, starting: [...], bench: [...] }] }
-```
-
-**get_event_statistics** - Get team-level match statistics (possession, shots, passes, etc.).
-
-```
-Params:
-  event_id (string, required)
-Returns: { teams: [{ team: {...}, statistics: {...}, qualifier: "home"|"away" }] }
-```
-
-**get_event_timeline** - Get all match events: goals, cards, substitutions, VAR decisions.
-
-```
-Params:
-  event_id (string, required)
-Returns: { timeline: [{ type, minute, player: {...}, team: {...} }] }
-```
-
-**get_event_xg** - Get expected goals (xG) data with shot maps.
-
-```
-Params:
-  event_id (string, required)
-Returns: { event_id, teams: [{ xg: float, ... }], shots: [...] }
-Coverage: Premier League, La Liga, Bundesliga, Serie A, Ligue 1 only (via Understat).
-```
-
-**get_event_players_statistics** - Get individual player statistics for a match.
-
-```
-Params:
-  event_id (string, required)
-Returns: { event_id, teams: [{ players: [...], qualifier: "home"|"away" }] }
-Player stats include: minutes, rating, goals, assists, shots, passes, tackles, interceptions, dribbles, duels.
-```
-
-### Player & Transfer Data
-
-**get_player_profile** - Get player biography, career stats, market value, and transfer history.
-
-```
-Params (at least one required):
-  player_id (string) - football-data.org player ID
-  fpl_id (string) - Fantasy Premier League player ID
-  tm_player_id (string) - Transfermarkt player ID
-Returns: { player: {..., fpl_data: {...}, market_value: {...}, transfer_history: [...]} }
-```
-
-**get_missing_players** - Get injured and suspended players by team.
-
-```
-Params:
-  season_id (string, required)
-Returns: { season_id, teams: [{ team: {...}, players: [...] }] }
-Coverage: Premier League only (via FPL).
-```
-
-**get_season_transfers** - Get player transfers for a season.
-
-```
-Params:
-  tm_player_ids (list, required) - Transfermarkt player IDs (max 50)
-  season_id (string, optional)
-Returns: { season_id, transfers: [...] }
-```
-
-## Response Format
-
-All commands return normalized JSON following IPTC Sport Schema conventions:
-
+Returns `data.standings[].entries[]`:
 ```json
 {
-  "status": true,
-  "data": { ... },
-  "message": "Description of result"
+  "position": 1,
+  "team": {"id": "359", "name": "Arsenal", "short_name": "Arsenal", "abbreviation": "ARS", "crest": "https://..."},
+  "played": 26, "won": 17, "drawn": 6, "lost": 3,
+  "goals_for": 50, "goals_against": 18, "goal_difference": 32, "points": 57
 }
 ```
 
-Match events include standardized status values: `not_started`, `live`, `halftime`, `1st_half`, `2nd_half`, `closed`, `postponed`, `suspended`, `cancelled`.
+### get_season_leaders
+Get top scorers/leaders for a season. **Premier League only** (via FPL).
+- `season_id` (str, required): Season slug (must be `premier-league-*`)
 
-## Usage Examples
+Returns `data.leaders[]` — note: player name is nested under `.player.name`:
+```json
+{
+  "player": {"id": "223094", "name": "Erling Haaland", "first_name": "Erling", "last_name": "Haaland", "position": "Forward"},
+  "team": {"id": "43", "name": "Man City"},
+  "goals": 22, "assists": 6, "penalties": 0, "played_matches": 25
+}
+```
+Returns empty for non-PL leagues.
 
-Get today's Premier League matches:
-> "What Premier League matches are on today?"
-> Uses: get_daily_schedule
+### get_season_teams
+Get teams in a season. Works for all leagues.
+- `season_id` (str, required): Season slug
 
-Check the league standings:
-> "Show me the current La Liga table"
-> Uses: get_current_season (to find season_id) then get_season_standings
+### get_team_profile
+Get team profile with squad/roster. **Squad data is PL only** (via FPL enrichment). For other leagues, returns basic team info (name, crest) without players, manager, or venue.
+- `team_id` (str, required): ESPN team ID
+- `league_slug` (str, optional): League hint for faster resolution
 
-Get match details:
-> "What happened in the Arsenal vs Chelsea match?"
-> Uses: get_event_summary, get_event_statistics, get_event_timeline
+Returns `data.team`, `data.players[]`, `data.manager`, `data.venue`.
 
-Check xG data:
-> "What was the xG for Liverpool's last match?"
-> Uses: get_event_xg
+### get_daily_schedule
+Get all matches for a specific date across all leagues.
+- `date` (str, optional): Date in YYYY-MM-DD format. Defaults to today.
 
-Get player info:
-> "Show me Haaland's stats and market value"
-> Uses: get_player_profile
+Returns `data.date` and `data.events[]`:
+```json
+{
+  "id": "748381", "status": "not_started", "start_time": "2026-02-16T20:00Z",
+  "competition": {"id": "la-liga", "name": "La Liga"},
+  "season": {"id": "la-liga-2025", "year": "2025"},
+  "venue": {"name": "Estadi Montilivi", "city": "Girona"},
+  "competitors": [
+    {"team": {"id": "9812", "name": "Girona", "abbreviation": "GIR"}, "qualifier": "home", "score": 0},
+    {"team": {"id": "83", "name": "Barcelona", "abbreviation": "BAR"}, "qualifier": "away", "score": 0}
+  ],
+  "scores": {"home": 0, "away": 0}
+}
+```
+Status values: `"not_started"`, `"live"`, `"halftime"`, `"closed"`, `"postponed"`.
+
+### get_event_summary
+Get match summary with scores. Works for all leagues.
+- `event_id` (str, required): Match/event ID
+
+Returns `data.event` (same shape as daily schedule events).
+
+### get_event_lineups
+Get match lineups. Works for all leagues (when available from ESPN).
+- `event_id` (str, required): Match/event ID
+
+Returns `data.lineups[]`:
+```json
+{
+  "team": {"id": "364", "name": "Liverpool", "abbreviation": "LIV"},
+  "qualifier": "home",
+  "formation": "4-3-3",
+  "starting": [{"id": "275599", "name": "Caoimhín Kelleher", "position": "Goalkeeper", "shirt_number": 1}],
+  "bench": [{"id": "...", "name": "...", "position": "...", "shirt_number": 62}]
+}
+```
+
+### get_event_statistics
+Get match team statistics. Works for all leagues.
+- `event_id` (str, required): Match/event ID
+
+Returns `data.teams[]`:
+```json
+{
+  "team": {"id": "244", "name": "Brentford"},
+  "qualifier": "home",
+  "statistics": {"ball_possession": "40.8", "shots_total": "10", "shots_on_target": "3", "fouls": "12", "corners": "4"}
+}
+```
+
+### get_event_timeline
+Get match timeline/key events (goals, cards, substitutions). Works for all leagues.
+- `event_id` (str, required): Match/event ID
+
+Returns `data.timeline[]` with goal, card, and substitution events.
+
+### get_team_schedule
+Get schedule for a specific team. Works for all leagues.
+- `team_id` (str, required): ESPN team ID
+- `league_slug` (str, optional): League hint
+- `season_year` (str, optional): Season year filter
+
+### get_head_to_head
+Get head-to-head history between two teams. **Not available** without licensed data. Use `get_team_schedule` and filter manually instead.
+- `team_id` (str, required): First team ID
+- `team_id_2` (str, required): Second team ID
+
+### get_event_xg
+Get expected goals (xG) data from Understat. **Top 5 leagues only**: EPL, La Liga, Bundesliga, Serie A, Ligue 1. Returns empty for other leagues.
+- `event_id` (str, required): Match/event ID
+
+Returns `data.teams[]` and `data.shots[]`:
+```json
+{"team": {"id": "244", "name": "Brentford"}, "qualifier": "home", "xg": 1.812}
+```
+`data.shots[]` contains individual shot data with xG per shot. Note: very recent matches (last 24-48h) may not be indexed on Understat yet.
+
+### get_event_players_statistics
+Get player-level match statistics with xG enrichment. Works for all leagues (basic stats from ESPN). xG/xA enrichment only for top 5 leagues (Understat).
+- `event_id` (str, required): Match/event ID
+
+Returns `data.teams[].players[]`:
+```json
+{
+  "id": "...", "name": "Bukayo Saka", "position": "Midfielder", "shirt_number": 7, "starter": true,
+  "statistics": {"appearances": "1", "shotsTotal": "3", "shotsOnTarget": "1", "foulsCommitted": "1", "xg": "0.45", "xa": "0.12"}
+}
+```
+`xg` and `xa` fields only present for top 5 leagues.
+
+### get_missing_players
+Get injured/missing/doubtful players. **Premier League only** (via FPL). Returns empty for other leagues.
+- `season_id` (str, required): Season slug (must be `premier-league-*`)
+
+Returns `data.teams[].players[]`:
+```json
+{
+  "id": "463748", "name": "Mikel Merino Zazón", "web_name": "Merino",
+  "position": "Midfielder", "status": "injured",
+  "news": "Foot injury - Unknown return date",
+  "chance_of_playing_this_round": 0, "chance_of_playing_next_round": 0
+}
+```
+Status values: `"injured"`, `"unavailable"`, `"doubtful"`, `"suspended"`.
+
+### get_season_transfers
+Get transfer history for specific players via Transfermarkt. Works for any league.
+- `season_id` (str, required): Season slug (used to filter transfers by year)
+- `tm_player_ids` (list, required): Transfermarkt player IDs
+
+Returns `data.transfers[]`:
+```json
+{
+  "player_tm_id": "433177", "date": "2019-07-01", "season": "19/20",
+  "from_team": {"name": "Arsenal U23", "image": "https://..."},
+  "to_team": {"name": "Arsenal", "image": "https://..."},
+  "fee": "-", "market_value": "-"
+}
+```
+
+### get_player_profile
+Get player profile. Works for any player if you have their Transfermarkt or FPL ID. At least one ID required.
+- `fpl_id` (str, optional): FPL player ID (PL players only)
+- `tm_player_id` (str, optional): Transfermarkt player ID (any league)
+
+With `tm_player_id`, returns `data.player` with:
+```json
+{
+  "market_value": {"value": 130000000, "currency": "EUR", "formatted": "€130.00m", "date": "09/12/2025", "age": "24", "club": "Arsenal FC"},
+  "market_value_history": [{"value": 7000000, "formatted": "€7.00m", "date": "23/09/2019", "club": "Arsenal FC"}],
+  "transfer_history": [
+    {"player_tm_id": "433177", "date": "2019-07-01", "season": "19/20", "from_team": {"name": "Arsenal U23"}, "to_team": {"name": "Arsenal"}, "fee": "-"}
+  ]
+}
+```
+
+With `fpl_id`, also includes `data.player.fpl_data` with FPL stats (points, form, ICT index, ownership, etc.).
+
+## Supported Leagues
+
+Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Championship, Eredivisie, Primeira Liga, Serie A Brazil, Champions League, European Championship, World Cup.
+
+## Data Sources
+
+| Source | What it provides | League coverage |
+|--------|-----------------|-----------------|
+| ESPN | Scores, standings, schedules, lineups, match stats, timelines | All 12 leagues |
+| Understat | xG per match, xG per shot, player xG/xA | Top 5 (EPL, La Liga, Bundesliga, Serie A, Ligue 1) |
+| FPL | Top scorers, injuries, player stats, ownership | Premier League only |
+| Transfermarkt | Market values, transfer history | Any player (requires tm_player_id) |
+
+For licensed data with full coverage across all sports (Sportradar, Opta, Genius Sports), see [Machina Sports](https://machina.gg).

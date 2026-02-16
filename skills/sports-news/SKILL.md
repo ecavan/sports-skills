@@ -1,104 +1,70 @@
 ---
 name: sports-news
-description: Sports news aggregation via RSS feeds and Google News. Fetch articles from any sports RSS feed or search Google News for sports topics. Filter by date range, language, and country. Use when the user asks about sports news, transfer rumors, match reports, press conferences, injury updates, or any sports journalism content. No API key required.
+description: |
+  Sports news via RSS/Atom feeds and Google News. Fetch headlines, search by query, filter by date.
+
+  Use when: user asks for recent news, headlines, transfer rumors, or articles about any sport. Good for "what's the latest on [team/player]" questions. Supports any Google News query and curated RSS feeds (BBC Sport, ESPN, The Athletic, Sky Sports).
+  Don't use when: user asks for structured data like standings, scores, statistics, or xG — use football-data instead. Don't use for prediction market odds — use polymarket or kalshi. Don't use for F1 timing data — use fastf1. News results are text articles, not structured data.
+triggers:
+  - sports news
+  - football news
+  - transfer news
+  - google news sports
+  - rss feed
 ---
 
 # Sports News
 
-RSS and Atom feed aggregation for sports news. Supports any feed URL and Google News search queries. No API key required.
+## Quick Start
+
+```bash
+npx skills add sports-skills
+```
+
+```python
+from sports_skills import news
+
+articles = news.fetch_items(google_news=True, query="Arsenal transfer news", limit=10)
+feed = news.fetch_feed(url="https://feeds.bbci.co.uk/sport/football/rss.xml")
+```
+
+Or via CLI:
+```bash
+sports-skills news fetch_items --google_news --query="Arsenal transfer" --limit=5
+sports-skills news fetch_feed --url="https://feeds.bbci.co.uk/sport/football/rss.xml"
+```
 
 ## Commands
 
 ### fetch_feed
-
-Fetch a complete RSS/Atom feed with metadata and all entries.
-
-```
-Params:
-  google_news (bool, optional, default: false) - Use Google News RSS
-  query (string, required if google_news=true) - Google News search query
-  url (string, required if google_news=false) - RSS feed URL
-  language (string, optional, default: "en-US") - Language code for Google News
-  country (string, optional, default: "US") - Country code for Google News
-  after (string, optional) - Filter articles after date (YYYY-MM-DD)
-  before (string, optional) - Filter articles before date (YYYY-MM-DD)
-  sort_by_date (bool, optional, default: false) - Sort newest first
-Returns: {
-  title, subtitle, link, language, updated,
-  entries: [{
-    title, link, id, published, published_iso,
-    author, summary, content, tags
-  }]
-}
-```
+Fetch and parse a full RSS/Atom feed.
+- `google_news` (bool, optional): Use Google News RSS. Default: false
+- `query` (str): Search query (required if google_news=true)
+- `url` (str): RSS feed URL (required if google_news=false)
+- `language` (str, optional): Language code. Default: "en-US"
+- `country` (str, optional): Country code. Default: "US"
+- `after` (str, optional): Filter articles after date (YYYY-MM-DD)
+- `before` (str, optional): Filter articles before date (YYYY-MM-DD)
+- `sort_by_date` (bool, optional): Sort newest first. Default: false
 
 ### fetch_items
+Fetch items from a feed, optionally limited by count.
+- Same params as `fetch_feed`, plus:
+- `limit` (int, optional): Max number of items to return
 
-Fetch feed items with optional count limit and date filtering.
+## Useful RSS Feeds
 
-```
-Params:
-  (all params from fetch_feed, plus:)
-  limit (int, optional) - Max number of items to return
-Returns: {
-  items: [...same structure as entries above...],
-  count, query, url
-}
-```
+| Source | URL |
+|--------|-----|
+| BBC Sport Football | `https://feeds.bbci.co.uk/sport/football/rss.xml` |
+| ESPN FC | `https://www.espn.com/espn/rss/soccer/news` |
+| The Athletic | `https://theathletic.com/rss/` |
+| Sky Sports Football | `https://www.skysports.com/rss/12040` |
 
 ## Google News Queries
 
-When `google_news=true`, the connector builds a Google News RSS URL from the query. Useful queries for sports:
-
-- `"Premier League transfer news"` - Transfer rumors and deals
-- `"NFL injuries week 10"` - Injury reports
-- `"Champions League results"` - Match results
-- `"F1 race results 2026"` - Formula 1 news
-- `"NBA free agency"` - Basketball transactions
-- `"World Cup 2026"` - World Cup coverage
-
-Combine with `after` and `before` date filters to narrow results.
-
-## Popular Sports RSS Feeds
-
-| Source | Feed URL | Coverage |
-|--------|----------|----------|
-| ESPN | `https://www.espn.com/espn/rss/news` | General sports |
-| ESPN Soccer | `https://www.espn.com/espn/rss/soccer/news` | Football/soccer |
-| ESPN NFL | `https://www.espn.com/espn/rss/nfl/news` | NFL |
-| ESPN NBA | `https://www.espn.com/espn/rss/nba/news` | NBA |
-| BBC Sport | `https://feeds.bbci.co.uk/sport/rss.xml` | UK sports |
-| BBC Football | `https://feeds.bbci.co.uk/sport/football/rss.xml` | Football |
-| The Athletic | `https://theathletic.com/rss/` | Multi-sport premium |
-| Sky Sports | `https://www.skysports.com/rss/12040` | UK sports |
-| Guardian Football | `https://www.theguardian.com/football/rss` | Football |
-
-## Response Format
-
-All commands return:
-
-```json
-{
-  "status": true,
-  "data": { ... },
-  "message": "Error description (on failure only)"
-}
-```
-
-## Usage Examples
-
-Get latest sports news:
-> "What's the latest Premier League news?"
-> Uses: fetch_items with google_news=true, query="Premier League news", limit=10
-
-Get transfer rumors:
-> "Any transfer news from the last 3 days?"
-> Uses: fetch_items with google_news=true, query="football transfer news", after="2026-02-12"
-
-Read a specific feed:
-> "Get the latest from BBC Sport"
-> Uses: fetch_feed with url="https://feeds.bbci.co.uk/sport/rss.xml"
-
-World Cup coverage:
-> "Find World Cup 2026 news articles"
-> Uses: fetch_items with google_news=true, query="World Cup 2026", sort_by_date=true
+Use `google_news=True` with `query` to search Google News:
+- `"Arsenal transfer news"` — Arsenal transfer news
+- `"Premier League results"` — latest PL results
+- `"Champions League draw"` — CL draw coverage
+- `"World Cup 2026"` — World Cup news

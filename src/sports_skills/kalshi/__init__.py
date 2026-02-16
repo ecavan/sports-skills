@@ -1,0 +1,120 @@
+"""Kalshi prediction markets — events, series, markets, trades, and candlesticks.
+
+Public read-only endpoints. No authentication required. Uses stdlib only.
+"""
+
+from sports_skills.kalshi._connector import (
+    get_exchange_status as _get_exchange_status,
+    get_exchange_schedule as _get_exchange_schedule,
+    get_series_list as _get_series_list,
+    get_series as _get_series,
+    get_events as _get_events,
+    get_event as _get_event,
+    get_markets as _get_markets,
+    get_market as _get_market,
+    get_trades as _get_trades,
+    get_market_candlesticks as _get_market_candlesticks,
+    get_sports_filters as _get_sports_filters,
+)
+
+
+def _req(**kwargs):
+    """Build request_data dict from kwargs."""
+    return {"params": {k: v for k, v in kwargs.items() if v is not None}}
+
+
+def get_exchange_status() -> dict:
+    """Get exchange status (trading active, maintenance windows)."""
+    return _get_exchange_status(_req())
+
+
+def get_exchange_schedule() -> dict:
+    """Get exchange operating schedule."""
+    return _get_exchange_schedule(_req())
+
+
+def get_series_list(*, category: str | None = None, tags: str | None = None) -> dict:
+    """Get all available series (leagues, recurring event groups)."""
+    return _get_series_list(_req(category=category, tags=tags))
+
+
+def get_series(*, series_ticker: str) -> dict:
+    """Get details for a specific series."""
+    return _get_series(_req(series_ticker=series_ticker))
+
+
+def get_events(
+    *,
+    limit: int = 100,
+    cursor: str | None = None,
+    status: str | None = None,
+    series_ticker: str | None = None,
+    with_nested_markets: bool = False,
+) -> dict:
+    """Get events with optional filtering."""
+    return _get_events(_req(
+        limit=limit, cursor=cursor, status=status,
+        series_ticker=series_ticker, with_nested_markets=with_nested_markets,
+    ))
+
+
+def get_event(*, event_ticker: str, with_nested_markets: bool = False) -> dict:
+    """Get details for a specific event."""
+    return _get_event(_req(event_ticker=event_ticker, with_nested_markets=with_nested_markets))
+
+
+def get_markets(
+    *,
+    limit: int = 100,
+    cursor: str | None = None,
+    event_ticker: str | None = None,
+    series_ticker: str | None = None,
+    status: str | None = None,
+    tickers: str | None = None,
+) -> dict:
+    """Get markets with optional filtering."""
+    return _get_markets(_req(
+        limit=limit, cursor=cursor, event_ticker=event_ticker,
+        series_ticker=series_ticker, status=status, tickers=tickers,
+    ))
+
+
+def get_market(*, ticker: str) -> dict:
+    """Get details for a specific market."""
+    return _get_market(_req(ticker=ticker))
+
+
+def get_trades(
+    *,
+    limit: int = 100,
+    cursor: str | None = None,
+    ticker: str | None = None,
+    min_ts: int | None = None,
+    max_ts: int | None = None,
+) -> dict:
+    """Get recent trades with optional filtering."""
+    return _get_trades(_req(limit=limit, cursor=cursor, ticker=ticker, min_ts=min_ts, max_ts=max_ts))
+
+
+def get_market_candlesticks(
+    *,
+    series_ticker: str,
+    ticker: str,
+    start_ts: int,
+    end_ts: int,
+    period_interval: int,
+) -> dict:
+    """Get candlestick (OHLC) data for a market.
+
+    Args:
+        period_interval: Candlestick interval in minutes (1, 60, or 1440).
+    """
+    return _get_market_candlesticks(_req(
+        series_ticker=series_ticker, ticker=ticker,
+        start_ts=start_ts, end_ts=end_ts, period_interval=period_interval,
+    ))
+
+
+def get_sports_filters() -> dict:
+    """Get available sports filter categories (leagues, teams, etc.)."""
+    return _get_sports_filters(_req())
