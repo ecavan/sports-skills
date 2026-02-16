@@ -49,13 +49,14 @@ Params:
 Returns: { id, question, description, slug, status, outcomes, volume, ... }
 ```
 
-**search_markets** - Full-text search across all Polymarket markets.
+**search_markets** - Find markets by filtering events and markets with tag and keyword parameters. The `/search` endpoint requires authentication, so discovery uses the events and markets endpoints with filters instead.
 
 ```
-Params:
-  query (string, required) - Search query
-  limit (int, optional, default: 20, max: 50)
-Returns: { markets: [...], count, query }
+Approach: Use get_sports_events or get_sports_markets with filters.
+To find a specific market (e.g. "NBA Finals"):
+  1. Call get_sports_events with tag_id=1 and order=volume to browse top events
+  2. Call get_event_details on a matching event to see all its markets
+  3. Or call get_sports_markets with sports_market_types filter (e.g. "moneyline")
 ```
 
 ### Events (Gamma API)
@@ -139,31 +140,46 @@ Returns: {
 }
 ```
 
-### Trades (Gamma API)
+### Price History & Last Trade (CLOB API)
 
-**get_trades** - Get recent trade history.
+**get_price_history** - Get historical price data for a market over time.
 
 ```
 Params:
-  market_id (string, optional) - Filter by market
-  limit (int, optional, default: 50, max: 100)
-Returns: { trades: [{ id, market_id, side, size, price, outcome, created_at }], count }
+  token_id (string, required) - CLOB token ID
+  interval (string, optional, default: "max") - Time range ("1d", "1w", "1m", "max")
+  fidelity (int, optional, default: 120) - Data point density (seconds between points)
+Returns: { history: [{ t: timestamp, p: price }], count }
+```
+
+**get_last_trade_price** - Get the most recent trade price for a market.
+
+```
+Params:
+  token_id (string, required) - CLOB token ID
+Returns: { token_id, price, side }
 ```
 
 ## Workflow: Finding Sports Market Odds
 
-1. Call `get_sports_events` to browse current sports events by volume
+1. Call `get_sports_events` with `tag_id=1` and `order=volume` to browse top sports events
 2. Pick an event and call `get_event_details` to see all markets for it
 3. For real-time pricing, take `clob_token_ids` from a market and call `get_market_prices`
 4. For order book depth, call `get_order_book` with a specific token ID
+5. For price history, call `get_price_history` with a CLOB token ID
 
-Alternative: call `search_markets` with a query like "NBA Finals" or "World Cup" to find markets directly.
+To narrow by sport type, use `get_sports_markets` with `sports_market_types` filter (e.g. "moneyline", "spreads", "totals").
 
 ## Caching & Rate Limits
 
-- Gamma API: Cached for 120s (markets/events), 600s (series), 60s (details/search)
+- Gamma API: Cached for 120s (markets/events), 600s (series), 60s (details)
 - CLOB API: Cached for 30s (prices and order books refresh frequently)
 - Rate limits are generous: 4,000 req/10s (Gamma general), 1,500 req/10s (CLOB price endpoints)
+
+## Known Limitations
+
+- The Gamma `/search` endpoint now requires authentication (token/cookies). Use `get_sports_events` and `get_sports_markets` with filters for market discovery instead.
+- The `/core/trades` endpoint has been removed. Use `get_price_history` and `get_last_trade_price` via the CLOB API for trade/price data.
 
 ## Usage Examples
 
@@ -173,7 +189,7 @@ Browse sports markets:
 
 Find specific game odds:
 > "What are the Polymarket odds for the Champions League final?"
-> Uses: search_markets with query="Champions League final"
+> Uses: get_sports_events with tag_id=1, then get_event_details on the matching event
 
 Check real-time prices:
 > "What's the current price on this Polymarket market?"

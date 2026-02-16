@@ -11,7 +11,7 @@ Public prediction market data from Kalshi. Access sports series, events, markets
 
 ## Supported Sports
 
-Filter series and events by sport tag: `Soccer`, `Basketball`, `Baseball`, `Tennis`, `American Football`, `Hockey`
+18 sport categories with 80+ competitions. Major sports: `Soccer` (38 competitions), `Basketball` (11), `Hockey` (8), `Tennis` (14), `Football` (2), `Baseball` (2), `Golf` (3), `MMA` (1), `Boxing` (1)
 
 ## Commands (Public, No Auth)
 
@@ -43,12 +43,16 @@ Returns: { ticker, title, category, frequency, fee_type, settlement_sources: [..
 ```
 GET /events
 Params:
-  category (string, optional) - Filter by category
+  series_ticker (string, recommended) - Filter by series (most reliable for sports)
+  category (string, optional) - Filter by category (note: unreliable for sports filtering)
   tags (string, optional) - Filter by sport
-  series_ticker (string, optional) - Filter by series
   limit (int, optional, default: 200) - Page size
   cursor (string, optional) - Pagination cursor
 Returns: { events: [{ event_ticker, series_ticker, title, sub_title, category, strike_date, mutually_exclusive }], cursor }
+
+IMPORTANT: The category=Sports filter on this endpoint does not reliably return sports events.
+Always filter by series_ticker instead (e.g. series_ticker=KXNBA for basketball).
+Use GetSeriesList with category=Sports first to find valid series tickers.
 ```
 
 **GetMultivariateEvents** - Get multivariate (combo) events.
@@ -110,8 +114,17 @@ GET /series/{series_ticker}/markets/{ticker}/candlesticks
 Params:
   series_ticker (string, required)
   ticker (string, required)
-  period_interval (string, optional) - "1min", "1hour", or "1day"
-Returns: { candlesticks: [{ open, high, low, close, volume, start_ts, end_ts }] }
+  start_ts (int, required) - Start Unix timestamp in seconds
+  end_ts (int, required) - End Unix timestamp in seconds
+  period_interval (int, optional) - Interval in minutes: 1 (1min), 60 (1hour), 1440 (1day)
+Returns: { candlesticks: [{
+  open, high, low, close, volume, open_interest,
+  start_ts, end_ts,
+  price: { open, high, low, close },
+  yes_ask: { open, high, low, close },
+  yes_bid: { open, high, low, close }
+}] }
+Note: Requires start_ts and end_ts. Without them the endpoint returns empty results.
 ```
 
 **BatchGetMarketCandlesticks** - Get candlestick data for up to 100 markets at once.
@@ -166,11 +179,11 @@ Returns: { schedule: {...} }
 
 ## Workflow: Finding Sports Markets
 
-1. Call `GetFiltersForSports` to see available sports and competitions
-2. Call `GetSeriesList` with `tags=Soccer` (or other sport) to find relevant series
-3. Call `GetEvents` with `series_ticker` to find specific events
+1. Call `GetFiltersForSports` to see available sports (18 categories, 80+ competitions)
+2. Call `GetSeriesList` with `category=Sports` and optionally `tags=Soccer` to find series tickers
+3. Call `GetEvents` with `series_ticker` (NOT category) to find specific events
 4. Call `GetMarkets` with `event_ticker` to see available markets and current prices
-5. Call `GetMarketCandlesticks` for price history on a specific market
+5. Call `GetMarketCandlesticks` for price history (requires `start_ts` and `end_ts` as Unix timestamps, `period_interval` in minutes: 1=1min, 60=1hour, 1440=1day)
 
 ## Usage Examples
 
