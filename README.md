@@ -5,7 +5,7 @@ Open-source agent skills for live sports data and prediction markets. Built for 
 **Zero API keys. Zero signup. Just works.**
 
 ```bash
-npx skills add sports-skills/football-data
+npx skills add sports-skills
 ```
 
 ---
@@ -64,7 +64,7 @@ Each connector is a SKILL.md file that any compatible AI agent can load and use 
 ### Install a skill
 
 ```bash
-npx skills add sports-skills/football-data
+npx skills add sports-skills
 ```
 
 ### Use with your AI agent
