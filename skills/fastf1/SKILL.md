@@ -106,3 +106,4 @@ User: "Compare qualifying times at Silverstone"
 - **No data for future events**: FastF1 only returns data for completed sessions. Future races appear in the schedule but have no session data.
 - **Slow first request**: FastF1 downloads and caches session data locally. First call for a given session may take 10-30 seconds. Subsequent calls are fast.
 - **Event name not found**: Use the exact event name from `get_race_schedule()`. Common circuit names like "Monza" or "Silverstone" usually work as aliases.
+- **`fastest_lap` false / `fastest_lap_time` empty in race results**: FastF1 doesn't always populate these fields. To find the actual fastest lap, use `get_lap_data()` and find the minimum `lap_time` across all drivers.

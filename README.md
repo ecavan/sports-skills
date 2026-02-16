@@ -5,7 +5,7 @@ Open-source agent skills for live sports data and prediction markets. Built for 
 **Zero API keys. Zero signup. Just works.**
 
 ```bash
-npx skills add sports-skills
+npx skills add machina-sports/sports-skills
 ```
 
 ---
@@ -64,7 +64,7 @@ Each connector is a SKILL.md file that any compatible AI agent can load and use 
 ### Install a skill
 
 ```bash
-npx skills add sports-skills
+npx skills add machina-sports/sports-skills
 ```
 
 ### Use with your AI agent
@@ -79,41 +79,6 @@ Once installed, your agent can call commands directly:
 
 **Get F1 race results:**
 > "Show me the lap data from the last Monaco Grand Prix"
-
----
-
-## Python SDK
-
-Also available as a pip-installable Python package for programmatic use.
-
-```bash
-pip install sports-skills           # Football, Polymarket, Kalshi, News
-pip install sports-skills[f1]       # + Formula 1 (fastf1 + pandas)
-```
-
-```python
-from sports_skills import football, polymarket, kalshi, news
-
-standings = football.get_season_standings(season_id="premier-league-2025")
-matches = football.get_daily_schedule()
-xg = football.get_event_xg(event_id="401234567")
-player = football.get_player_profile(tm_player_id="433177")
-
-markets = polymarket.get_sports_markets(limit=20)
-articles = news.fetch_items(google_news=True, query="Arsenal transfer news", limit=10)
-```
-
-CLI included:
-
-```bash
-sports-skills football get_season_standings --season_id=premier-league-2025
-sports-skills polymarket get_sports_markets --limit=20
-sports-skills kalshi get_markets --series_ticker=KXNBA
-sports-skills news fetch_items --google_news --query="Arsenal" --limit=5
-sports-skills f1 get_race_schedule --year=2025
-```
-
-All commands output JSON with a consistent envelope: `{"status": true, "data": {...}, "message": ""}`.
 
 ---
 
@@ -220,14 +185,7 @@ sports-skills.sh
 │   ├── kalshi/SKILL.md               # Prediction markets (CFTC)
 │   ├── polymarket/SKILL.md           # Prediction markets (crypto)
 │   └── sports-news/SKILL.md          # RSS + Google News
-├── src/sports_skills/                 # Python SDK
-│   ├── football/                      # ESPN, Understat, FPL, Transfermarkt
-│   ├── f1/                            # FastF1 library
-│   ├── polymarket/                    # Gamma + CLOB APIs
-│   ├── kalshi/                        # Kalshi Trade API v2
-│   ├── news/                          # RSS/Atom + Google News
-│   └── cli.py                         # CLI entry point
-├── pyproject.toml
+├── src/sports_skills/                 # Python runtime (used by skills)
 ├── site/                              # Landing page (sports-skills.sh)
 ├── LICENSE
 └── README.md
@@ -305,6 +263,19 @@ See the existing SKILL.md files and the [Agent Skills spec](https://agentskills.
 ## World Cup 2026
 
 This project ships with World Cup 2026 coverage built in. The `football-data` skill includes FIFA World Cup as a supported competition. As the tournament approaches (June 2026), we'll add dedicated World Cup skills for bracket tracking, group stage analysis, and match predictions.
+
+---
+
+## Acknowledgments
+
+This project is built on top of incredible open-source work and public APIs:
+
+- **[FastF1](https://github.com/theOehrly/Fast-F1)** — the backbone of our Formula 1 skill. Huge thanks to theOehrly and contributors for making F1 data accessible.
+- **[feedparser](https://github.com/kurtmckee/feedparser)** — powers our sports news skill with reliable RSS/Atom parsing.
+- **[ESPN](https://www.espn.com)**, **[Understat](https://understat.com)**, **[FPL](https://fantasy.premierleague.com)**, **[Transfermarkt](https://www.transfermarkt.com)** — the public data sources behind the football skill.
+- **[Kalshi](https://kalshi.com)** and **[Polymarket](https://polymarket.com)** — for their public market data APIs.
+- **[skills.sh](https://skills.sh)** — the open agent skills directory and CLI that makes `npx skills add` work.
+- **[Agent Skills](https://agentskills.io)** — the open spec that makes all of this interoperable across agents.
 
 ---
 
