@@ -191,20 +191,43 @@ def get_lap_data(request_data):
         session.load()
 
         if driver:
-            laps = session.laps.pick_driver(driver)
+            laps = session.laps.pick_drivers(driver)
         else:
             laps = session.laps
 
+        # Compute fastest valid lap for dynamic sanity threshold
+        valid_times = laps['LapTime'].dropna()
+        if not valid_times.empty:
+            fastest_seconds = valid_times.min().total_seconds()
+            max_reasonable = fastest_seconds * 1.5
+        else:
+            max_reasonable = 150  # fallback: 2.5 min
+
         laps_list = []
         for _, lap in laps.iterrows():
+            lap_time = lap.get('LapTime')
+            s1 = lap.get('Sector1Time')
+            s2 = lap.get('Sector2Time')
+            s3 = lap.get('Sector3Time')
+
+            # Reconstruct lap time from sectors when missing (common in qualifying)
+            is_accurate = True
+            if pd.isna(lap_time) and pd.notna(s1) and pd.notna(s2) and pd.notna(s3):
+                reconstructed = s1 + s2 + s3
+                # Dynamic sanity check: reject if > 1.5x the fastest valid lap
+                if reconstructed.total_seconds() <= max_reasonable:
+                    lap_time = reconstructed
+                    is_accurate = False
+
             lap_data = {
                 "driver": lap.get('Driver', ''),
                 "team": lap.get('Team', ''),
                 "lap_number": lap.get('LapNumber', ''),
-                "lap_time": _format_timedelta(lap.get('LapTime')),
-                "sector_1_time": _format_timedelta(lap.get('Sector1Time')),
-                "sector_2_time": _format_timedelta(lap.get('Sector2Time')),
-                "sector_3_time": _format_timedelta(lap.get('Sector3Time')),
+                "lap_time": _format_timedelta(lap_time),
+                "is_accurate": is_accurate,
+                "sector_1_time": _format_timedelta(s1),
+                "sector_2_time": _format_timedelta(s2),
+                "sector_3_time": _format_timedelta(s3),
                 "compound": lap.get('Compound', ''),
                 "tyre_life": lap.get('TyreLife', ''),
                 "is_personal_best": bool(lap.get('IsPersonalBest', False)),
