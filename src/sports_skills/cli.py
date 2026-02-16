@@ -90,6 +90,13 @@ _INT_PARAMS = {"limit", "offset", "year", "session_year", "tag_id", "fidelity", 
 _LIST_PARAMS = {"tm_player_ids", "token_ids"}
 
 
+def _cli_error(message):
+    """Print error as JSON to stdout (for agents) and plain text to stderr (for humans), then exit."""
+    print(json.dumps({"status": False, "data": None, "message": message}, indent=2))
+    print(f"Error: {message}", file=sys.stderr)
+    sys.exit(1)
+
+
 def _load_module(name):
     """Lazy-import a sports_skills module."""
     if name == "football":
@@ -111,13 +118,9 @@ def _load_module(name):
                 raise ImportError
             return f1
         except ImportError:
-            print("Error: F1 module requires extra dependencies.", file=sys.stderr)
-            print("Install with: pip install sports-skills[f1]", file=sys.stderr)
-            sys.exit(1)
+            _cli_error("F1 module requires extra dependencies. Install with: pip install sports-skills[f1]")
     else:
-        print(f"Error: Unknown module '{name}'", file=sys.stderr)
-        print(f"Available modules: {', '.join(_REGISTRY.keys())}", file=sys.stderr)
-        sys.exit(1)
+        _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
 
 def _parse_value(key, value):
@@ -160,8 +163,7 @@ def main():
     if not args.command:
         # Show commands for this module
         if args.module not in _REGISTRY:
-            print(f"Error: Unknown module '{args.module}'", file=sys.stderr)
-            sys.exit(1)
+            _cli_error(f"Unknown module '{args.module}'. Available: {', '.join(_REGISTRY.keys())}")
         commands = _REGISTRY[args.module]
         print(f"Commands for '{args.module}':")
         for cmd_name, cmd_info in commands.items():
@@ -176,13 +178,13 @@ def main():
     command_name = args.command
 
     if module_name not in _REGISTRY:
-        print(f"Error: Unknown module '{module_name}'", file=sys.stderr)
-        sys.exit(1)
+        _cli_error(f"Unknown module '{module_name}'. Available: {', '.join(_REGISTRY.keys())}")
 
     if command_name not in _REGISTRY[module_name]:
-        print(f"Error: Unknown command '{command_name}' for module '{module_name}'", file=sys.stderr)
-        print(f"Available commands: {', '.join(_REGISTRY[module_name].keys())}", file=sys.stderr)
-        sys.exit(1)
+        _cli_error(
+            f"Unknown command '{command_name}' for module '{module_name}'. "
+            f"Available: {', '.join(_REGISTRY[module_name].keys())}"
+        )
 
     # Parse --key=value and --flag params
     kwargs = {}
@@ -201,23 +203,22 @@ def main():
     required = cmd_info.get("required", [])
     missing = [p for p in required if p not in kwargs]
     if missing:
-        print(f"Error: Missing required params: {', '.join('--' + p for p in missing)}", file=sys.stderr)
-        sys.exit(1)
+        _cli_error(
+            f"Missing required params: {', '.join('--' + p for p in missing)}. "
+            f"Run 'sports-skills {module_name}' to see usage."
+        )
 
     # Load module and call function
     module = _load_module(module_name)
     func = getattr(module, command_name, None)
     if not func:
-        print(f"Error: Function '{command_name}' not found in module '{module_name}'", file=sys.stderr)
-        sys.exit(1)
+        _cli_error(f"Function '{command_name}' not found in module '{module_name}'")
 
     try:
         result = func(**kwargs)
         print(json.dumps(result, indent=2, default=str, ensure_ascii=False))
     except TypeError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        print(f"Hint: Check parameter names. Run 'sports-skills {module_name}' to see available params.", file=sys.stderr)
-        sys.exit(1)
+        _cli_error(f"{e}. Hint: check parameter names. Run 'sports-skills {module_name}' to see usage.")
     except Exception as e:
         print(json.dumps({"status": False, "data": None, "message": str(e)}, indent=2))
         sys.exit(1)
