@@ -16,8 +16,8 @@ def wrap(result):
 
     Handles the different patterns used by the connectors:
     - {"status": True/False, "data": ..., "message": ...}  (polymarket, fastf1, rss)
-    - {"error": True, "message": ...}                       (football-data)
-    - Plain dict with data                                   (football-data success)
+    - {"error": True, "message": ...}                       (connector error)
+    - Plain dict with data                                   (connector success)
     """
     if not isinstance(result, dict):
         return success(result)
@@ -26,9 +26,9 @@ def wrap(result):
     if "status" in result and "data" in result:
         return result
 
-    # Error format from football-data connector
+    # Error format from connectors
     if result.get("error"):
         return error(result.get("message", "Unknown error"))
 
-    # Plain data dict (football-data success responses)
+    # Plain data dict (success responses)
     return success(result)

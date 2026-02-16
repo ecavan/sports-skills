@@ -1,6 +1,6 @@
 """Football data — standings, schedules, match stats, xG, transfers, and more.
 
-Wraps the machina-football-data connector (ESPN, Understat, FPL, Transfermarkt).
+Wraps ESPN, Understat, FPL, Transfermarkt, and openfootball.
 No API keys required. Zero config.
 """
 

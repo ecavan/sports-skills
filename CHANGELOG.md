@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.2.0] - 2026-02-16
 
 ### Added
-- HTTP retry with exponential backoff across all data sources (ESPN, Understat, FPL, Transfermarkt, football-data.org)
+- HTTP retry with exponential backoff across all data sources (ESPN, Understat, FPL, Transfermarkt)
 - Smart retry classification: transient errors (5xx, 429, timeouts) retry up to 3 attempts; client errors (4xx) fail immediately
 - Extra backoff for 429 rate-limit responses
 - Structured logging via `logging` module for request failures

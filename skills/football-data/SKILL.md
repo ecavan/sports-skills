@@ -1,7 +1,7 @@
 ---
 name: football-data
 description: |
-  Football (soccer) data across 12 leagues — standings, schedules, match stats, xG, transfers, player profiles. Zero config, no API keys. Covers Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Champions League, World Cup, Championship, Eredivisie, Primeira Liga, Serie A Brazil, European Championship.
+  Football (soccer) data across 13 leagues — standings, schedules, match stats, xG, transfers, player profiles. Zero config, no API keys. Covers Premier League, La Liga, Bundesliga, Serie A, Ligue 1, MLS, Champions League, World Cup, Championship, Eredivisie, Primeira Liga, Serie A Brazil, European Championship.
 
   Use when: user asks about football/soccer standings, fixtures, match stats, xG, lineups, player values, transfers, injury news, league tables, daily fixtures, or player profiles.
   Don't use when: user asks about American football (NFL), basketball (NBA), baseball, or any non-soccer sport. Don't use for live/real-time scores — data updates post-match. Don't use get_season_leaders or get_missing_players for non-Premier League leagues (they return empty). Don't use get_event_xg for leagues outside the top 5 (EPL, La Liga, Bundesliga, Serie A, Ligue 1).
@@ -47,7 +47,7 @@ schedule = football.get_daily_schedule()
 
 Not all data is available for every league. Use the right command for the right league.
 
-| Command | All 12 leagues | Top 5 only | PL only |
+| Command | All 13 leagues | Top 5 only | PL only |
 |---------|:-:|:-:|:-:|
 | get_season_standings | x | | |
 | get_daily_schedule | x | | |
@@ -71,6 +71,8 @@ Not all data is available for every league. Use the right command for the right 
 **PL only** (FPL): Premier League — injury news, player stats, ownership, ICT index.
 **All leagues**: via ESPN — scores, standings, schedules, match summaries, lineups, team stats.
 **Transfermarkt**: Works for any player with a `tm_player_id` — market values and transfer history.
+
+**Note**: MLS uses a different season structure (spring-fall calendar). Use `get_current_season(competition_id="mls")` to detect the right season_id.
 
 ## ID Conventions
 
@@ -301,13 +303,14 @@ With `fpl_id`, also includes `data.player.fpl_data` with FPL stats (points, form
 
 ## Supported Leagues
 
-Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Championship, Eredivisie, Primeira Liga, Serie A Brazil, Champions League, European Championship, World Cup.
+Premier League, La Liga, Bundesliga, Serie A, Ligue 1, MLS, Championship, Eredivisie, Primeira Liga, Serie A Brazil, Champions League, European Championship, World Cup.
 
 ## Data Sources
 
 | Source | What it provides | League coverage |
 |--------|-----------------|-----------------|
-| ESPN | Scores, standings, schedules, lineups, match stats, timelines | All 12 leagues |
+| ESPN | Scores, standings, schedules, lineups, match stats, timelines | All 13 leagues |
+| openfootball | Schedules, standings, team lists (fallback when ESPN is down) | 10 leagues (all except CL, Euros, World Cup) |
 | Understat | xG per match, xG per shot, player xG/xA | Top 5 (EPL, La Liga, Bundesliga, Serie A, Ligue 1) |
 | FPL | Top scorers, injuries, player stats, ownership | Premier League only |
 | Transfermarkt | Market values, transfer history | Any player (requires tm_player_id) |

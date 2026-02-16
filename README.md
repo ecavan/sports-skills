@@ -14,7 +14,7 @@ npx skills add machina-sports/sports-skills
 
 A collection of agent skills that wrap **publicly available** sports data sources and APIs. These skills don't provide proprietary data — they give AI agents a structured interface to data that's already freely accessible on the web:
 
-- **Football**: ESPN, Understat, FPL, Transfermarkt — 21 commands across 12 leagues
+- **Football**: ESPN, Understat, FPL, Transfermarkt — 21 commands across 13 leagues
 - **Formula 1**: FastF1 open-source library — sessions, lap data, race results
 - **Prediction Markets**: Kalshi and Polymarket public APIs — markets, prices, order books
 - **Sports News**: RSS feeds and Google News — any public feed
@@ -57,6 +57,7 @@ Each skill is a SKILL.md file that any compatible AI agent can load and use imme
 | Eredivisie | Netherlands | Yes | Yes | Yes | - | Yes |
 | Primeira Liga | Portugal | Yes | Yes | Yes | - | Yes |
 | Serie A Brazil | Brazil | Yes | Yes | Yes | - | Yes |
+| MLS | USA | Yes | Yes | Yes | - | Yes |
 | European Championship | Europe | Yes | Yes | Yes | - | - |
 
 ---
@@ -183,7 +184,7 @@ Supports any RSS/Atom feed URL and Google News queries.
 ```
 sports-skills.sh
 ├── skills/                            # SKILL.md files (agent instructions)
-│   ├── football-data/SKILL.md         # 21 commands, 12 leagues
+│   ├── football-data/SKILL.md         # 21 commands, 13 leagues
 │   ├── fastf1/SKILL.md               # F1 sessions, laps, results
 │   ├── kalshi/SKILL.md               # Prediction markets (CFTC)
 │   ├── polymarket/SKILL.md           # Prediction markets (crypto)
@@ -200,7 +201,7 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 ---
 name: football-data
 description: |
-  Football (soccer) data across 12 leagues — standings, schedules, match stats, xG, transfers, player profiles.
+  Football (soccer) data across 13 leagues — standings, schedules, match stats, xG, transfers, player profiles.
   Use when: user asks about football/soccer standings, fixtures, match stats, xG, lineups, transfers, or injury news.
 license: MIT
 metadata:
@@ -279,6 +280,7 @@ This project does not own, license, or redistribute any sports data. Each skill 
 | Understat | Public web data | No — community access, subject to their ToS |
 | FPL | Public API | Semi-official — widely used by the community |
 | Transfermarkt | Public web data | No — subject to their ToS |
+| openfootball | Open-source dataset | Yes — [football.json](https://github.com/openfootball/football.json) (CC0/Public Domain) |
 | FastF1 | Open-source library | Yes — [FastF1](https://github.com/theOehrly/Fast-F1) (MIT) |
 | Kalshi | Official public API | Yes — [Trade API v2](https://trading-api.readme.io) |
 | Polymarket | Official public APIs | Yes — [Gamma](https://gamma-api.polymarket.com) + [CLOB](https://docs.polymarket.com) |
@@ -297,10 +299,11 @@ This project does not own, license, or redistribute any sports data. Each skill 
 
 This project is built on top of great open-source work and public APIs:
 
-- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 12 leagues.
+- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues.
 - **[Fantasy Premier League](https://fantasy.premierleague.com)** — for their community API powering injury news, player stats, ownership data, and ICT index for Premier League players.
 - **[Transfermarkt](https://www.transfermarkt.com)** — for player market values, transfer history, and the richest player data in football.
 - **[Understat](https://understat.com)** — for xG data across the top 5 European leagues.
+- **[openfootball](https://github.com/openfootball/football.json)** — open public domain football data (CC0). Used as a fallback for schedules, standings, and team lists when ESPN is unavailable. Covers 10 leagues.
 - **[FastF1](https://github.com/theOehrly/Fast-F1)** — the backbone of our Formula 1 skill. Thanks to theOehrly and contributors.
 - **[feedparser](https://github.com/kurtmckee/feedparser)** — reliable RSS/Atom parsing for the news skill.
 - **[Kalshi](https://kalshi.com)** and **[Polymarket](https://polymarket.com)** — for their public market data APIs.
