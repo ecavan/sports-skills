@@ -188,7 +188,7 @@ def get_series_list(request_data):
         if err:
             return err
 
-        series = response.get("series", [])
+        series = response.get("series") or []
         return _success(
             {"series": series, "count": len(series)},
             f"Retrieved {len(series)} series"

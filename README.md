@@ -1,6 +1,6 @@
 # sports-skills.sh
 
-Open-source agent skills for live sports data and prediction markets. Built for the [SKILL.md](https://github.com/anthropics/skill) spec. Works with Claude Code, Cursor, Copilot, Gemini CLI, and every major AI agent.
+Open-source agent skills for live sports data and prediction markets. Built for the [Agent Skills](https://agentskills.io/specification) spec. Works with Claude Code, Cursor, Copilot, Gemini CLI, and every major AI agent.
 
 **Zero API keys. Zero signup. Just works.**
 
@@ -167,15 +167,17 @@ Public endpoints from Kalshi prediction markets. No API key needed for market da
 
 | Command | Description |
 |---------|-------------|
-| `GetSeriesList` | All series filtered by sport tag |
-| `GetSeries` | Single series details |
-| `GetMarkets` | Markets with bid/ask/volume/open interest |
-| `GetMarket` | Single market details |
-| `GetEvents` | Events with pagination |
-| `GetTrades` | Trade history |
-| `GetMarketCandlesticks` | OHLCV price data (1min/1hr/1day) |
-| `GetFiltersForSports` | Sports-specific filters and competitions |
-| `GetExchangeStatus` | Exchange active/trading status |
+| `get_series_list` | All series filtered by sport tag |
+| `get_series` | Single series details |
+| `get_markets` | Markets with bid/ask/volume/open interest |
+| `get_market` | Single market details |
+| `get_events` | Events with pagination |
+| `get_event` | Single event details |
+| `get_trades` | Trade history |
+| `get_market_candlesticks` | OHLCV price data (1min/1hr/1day) |
+| `get_sports_filters` | Sports-specific filters and competitions |
+| `get_exchange_status` | Exchange active/trading status |
+| `get_exchange_schedule` | Exchange operating schedule |
 
 ### polymarket
 
@@ -192,7 +194,8 @@ Public endpoints from Polymarket (Gamma + CLOB APIs). No API key needed.
 | `get_order_book` | Full order book with spread calculation |
 | `get_sports_market_types` | 58+ market types (moneyline, spreads, totals, props) |
 | `search_markets` | Full-text search across markets |
-| `get_trades` | Recent trade history |
+| `get_price_history` | Historical price data (1d, 1w, 1m, max) |
+| `get_last_trade_price` | Most recent trade price |
 
 ### sports-news
 
@@ -230,18 +233,18 @@ sports-skills.sh
 └── README.md
 ```
 
-Each skill follows the [SKILL.md specification](https://github.com/anthropics/skill):
+Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
 
 ```yaml
 ---
 name: football-data
-description: Live football data across 12 leagues. Scores, standings, stats, xG, transfers.
-triggers:
-  - football
-  - soccer
-  - premier league
-  - match
-  - standings
+description: |
+  Football (soccer) data across 12 leagues — standings, schedules, match stats, xG, transfers, player profiles.
+  Use when: user asks about football/soccer standings, fixtures, match stats, xG, lineups, transfers, or injury news.
+license: MIT
+metadata:
+  author: machina-sports
+  version: "0.1.0"
 ---
 
 # Football Data
@@ -269,33 +272,33 @@ Works with every agent that supports the SKILL.md format:
 
 ---
 
-## Licensed Data (via Machina API)
+## Coming Soon
 
-Need Sportradar, Opta, or enterprise-grade data with SLAs?
+Licensed data skills — coming soon via [Machina Sports](https://machina.gg):
 
-The open-source skills cover free public data. For production workloads with licensed data providers, real-time feeds, and managed infrastructure, see [machina.gg](https://machina.gg).
+| Provider | Coverage | Status |
+|----------|----------|--------|
+| Sportradar | 1,200+ competitions, real-time feeds | Coming Soon |
+| Stats Perform (Opta) | Advanced analytics, event-level data | Coming Soon |
+| API-Football | 900+ leagues, live scores, odds | Coming Soon |
+| Data Sports Group | US sports, player props, projections | Coming Soon |
 
-| What You Get | Open Source (Free) | Machina API (Licensed) |
-|-------------|-------------------|----------------------|
-| Football data | ESPN, Understat, FPL, Transfermarkt | Sportradar, Opta/Stats Perform |
-| Coverage | 12 leagues | 1,200+ competitions |
-| Real-time latency | Best-effort | < 2s SLA |
-| Prediction markets | Kalshi + Polymarket (public) | Full depth + analytics |
-| Infrastructure | Self-managed | Managed, persistent, compliant |
-| Support | Community | Enterprise SLAs |
+These will ship as additional skills that drop in alongside the free ones. Same interface, same JSON envelope — just licensed data underneath.
+
+For early access or enterprise needs, see [machina.gg](https://machina.gg).
 
 ---
 
 ## Contributing
 
-We welcome contributions. Add a new sport, a new data source, or improve an existing skill.
+We're actively expanding to cover more sports and data sources — and always looking for contributions. Whether it's a new sport, a new league, a better data source, or improvements to existing skills, PRs are welcome.
 
 1. Fork the repo
 2. Create a skill in `skills/<your-skill>/SKILL.md`
 3. Follow the SKILL.md spec (YAML frontmatter + Markdown instructions)
 4. Open a PR
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+See the existing SKILL.md files and the [Agent Skills spec](https://agentskills.io/specification) for format details.
 
 ---
 

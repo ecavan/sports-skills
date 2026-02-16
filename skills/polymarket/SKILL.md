@@ -1,37 +1,46 @@
 ---
 name: polymarket
 description: |
-  Polymarket sports prediction markets — live odds, prices, order books, events, series, and market search. No auth required.
+  Polymarket sports prediction markets — live odds, prices, order books, events, series, and market search. No auth required. Covers NFL, NBA, MLB, soccer, tennis, cricket, MMA, esports. Supports moneyline, spreads, totals, and player props.
 
-  Use when: user asks about sports betting odds, prediction markets, win probabilities, or market sentiment for upcoming games/events. Good for "who is favored to win" questions.
+  Use when: user asks about sports betting odds, prediction markets, win probabilities, market sentiment, or "who is favored to win" questions.
   Don't use when: user asks about actual match results, scores, or statistics — use football-data or fastf1 instead. Don't use for historical match data. Don't use for news — use sports-news instead. Don't confuse with Kalshi — Polymarket focuses on crypto-native prediction markets with deeper sports coverage; Kalshi is a US-regulated exchange with different market structure.
-triggers:
-  - polymarket
-  - prediction market
-  - sports odds
-  - market prices
-  - betting odds
+license: MIT
+metadata:
+  author: machina-sports
+  version: "0.1.0"
 ---
 
 # Polymarket — Sports Prediction Markets
 
+## Setup
+
+Before first use, check if the CLI is available:
+```bash
+which sports-skills || pip install sports-skills
+```
+If `pip install` fails with a Python version error, the package requires Python 3.10+. Find a compatible Python:
+```bash
+python3 --version  # check version
+# If < 3.10, try: python3.12 -m pip install sports-skills
+# On macOS with Homebrew: /opt/homebrew/bin/python3.12 -m pip install sports-skills
+```
+No API keys required.
+
 ## Quick Start
 
+Prefer the CLI — it avoids Python import path issues:
 ```bash
-npx skills add sports-skills
+sports-skills polymarket get_sports_markets --limit=20
+sports-skills polymarket search_markets --query="NBA Finals"
 ```
 
+Python SDK (alternative):
 ```python
 from sports_skills import polymarket
 
 markets = polymarket.get_sports_markets(limit=20)
 prices = polymarket.get_market_prices(token_id="abc123")
-```
-
-Or via CLI:
-```bash
-sports-skills polymarket get_sports_markets --limit=20
-sports-skills polymarket search_markets --query="NBA Finals"
 ```
 
 ## Commands
@@ -80,8 +89,8 @@ Get full order book for a market.
 Get all valid sports market types. No params.
 
 ### search_markets
-Find markets by keyword and filters.
-- `query` (str, optional): Keyword to search
+Find markets by keyword and filters. **Search matches event titles, not sport categories.** Use specific league/competition names, not generic terms like "soccer" or "football".
+- `query` (str, optional): Keyword to search — use league names (e.g., "Premier League", "Champions League", "La Liga", "NBA Finals")
 - `sports_market_types` (str, optional): Filter by type
 - `tag_id` (int, optional): Tag ID (default: 1 = Sports)
 - `limit` (int, optional): Max results (default: 20)
@@ -95,6 +104,37 @@ Get historical price data.
 ### get_last_trade_price
 Get the most recent trade price.
 - `token_id` (str, required): CLOB token ID
+
+## Examples
+
+User: "Who's favored to win the NBA Finals?"
+1. Call `search_markets(query="NBA Finals", sports_market_types="moneyline")`
+2. Get `token_id` from the market details
+3. Call `get_market_prices(token_id="...")` for current odds
+4. Present teams with implied probabilities (price = probability)
+
+User: "Who will win the Premier League?"
+1. Call `search_markets(query="English Premier League")` — use full league name
+2. Sort results by Yes outcome price descending
+3. Present teams with implied probabilities (price = probability)
+
+User: "Show me Champions League odds"
+1. Call `search_markets(query="Champions League")`
+2. Present top contenders with prices, volume, and liquidity
+
+User: "What's the order book depth on this market?"
+1. Call `get_order_book(token_id="...")` for full book
+2. Present bids, asks, spread, and implied probabilities
+
+## Troubleshooting
+
+- **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills`. If pip fails with a Python version error, you need Python 3.10+ — see Setup section.
+- **`ModuleNotFoundError: No module named 'sports_skills'`**: Same as above — install the package. Prefer the CLI over Python imports to avoid path issues.
+- **token_id vs market_id**: Price/orderbook endpoints need the CLOB `token_id` (found in market details under `clobTokenIds`), not the Gamma `market_id`. Always fetch market details first to get the token_id.
+- **Search returns 0 results**: `search_markets` matches event titles, not sport categories. Don't search "soccer" or "football" — search by league name: "Premier League", "Champions League", "La Liga", "Bundesliga", "Serie A", "NBA Finals", etc.
+- **Market not found by ID**: Use `search_markets(query="...")` with keywords instead of guessing IDs. Or use `get_market_details(slug="...")` with the URL slug.
+- **Stale or wide prices**: Low-liquidity markets may have wide bid-ask spreads. The `mid` price from `get_market_prices` is the midpoint — check `spread` to assess reliability.
+- **Pagination**: Use `offset` parameter for paging. Default `limit` varies by endpoint (20-100). Increment offset by limit for each page.
 
 ## APIs
 

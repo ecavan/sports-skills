@@ -1,43 +1,47 @@
 ---
 name: football-data
 description: |
-  Football (soccer) data across 12 leagues — standings, schedules, match stats, xG, transfers, player profiles. Zero config, no API keys.
+  Football (soccer) data across 12 leagues — standings, schedules, match stats, xG, transfers, player profiles. Zero config, no API keys. Covers Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Champions League, World Cup, Championship, Eredivisie, Primeira Liga, Serie A Brazil, European Championship.
 
-  Use when: user asks about football/soccer standings, fixtures, match stats, xG, lineups, player values, transfers, or injury news.
+  Use when: user asks about football/soccer standings, fixtures, match stats, xG, lineups, player values, transfers, injury news, league tables, daily fixtures, or player profiles.
   Don't use when: user asks about American football (NFL), basketball (NBA), baseball, or any non-soccer sport. Don't use for live/real-time scores — data updates post-match. Don't use get_season_leaders or get_missing_players for non-Premier League leagues (they return empty). Don't use get_event_xg for leagues outside the top 5 (EPL, La Liga, Bundesliga, Serie A, Ligue 1).
-triggers:
-  - football standings
-  - football schedule
-  - match stats
-  - xG data
-  - player profile
-  - transfer news
-  - league table
-  - daily fixtures
+license: MIT
+metadata:
+  author: machina-sports
+  version: "0.1.0"
 ---
 
 # Football Data
 
+## Setup
+
+Before first use, check if the CLI is available:
+```bash
+which sports-skills || pip install sports-skills
+```
+If `pip install` fails with a Python version error, the package requires Python 3.10+. Find a compatible Python:
+```bash
+python3 --version  # check version
+# If < 3.10, try: python3.12 -m pip install sports-skills
+# On macOS with Homebrew: /opt/homebrew/bin/python3.12 -m pip install sports-skills
+```
+No API keys required.
+
 ## Quick Start
 
+Prefer the CLI — it avoids Python import path issues:
 ```bash
-npx skills add sports-skills
+sports-skills football get_daily_schedule
+sports-skills football get_season_standings --season_id=premier-league-2025
 ```
 
+Python SDK (alternative):
 ```python
 from sports_skills import football
 
 standings = football.get_season_standings(season_id="premier-league-2025")
 schedule = football.get_daily_schedule()
 ```
-
-Or via CLI:
-```bash
-sports-skills football get_season_standings --season_id=premier-league-2025
-sports-skills football get_daily_schedule
-```
-
-No API keys required. Everything works out of the box.
 
 ## Data Coverage by League
 
@@ -208,7 +212,7 @@ Get schedule for a specific team. Works for all leagues.
 - `season_year` (str, optional): Season year filter
 
 ### get_head_to_head
-Get head-to-head history between two teams. **Not available** without licensed data. Use `get_team_schedule` and filter manually instead.
+**UNAVAILABLE** — requires licensed data. Do not call this command; it will return empty results. Instead, use `get_team_schedule` for both teams and filter overlapping matches manually.
 - `team_id` (str, required): First team ID
 - `team_id_2` (str, required): Second team ID
 
@@ -297,3 +301,31 @@ Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Championship, Eredivisie,
 | Transfermarkt | Market values, transfer history | Any player (requires tm_player_id) |
 
 For licensed data with full coverage across all sports (Sportradar, Opta, Genius Sports), see [Machina Sports](https://machina.gg).
+
+## Examples
+
+User: "Show me the Premier League table"
+1. Call `get_current_season(competition_id="premier-league")` to get current season_id
+2. Call `get_season_standings(season_id="premier-league-2025")`
+3. Present standings table with position, team, played, won, drawn, lost, GD, points
+
+User: "How did Arsenal vs Liverpool go?"
+1. Call `get_daily_schedule()` or `get_team_schedule(team_id="359")` to find the event_id
+2. Call `get_event_summary(event_id="...")` for the score
+3. Call `get_event_statistics(event_id="...")` for possession, shots, etc.
+4. Call `get_event_xg(event_id="...")` for xG comparison (EPL — top 5 only)
+5. Present match report with scores, key stats, and xG
+
+User: "What's Saka's market value?"
+1. Call `get_player_profile(tm_player_id="433177")` for Transfermarkt data
+2. Optionally add `fpl_id` for FPL stats if Premier League player
+3. Present market value, value history, and transfer history
+
+## Troubleshooting
+
+- **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills`. If pip fails with a Python version error, you need Python 3.10+ — see Setup section.
+- **`ModuleNotFoundError: No module named 'sports_skills'`**: Same as above — install the package. Prefer the CLI over Python imports to avoid path issues.
+- **Empty results for PL-only commands on other leagues**: `get_season_leaders`, `get_missing_players`, and `get_team_profile` (squad) only return data for Premier League. They silently return empty for other leagues — check the Data Coverage table.
+- **No xG for recent matches**: Understat data may lag 24-48 hours after a match ends. If `get_event_xg` returns empty for a recent top-5 match, try again later.
+- **Wrong season_id format**: Must be `{league-slug}-{year}` e.g. `"premier-league-2025"`. Not `"2025-2026"`, not `"EPL-2025"`. Use `get_current_season()` to discover the correct format.
+- **Team/event IDs unknown**: Use `get_season_teams` to find team IDs, `get_daily_schedule` or `get_season_schedule` to find event IDs. IDs are ESPN numeric strings.
