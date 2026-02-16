@@ -138,6 +138,16 @@ Returns empty for non-PL leagues.
 Get teams in a season. Works for all leagues.
 - `season_id` (str, required): Season slug
 
+### search_team
+Search for a team by name across all leagues (or a specific one). Uses fuzzy matching.
+- `query` (str, required): Team name to search (e.g., "Corinthians", "Barcelona", "Man Utd")
+- `competition_id` (str, optional): Limit search to one league (e.g., "serie-a-brazil", "premier-league")
+
+Returns `data.results[]` with `team`, `competition`, and `season` for each match:
+```json
+{"team": {"id": "874", "name": "Corinthians"}, "competition": {"id": "serie-a-brazil", "name": "Serie A Brazil"}, "season": {"id": "serie-a-brazil-2025", "year": "2025"}}
+```
+
 ### get_team_profile
 Get team profile with squad/roster. **Squad data is PL only** (via FPL enrichment). For other leagues, returns basic team info (name, crest) without players, manager, or venue.
 - `team_id` (str, required): ESPN team ID
@@ -210,6 +220,7 @@ Get schedule for a specific team — includes both past results and upcoming fix
 - `team_id` (str, required): ESPN team ID
 - `league_slug` (str, optional): League hint (faster resolution)
 - `season_year` (str, optional): Season year filter
+- `competition_id` (str, optional): Filter results to a single competition (e.g., "serie-a-brazil", "premier-league")
 
 ### get_head_to_head
 **UNAVAILABLE** — requires licensed data. Do not call this command; it will return empty results. Instead, use `get_team_schedule` for both teams and filter overlapping matches manually.
@@ -328,4 +339,4 @@ User: "What's Saka's market value?"
 - **Empty results for PL-only commands on other leagues**: `get_season_leaders`, `get_missing_players`, and `get_team_profile` (squad) only return data for Premier League. They silently return empty for other leagues — check the Data Coverage table.
 - **No xG for recent matches**: Understat data may lag 24-48 hours after a match ends. If `get_event_xg` returns empty for a recent top-5 match, try again later.
 - **Wrong season_id format**: Must be `{league-slug}-{year}` e.g. `"premier-league-2025"`. Not `"2025-2026"`, not `"EPL-2025"`. Use `get_current_season()` to discover the correct format.
-- **Team/event IDs unknown**: Use `get_season_teams` to find team IDs, `get_daily_schedule` or `get_season_schedule` to find event IDs. IDs are ESPN numeric strings.
+- **Team/event IDs unknown**: Use `search_team(query="team name")` to find team IDs by name, or `get_season_teams` to list all teams in a season. Use `get_daily_schedule` or `get_season_schedule` to find event IDs. IDs are ESPN numeric strings.

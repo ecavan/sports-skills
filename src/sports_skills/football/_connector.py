@@ -540,6 +540,11 @@ def _resolve_espn_event(event_id, params):
             continue
         summary = _espn_summary(espn_slug, eid, max_retries=0)
         if summary and summary.get("header"):
+            # Use actual league from response, not the probed slug
+            real_espn = summary.get("header", {}).get("league", {}).get("slug", espn_slug)
+            resolved = ESPN_TO_SLUG.get(real_espn)
+            if resolved and LEAGUES.get(resolved, {}).get("espn"):
+                return LEAGUES[resolved]["espn"], eid
             return espn_slug, eid
     return None, eid
 
@@ -582,8 +587,13 @@ def _normalize_name(name):
     for token in [" fc", " cf", " sc", " ac", "fc ", "sc ", " afc", " ssc"]:
         n = n.replace(token, " ")
     for old, new in [
-        ("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"),
-        ("ü", "u"), ("ñ", "n"), ("ö", "o"), ("ä", "a"), ("ß", "ss"),
+        ("á", "a"), ("à", "a"), ("â", "a"), ("ã", "a"),
+        ("é", "e"), ("è", "e"), ("ê", "e"),
+        ("í", "i"), ("ì", "i"),
+        ("ó", "o"), ("ò", "o"), ("ô", "o"), ("õ", "o"),
+        ("ú", "u"), ("ù", "u"), ("ü", "u"),
+        ("ñ", "n"), ("ç", "c"),
+        ("ö", "o"), ("ä", "a"), ("ß", "ss"),
     ]:
         n = n.replace(old, new)
     return " ".join(n.split())
@@ -1110,7 +1120,11 @@ def _normalize_espn_summary_timeline(summary):
         except ValueError:
             minute = 0
         team_data = ev.get("team", {})
-        athletes = ev.get("athletesInvolved", [])
+        athletes = ev.get("athletesInvolved") or []
+        if not athletes:
+            # Fallback: ESPN uses participants[].athlete for some leagues
+            participants = ev.get("participants") or []
+            athletes = [p.get("athlete") or {} for p in participants if p.get("athlete")]
         entry = {
             "id": str(ev.get("id", ev.get("sequenceNumber", ""))),
             "type": mapped_type,
@@ -1960,6 +1974,49 @@ def get_season_teams(params):
     return {"teams": teams}
 
 
+def search_team(params):
+    """Search for a team by name across all leagues (or a specific one)."""
+    query = (
+        params.get("query")
+        or params.get("command_attribute", {}).get("query", "")
+    )
+    if not query:
+        return {"results": [], "error": True, "message": "Missing query"}
+    competition_id = (
+        params.get("competition_id")
+        or params.get("command_attribute", {}).get("competition_id", "")
+    )
+    leagues_to_search = []
+    if competition_id:
+        league, slug = _resolve_competition(competition_id)
+        if league:
+            leagues_to_search.append((slug, league))
+        else:
+            return {"results": [], "error": True, "message": f"Unknown competition: {competition_id}"}
+    else:
+        leagues_to_search = list(LEAGUES.items())
+    results = []
+    for slug, league in leagues_to_search:
+        espn_slug = league.get("espn")
+        if not espn_slug:
+            continue
+        season = _detect_current_season(slug, espn_slug)
+        if not season:
+            continue
+        year = season["year"]
+        season_id = f"{slug}-{year}"
+        teams_data = get_season_teams({"season_id": season_id, **{k: v for k, v in params.items() if k.startswith("fd_")}})
+        for team in teams_data.get("teams", []):
+            team_name = team.get("name", "")
+            if _teams_match(query, team_name):
+                results.append({
+                    "team": team,
+                    "competition": {"id": slug, "name": league["name"]},
+                    "season": {"id": season_id, "year": str(year)},
+                })
+    return {"results": results}
+
+
 def get_team_profile(params):
     """Get team profile with squad/roster. FPL enrichment for PL teams."""
     team_id = (
@@ -2200,10 +2257,20 @@ def get_team_schedule(params):
     tid = _resolve_team_id(team_id)
     if not tid:
         return {"team": {}, "events": [], "error": True, "message": "Missing team_id"}
+    competition_id = (
+        params.get("competition_id")
+        or params.get("command_attribute", {}).get("competition_id", "")
+    )
+    # Resolve competition_id to a slug for filtering
+    comp_filter_slug = None
+    if competition_id:
+        _, comp_filter_slug = _resolve_competition(competition_id)
     if _has_fd_key(params):
         data = _fd_request(f"/teams/{tid}/matches", _get_api_key(params), {"limit": 50})
         if not data.get("error"):
             events = [_normalize_match(m) for m in data.get("matches", [])]
+            if comp_filter_slug:
+                events = [e for e in events if e.get("competition", {}).get("id") == comp_filter_slug]
             team_data = {}
             if events and events[0].get("competitors"):
                 for comp in events[0]["competitors"]:
@@ -2253,6 +2320,8 @@ def get_team_schedule(params):
         if not events_raw:
             continue
         events = [_normalize_espn_event(e, slug) for e in events_raw]
+        if comp_filter_slug:
+            events = [e for e in events if e.get("competition", {}).get("id") == comp_filter_slug]
         events.sort(key=lambda e: e.get("start_time", ""))
         team_data = {}
         if events and events[0].get("competitors"):

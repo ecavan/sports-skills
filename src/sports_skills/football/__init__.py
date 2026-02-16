@@ -13,6 +13,7 @@ from sports_skills.football._connector import (
     get_season_standings as _get_season_standings,
     get_season_leaders as _get_season_leaders,
     get_season_teams as _get_season_teams,
+    search_team as _search_team,
     get_team_profile as _get_team_profile,
     get_daily_schedule as _get_daily_schedule,
     get_event_summary as _get_event_summary,
@@ -69,6 +70,11 @@ def get_season_teams(*, season_id: str) -> dict:
     return wrap(_get_season_teams(_params(season_id=season_id)))
 
 
+def search_team(*, query: str, competition_id: str | None = None) -> dict:
+    """Search for a team by name across all leagues."""
+    return wrap(_search_team(_params(query=query, competition_id=competition_id)))
+
+
 def get_team_profile(*, team_id: str, league_slug: str | None = None) -> dict:
     """Get team profile with squad/roster."""
     return wrap(_get_team_profile(_params(team_id=team_id, league_slug=league_slug)))
@@ -103,9 +109,9 @@ def get_event_timeline(*, event_id: str) -> dict:
     return wrap(_get_event_timeline(_params(event_id=event_id)))
 
 
-def get_team_schedule(*, team_id: str, league_slug: str | None = None, season_year: str | None = None) -> dict:
+def get_team_schedule(*, team_id: str, league_slug: str | None = None, season_year: str | None = None, competition_id: str | None = None) -> dict:
     """Get schedule for a specific team."""
-    return wrap(_get_team_schedule(_params(team_id=team_id, league_slug=league_slug, season_year=season_year)))
+    return wrap(_get_team_schedule(_params(team_id=team_id, league_slug=league_slug, season_year=season_year, competition_id=competition_id)))
 
 
 def get_head_to_head(*, team_id: str, team_id_2: str) -> dict:
