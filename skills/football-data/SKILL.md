@@ -53,7 +53,9 @@ Not all data is available for every league. Use the right command for the right 
 | get_daily_schedule | x | | |
 | get_season_schedule | x | | |
 | get_season_teams | x | | |
+| search_team | x | | |
 | get_team_schedule | x | | |
+| get_team_profile | x | | |
 | get_event_summary | x | | |
 | get_event_lineups | x | | |
 | get_event_statistics | x | | |
@@ -64,7 +66,6 @@ Not all data is available for every league. Use the right command for the right 
 | get_event_players_statistics (with xG) | | x | |
 | get_season_leaders | | | x |
 | get_missing_players | | | x |
-| get_team_profile (with squad) | | | x |
 
 **Top 5 leagues** (Understat): EPL, La Liga, Bundesliga, Serie A, Ligue 1.
 **PL only** (FPL): Premier League — injury news, player stats, ownership, ICT index.
@@ -149,11 +150,11 @@ Returns `data.results[]` with `team`, `competition`, and `season` for each match
 ```
 
 ### get_team_profile
-Get team profile with squad/roster. **Squad data is PL only** (via FPL enrichment). For other leagues, returns basic team info (name, crest) without players, manager, or venue.
+Get basic team info (name, crest, venue). **Does not return squad/roster** — use `get_season_leaders` to find PL player IDs, then `get_player_profile` for individual player data.
 - `team_id` (str, required): ESPN team ID
-- `league_slug` (str, optional): League hint for faster resolution
+- `league_slug` (str, optional): League hint (faster resolution)
 
-Returns `data.team`, `data.players[]`, `data.manager`, `data.venue`.
+Returns `data.team` and `data.venue`. `data.players[]` is empty — see "Deep dive on a PL team" example below for the recommended workflow.
 
 ### get_daily_schedule
 Get all matches for a specific date across all leagues.
@@ -327,16 +328,36 @@ User: "How did Arsenal vs Liverpool go?"
 4. Call `get_event_xg(event_id="...")` for xG comparison (EPL — top 5 only)
 5. Present match report with scores, key stats, and xG
 
+User: "Deep dive on Chelsea's recent form"
+1. Call `search_team(query="Chelsea")` → team_id=363, competition=premier-league
+2. Call `get_team_schedule(team_id="363", competition_id="premier-league")` → find recent closed events
+3. For each recent match, call in parallel:
+   - `get_event_xg(event_id="...")` for xG comparison and shot map
+   - `get_event_statistics(event_id="...")` for possession, shots, passes
+   - `get_event_players_statistics(event_id="...")` for individual player xG/xA
+4. Call `get_missing_players(season_id="premier-league-2025")` → filter Chelsea's injured/doubtful players
+5. Call `get_season_leaders(season_id="premier-league-2025")` → filter Chelsea players, get their FPL IDs
+6. Call `get_player_profile(fpl_id="...", tm_player_id="...")` for key players — combine FPL stats (form, ownership, ICT) with Transfermarkt data (market value, transfer history)
+7. Present: xG trend across matches, key player stats, injury report, market values
+
 User: "What's Saka's market value?"
 1. Call `get_player_profile(tm_player_id="433177")` for Transfermarkt data
 2. Optionally add `fpl_id` for FPL stats if Premier League player
 3. Present market value, value history, and transfer history
 
+User: "Tell me about Corinthians"
+1. Call `search_team(query="Corinthians")` → team_id=874, competition=serie-a-brazil
+2. Call `get_team_schedule(team_id="874", competition_id="serie-a-brazil")` for fixtures
+3. Pick a recent match and call `get_event_timeline(event_id="...")` for goals, cards, subs
+4. Note: xG, FPL stats, and season leaders are NOT available for Brazilian Serie A
+
 ## Troubleshooting
 
 - **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills`. If pip fails with a Python version error, you need Python 3.10+ — see Setup section.
 - **`ModuleNotFoundError: No module named 'sports_skills'`**: Same as above — install the package. Prefer the CLI over Python imports to avoid path issues.
-- **Empty results for PL-only commands on other leagues**: `get_season_leaders`, `get_missing_players`, and `get_team_profile` (squad) only return data for Premier League. They silently return empty for other leagues — check the Data Coverage table.
+- **Empty results for PL-only commands on other leagues**: `get_season_leaders` and `get_missing_players` only return data for Premier League. They silently return empty for other leagues — check the Data Coverage table.
+- **`get_team_profile` returns empty players**: This is expected — squad rosters are not available. To get player data for a PL team, use `get_season_leaders` to find players and their FPL IDs, then `get_player_profile(fpl_id="...")` for detailed stats. For Transfermarkt data, you need the player's `tm_player_id`.
+- **Finding FPL IDs and Transfermarkt IDs**: Use `get_season_leaders(season_id="premier-league-2025")` to discover FPL IDs for PL players. Transfermarkt IDs must be looked up on [transfermarkt.com](https://www.transfermarkt.com) — the ID is the number at the end of the player's URL. Well-known examples: Cole Palmer = `568177`, Bukayo Saka = `433177`, Mbappe = `342229`.
 - **No xG for recent matches**: Understat data may lag 24-48 hours after a match ends. If `get_event_xg` returns empty for a recent top-5 match, try again later.
 - **Wrong season_id format**: Must be `{league-slug}-{year}` e.g. `"premier-league-2025"`. Not `"2025-2026"`, not `"EPL-2025"`. Use `get_current_season()` to discover the correct format.
 - **Team/event IDs unknown**: Use `search_team(query="team name")` to find team IDs by name, or `get_season_teams` to list all teams in a season. Use `get_daily_schedule` or `get_season_schedule` to find event IDs. IDs are ESPN numeric strings.

@@ -14,7 +14,7 @@ npx skills add machina-sports/sports-skills
 
 A collection of agent skills that wrap **publicly available** sports data sources and APIs. These skills don't provide proprietary data — they give AI agents a structured interface to data that's already freely accessible on the web:
 
-- **Football**: ESPN, Understat, FPL, Transfermarkt — 20 commands across 12 leagues
+- **Football**: ESPN, Understat, FPL, Transfermarkt — 21 commands across 12 leagues
 - **Formula 1**: FastF1 open-source library — sessions, lap data, race results
 - **Prediction Markets**: Kalshi and Polymarket public APIs — markets, prices, order books
 - **Sports News**: RSS feeds and Google News — any public feed
@@ -31,7 +31,7 @@ Each skill is a SKILL.md file that any compatible AI agent can load and use imme
 
 | Skill | Sport | Commands | Data Sources |
 |-------|-------|----------|-------------|
-| `football-data` | Football | 20 | ESPN, FPL, Understat, Transfermarkt |
+| `football-data` | Football | 21 | ESPN, FPL, Understat, Transfermarkt |
 | `fastf1` | Formula 1 | 6 | FastF1 (free library) |
 | `sports-news` | Multi-sport | 2 | Any RSS feed, Google News |
 
@@ -101,9 +101,10 @@ Community football data skill. Aggregates publicly accessible web sources (ESPN,
 | `get_season_standings` | League table (home/away/total) |
 | `get_season_leaders` | Top scorers, assist leaders, card leaders |
 | `get_season_teams` | All teams in a season |
-| `get_team_profile` | Squad roster, manager, venue |
+| `search_team` | Fuzzy search for a team by name across all leagues |
+| `get_team_profile` | Team info, crest, venue |
 | `get_team_schedule` | Upcoming and recent matches for a team |
-| `get_head_to_head` | H2H history between two teams |
+| `get_head_to_head` | H2H history between two teams (unavailable) |
 | `get_event_summary` | Match summary with scores |
 | `get_event_lineups` | Starting lineups and formations |
 | `get_event_statistics` | Team-level match stats (possession, shots, passes) |
@@ -182,7 +183,7 @@ Supports any RSS/Atom feed URL and Google News queries.
 ```
 sports-skills.sh
 ├── skills/                            # SKILL.md files (agent instructions)
-│   ├── football-data/SKILL.md         # 20 commands, 12 leagues
+│   ├── football-data/SKILL.md         # 21 commands, 12 leagues
 │   ├── fastf1/SKILL.md               # F1 sessions, laps, results
 │   ├── kalshi/SKILL.md               # Prediction markets (CFTC)
 │   ├── polymarket/SKILL.md           # Prediction markets (crypto)
@@ -296,6 +297,10 @@ This project does not own, license, or redistribute any sports data. Each skill 
 
 This project is built on top of great open-source work and public APIs:
 
+- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 12 leagues.
+- **[Fantasy Premier League](https://fantasy.premierleague.com)** — for their community API powering injury news, player stats, ownership data, and ICT index for Premier League players.
+- **[Transfermarkt](https://www.transfermarkt.com)** — for player market values, transfer history, and the richest player data in football.
+- **[Understat](https://understat.com)** — for xG data across the top 5 European leagues.
 - **[FastF1](https://github.com/theOehrly/Fast-F1)** — the backbone of our Formula 1 skill. Thanks to theOehrly and contributors.
 - **[feedparser](https://github.com/kurtmckee/feedparser)** — reliable RSS/Atom parsing for the news skill.
 - **[Kalshi](https://kalshi.com)** and **[Polymarket](https://polymarket.com)** — for their public market data APIs.
