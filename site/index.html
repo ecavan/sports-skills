@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sports-skills.sh — Live Sports Data for AI Agents</title>
+  <meta name="description" content="Open-source agent skills for live sports data and prediction markets. Zero API keys. Zero signup. Just works.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-card: #111111;
+      --bg-card-hover: #161616;
+      --border: #1a1a1a;
+      --border-hover: #2a2a2a;
+      --text: #e0e0e0;
+      --text-muted: #666666;
+      --text-dim: #444444;
+      --green: #00ff41;
+      --green-dim: #00cc33;
+      --green-muted: rgba(0, 255, 65, 0.08);
+      --amber: #ffb000;
+      --amber-dim: #cc8d00;
+      --amber-muted: rgba(255, 176, 0, 0.08);
+      --cyan: #00d4ff;
+      --cyan-muted: rgba(0, 212, 255, 0.08);
+      --white: #ffffff;
+      --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', monospace;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    ::selection {
+      background: var(--green);
+      color: var(--bg);
+    }
+
+    a {
+      color: var(--green);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    a:hover {
+      opacity: 0.8;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--white);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .nav-brand .dot {
+      color: var(--green);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      opacity: 1;
+    }
+
+    .nav-cta {
+      padding: 6px 14px;
+      border: 1px solid var(--border-hover);
+      border-radius: 4px;
+      color: var(--text) !important;
+      font-size: 12px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-cta:hover {
+      border-color: var(--green);
+      color: var(--green) !important;
+      background: var(--green-muted);
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    section {
+      padding: 80px 0;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding-top: 140px;
+      padding-bottom: 80px;
+      text-align: center;
+    }
+
+    .ascii-art {
+      font-size: clamp(5px, 1.05vw, 11px);
+      line-height: 1.15;
+      color: var(--green);
+      white-space: pre;
+      overflow-x: auto;
+      display: inline-block;
+      text-align: left;
+      letter-spacing: 0;
+      text-shadow: 0 0 20px rgba(0, 255, 65, 0.15);
+      margin-bottom: 32px;
+    }
+
+    .hero-tagline {
+      font-size: clamp(14px, 2vw, 18px);
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 40px;
+      font-weight: 300;
+      line-height: 1.7;
+    }
+
+    .hero-tagline strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ── INSTALL BOX ── */
+    .install-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 20px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+
+    .install-box:hover {
+      border-color: var(--border-hover);
+    }
+
+    .install-box .prompt {
+      color: var(--green);
+      user-select: none;
+    }
+
+    .install-box code {
+      color: var(--text);
+    }
+
+    .install-box .copy-btn {
+      color: var(--text-dim);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      transition: all 0.2s;
+    }
+
+    .install-box .copy-btn:hover {
+      color: var(--text);
+      background: var(--border);
+    }
+
+    .install-hint {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 48px;
+    }
+
+    .install-hint a {
+      color: var(--text-muted);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* ── BADGES ── */
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+    }
+
+    /* ── DIVIDER ── */
+    .ascii-divider {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12px;
+      padding: 20px 0;
+      white-space: pre;
+      line-height: 1.2;
+      overflow: hidden;
+    }
+
+    /* ── SECTION HEADERS ── */
+    .section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: clamp(20px, 3vw, 28px);
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+
+    .section-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 48px;
+    }
+
+    .section-center {
+      text-align: center;
+    }
+
+    .section-center .section-desc {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── SKILLS GRID ── */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .skill-card {
+      background: var(--bg-card);
+      padding: 28px 24px;
+      transition: background 0.2s;
+      cursor: default;
+    }
+
+    .skill-card:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .skill-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .skill-name .icon {
+      font-size: 12px;
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+    }
+
+    .skill-tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-weight: 400;
+    }
+
+    .tag-green {
+      color: var(--green);
+      background: var(--green-muted);
+    }
+
+    .tag-amber {
+      color: var(--amber);
+      background: var(--amber-muted);
+    }
+
+    .tag-cyan {
+      color: var(--cyan);
+      background: var(--cyan-muted);
+    }
+
+    .skill-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+
+    .skill-meta {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .skill-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── CODE BLOCK ── */
+    .code-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      .code-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .code-block {
+      background: var(--bg-card);
+      padding: 24px;
+      overflow-x: auto;
+    }
+
+    .code-block-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .code-block-title .dot-green { color: var(--green); }
+    .code-block-title .dot-amber { color: var(--amber); }
+
+    .code-block pre {
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-muted);
+    }
+
+    .code-block pre .kw { color: var(--amber); }
+    .code-block pre .fn { color: var(--green); }
+    .code-block pre .str { color: #a8d8a8; }
+    .code-block pre .cm { color: var(--text-dim); }
+    .code-block pre .num { color: var(--cyan); }
+    .code-block pre .op { color: var(--text-muted); }
+    .code-block pre .var { color: var(--text); }
+
+    /* ── AGENTS ── */
+    .agents-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 40px;
+    }
+
+    .agent-chip {
+      font-size: 12px;
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      transition: all 0.2s;
+    }
+
+    .agent-chip:hover {
+      border-color: var(--border-hover);
+      color: var(--text);
+      background: var(--bg-card-hover);
+    }
+
+    /* ── HOW IT WORKS ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      .steps {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .step {
+      background: var(--bg-card);
+      padding: 32px 24px;
+    }
+
+    .step-num {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+      line-height: 1;
+    }
+
+    .step-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .step-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .step-code {
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--green);
+      background: rgba(0, 255, 65, 0.04);
+      padding: 8px 12px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 255, 65, 0.08);
+    }
+
+    /* ── STATS ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 48px;
+    }
+
+    @media (max-width: 640px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat {
+      background: var(--bg-card);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      text-align: center;
+      padding: 100px 0;
+    }
+
+    .cta-ascii {
+      font-size: 10px;
+      color: var(--text-dim);
+      white-space: pre;
+      line-height: 1.2;
+      margin-bottom: 32px;
+    }
+
+    .cta-title {
+      font-size: clamp(20px, 3vw, 28px);
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+
+    .cta-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.7;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      padding: 12px 24px;
+      background: var(--green);
+      color: var(--bg);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+    }
+
+    .btn-secondary {
+      padding: 12px 24px;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--border-hover);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-muted);
+      background: var(--bg-card);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-left {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .footer-left a {
+      color: var(--text-muted);
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-right a {
+      font-size: 12px;
+      color: var(--text-dim);
+      transition: color 0.2s;
+    }
+
+    .footer-right a:hover {
+      color: var(--text-muted);
+      opacity: 1;
+    }
+
+    .footer-ascii {
+      font-size: 10px;
+      color: var(--text-dim);
+      white-space: pre;
+      line-height: 1.2;
+      text-align: center;
+      margin-bottom: 24px;
+      opacity: 0.5;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      nav {
+        padding: 12px 16px;
+      }
+
+      .nav-links {
+        gap: 14px;
+      }
+
+      .container {
+        padding: 0 16px;
+      }
+
+      section {
+        padding: 60px 0;
+      }
+
+      .hero {
+        padding-top: 120px;
+        padding-bottom: 60px;
+      }
+
+      .ascii-art {
+        font-size: clamp(3.5px, 2.2vw, 7px);
+      }
+    }
+
+    /* ── ANIMATIONS ── */
+    @media (prefers-reduced-motion: no-preference) {
+      .fade-in {
+        opacity: 0;
+        transform: translateY(12px);
+        animation: fadeIn 0.5s ease forwards;
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .delay-1 { animation-delay: 0.1s; }
+      .delay-2 { animation-delay: 0.2s; }
+      .delay-3 { animation-delay: 0.3s; }
+      .delay-4 { animation-delay: 0.4s; }
+
+      .cursor-blink::after {
+        content: '█';
+        animation: blink 1s step-end infinite;
+        color: var(--green);
+      }
+
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-brand">
+      <span class="dot">$</span> sports-skills<span class="dot">.sh</span>
+    </div>
+    <div class="nav-links">
+      <a href="#skills">Skills</a>
+      <a href="#usage">Examples</a>
+      <a href="https://github.com/machina-sports/sports-skills" target="_blank" rel="noopener" class="nav-cta"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Star on GitHub</a>
+    </div>
+  </nav>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container">
+        <div class="fade-in">
+          <pre class="ascii-art">
+███████╗██████╗  ██████╗ ██████╗ ████████╗███████╗
+██╔════╝██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝
+███████╗██████╔╝██║   ██║██████╔╝   ██║   ███████╗
+╚════██║██╔═══╝ ██║   ██║██╔══██╗   ██║   ╚════██║
+███████║██║     ╚██████╔╝██║  ██║   ██║   ███████║
+╚══════╝╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝
+    ███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+    ██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+    ███████╗█████╔╝ ██║██║     ██║     ███████╗
+    ╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+    ███████║██║  ██╗██║███████╗███████╗███████║
+    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝</pre>
+        </div>
+
+        <p class="hero-tagline fade-in delay-1">
+          Open-source agent skills for <strong>live sports data</strong>
+          and <strong>prediction markets</strong>.<br>
+          Zero API keys. Zero signup. Just works.
+        </p>
+
+        <div class="fade-in delay-2">
+          <div class="install-box" onclick="copyInstall(this)">
+            <span class="prompt">$</span>
+            <code>npx skills add machina-sports/sports-skills</code>
+            <button class="copy-btn" aria-label="Copy install command">copy</button>
+          </div>
+          <div class="install-hint" style="margin-bottom: 48px;"></div>
+        </div>
+
+        <div class="badges fade-in delay-3">
+          <span class="badge">MIT License</span>
+          <span class="badge">Python 3.10+</span>
+          <span class="badge">50+ commands</span>
+          <span class="badge">5 skills</span>
+          <span class="badge">0 API keys</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- DIVIDER -->
+    <div class="ascii-divider">── works with ──────────────────────────────────────────────────────────</div>
+
+    <!-- AGENTS -->
+    <section style="padding-top: 0; padding-bottom: 60px;">
+      <div class="container">
+        <div class="agents-row fade-in">
+          <span class="agent-chip">Claude Code</span>
+          <span class="agent-chip">Cursor</span>
+          <span class="agent-chip">GitHub Copilot</span>
+          <span class="agent-chip">Gemini CLI</span>
+          <span class="agent-chip">VS Code Copilot</span>
+          <span class="agent-chip">OpenClaw</span>
+          <span class="agent-chip">Windsurf</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- DIVIDER -->
+    <div class="ascii-divider">────────────────────────────────────────────────────────────────────────</div>
+
+    <!-- SKILLS -->
+    <section id="skills">
+      <div class="container">
+        <div class="section-label fade-in">// skills</div>
+        <h2 class="section-title fade-in">Five skills. Zero config.</h2>
+        <p class="section-desc fade-in">
+          Each skill is a self-contained SKILL.md that any compatible agent
+          can read and use immediately. No tokens, no OAuth, no .env files.
+        </p>
+
+        <div class="skills-grid fade-in">
+          <div class="skill-card">
+            <div class="skill-name">
+              football-data
+              <span class="skill-tag tag-green">12 leagues</span>
+            </div>
+            <div class="skill-desc">
+              Standings, fixtures, match stats, xG, transfers,
+              player profiles across Premier League, La Liga,
+              Champions League, and 9 more.
+            </div>
+            <div class="skill-meta">
+              <span>20 commands</span>
+              <span>ESPN + Understat + FPL</span>
+            </div>
+          </div>
+
+          <div class="skill-card">
+            <div class="skill-name">
+              fastf1
+              <span class="skill-tag tag-amber">Formula 1</span>
+            </div>
+            <div class="skill-desc">
+              Race schedules, session results, lap-by-lap timing,
+              driver and team info. Full season data powered by
+              the FastF1 library.
+            </div>
+            <div class="skill-meta">
+              <span>6 commands</span>
+              <span>FastF1 library</span>
+            </div>
+          </div>
+
+          <div class="skill-card">
+            <div class="skill-name">
+              kalshi
+              <span class="skill-tag tag-cyan">regulated</span>
+            </div>
+            <div class="skill-desc">
+              CFTC-regulated prediction markets. Event contracts
+              for NBA, NFL, MLB, soccer, and more. Candlestick
+              data, trade history, order books.
+            </div>
+            <div class="skill-meta">
+              <span>12 commands</span>
+              <span>Trade API v2</span>
+            </div>
+          </div>
+
+          <div class="skill-card">
+            <div class="skill-name">
+              polymarket
+              <span class="skill-tag tag-cyan">58+ markets</span>
+            </div>
+            <div class="skill-desc">
+              Crypto-native prediction markets. Moneylines,
+              spreads, totals, player props across NFL, NBA,
+              soccer, MMA, tennis, and esports.
+            </div>
+            <div class="skill-meta">
+              <span>10 commands</span>
+              <span>Gamma + CLOB APIs</span>
+            </div>
+          </div>
+
+          <div class="skill-card">
+            <div class="skill-name">
+              sports-news
+              <span class="skill-tag tag-green">RSS</span>
+            </div>
+            <div class="skill-desc">
+              Aggregate sports news from RSS feeds and
+              Google News. Filter by date, language, country.
+              Works with any feed URL.
+            </div>
+            <div class="skill-meta">
+              <span>2 commands</span>
+              <span>feedparser + Google News</span>
+            </div>
+          </div>
+
+          <div class="skill-card">
+            <div class="skill-name" style="color: var(--text-dim);">
+              coming soon
+              <span class="skill-tag tag-amber">via Machina Sports</span>
+            </div>
+            <div class="skill-desc">
+              Sportradar, Stats Perform, API-Football,
+              Data Sports Group. Licensed data, same interface.
+              World Cup 2026 coverage built in.
+            </div>
+            <div class="skill-meta">
+              <span><a href="https://machina.gg" target="_blank" rel="noopener" style="color: var(--amber);">machina.gg</a></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DIVIDER -->
+    <div class="ascii-divider">────────────────────────────────────────────────────────────────────────</div>
+
+    <!-- USAGE -->
+    <section id="usage">
+      <div class="container">
+        <div class="section-label fade-in">// usage</div>
+        <h2 class="section-title fade-in">Just ask your agent.</h2>
+        <p class="section-desc fade-in">
+          Once installed, your agent reads the SKILL.md files and knows
+          which commands to call. Talk naturally.
+        </p>
+
+        <div class="code-section fade-in" style="grid-template-columns: 1fr;">
+          <div class="code-block">
+            <div class="code-block-title">
+              <span class="dot-green">&#9679;</span> example prompts
+            </div>
+            <pre>
+<span class="cm"># Football</span>
+<span class="str">"Show me the Premier League standings"</span>
+<span class="str">"Who scored in today's Champions League matches?"</span>
+<span class="str">"What's the xG breakdown for Arsenal vs Liverpool?"</span>
+
+<span class="cm"># Formula 1</span>
+<span class="str">"Show me the lap data from the last Monaco Grand Prix"</span>
+<span class="str">"Compare Verstappen and Norris lap times in qualifying"</span>
+
+<span class="cm"># Prediction Markets</span>
+<span class="str">"What are the Polymarket odds for the NBA Finals?"</span>
+<span class="str">"Show me Kalshi markets for tonight's NFL games"</span>
+
+<span class="cm"># News</span>
+<span class="str">"Get me the latest Arsenal transfer news"</span></pre>
+          </div>
+        </div>
+
+        <!-- RESPONSE FORMAT -->
+        <div style="margin-top: 1px;">
+          <div class="code-section" style="grid-template-columns: 1fr;">
+            <div class="code-block">
+              <div class="code-block-title">
+                <span class="dot-green">&#9679;</span> response format &mdash; every command, same shape
+              </div>
+              <pre>
+{
+  <span class="str">"status"</span>: <span class="kw">true</span>,
+  <span class="str">"data"</span>: {
+    <span class="str">"standings"</span>: [
+      { <span class="str">"rank"</span>: <span class="num">1</span>, <span class="str">"team"</span>: <span class="str">"Arsenal"</span>, <span class="str">"points"</span>: <span class="num">72</span>, <span class="str">"played"</span>: <span class="num">30</span> },
+      { <span class="str">"rank"</span>: <span class="num">2</span>, <span class="str">"team"</span>: <span class="str">"Liverpool"</span>, <span class="str">"points"</span>: <span class="num">70</span>, <span class="str">"played"</span>: <span class="num">30</span> },
+      <span class="cm">// ...</span>
+    ]
+  },
+  <span class="str">"message"</span>: <span class="str">""</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DIVIDER -->
+    <div class="ascii-divider">────────────────────────────────────────────────────────────────────────</div>
+
+    <!-- HOW IT WORKS -->
+    <section>
+      <div class="container">
+        <div class="section-label fade-in">// how it works</div>
+        <h2 class="section-title fade-in">Three steps. That's it.</h2>
+        <p class="section-desc fade-in">
+          No accounts, no dashboards, no API key management.
+        </p>
+
+        <div class="steps fade-in">
+          <div class="step">
+            <div class="step-num">01</div>
+            <div class="step-title">Install</div>
+            <div class="step-desc">
+              Add to any agent with a single command. Skills auto-register
+              via the SKILL.md specification.
+            </div>
+            <div class="step-code">$ npx skills add machina-sports/sports-skills</div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">02</div>
+            <div class="step-title">Ask</div>
+            <div class="step-desc">
+              Talk to your agent naturally. It reads the skill files and
+              knows which commands to call.
+            </div>
+            <div class="step-code">"Show me Premier League standings"</div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">03</div>
+            <div class="step-title">Get data</div>
+            <div class="step-desc">
+              Structured JSON back instantly. No rate limits, no
+              auth headers, no pagination headaches.
+            </div>
+            <div class="step-code" style="white-space: nowrap;">{ "status": true, "data": { ... } }</div>
+          </div>
+        </div>
+
+        <div class="stats-row fade-in">
+          <div class="stat">
+            <div class="stat-value">50+</div>
+            <div class="stat-label">Commands</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Leagues</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Skills</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">0</div>
+            <div class="stat-label">API Keys</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DIVIDER -->
+    <div class="ascii-divider">────────────────────────────────────────────────────────────────────────</div>
+
+    <!-- COVERAGE -->
+    <section id="coverage">
+      <div class="container">
+        <div class="section-label fade-in">// coverage</div>
+        <h2 class="section-title fade-in">What we cover today.</h2>
+        <p class="section-desc fade-in">
+          We're always bringing new sports and data sources.
+          Want to contribute? <a href="https://github.com/machina-sports/sports-skills" target="_blank" rel="noopener">Submit a PR on GitHub.</a>
+        </p>
+
+        <div class="skills-grid fade-in" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+          <div class="skill-card">
+            <div class="skill-name">Football</div>
+            <div class="skill-desc">
+              Premier League, La Liga, Bundesliga,
+              Serie A, Ligue 1, Champions League,
+              World Cup, and 5 more leagues.
+              Standings, xG, transfers, lineups.
+            </div>
+            <div class="skill-meta"><span>12 leagues</span><span>20 commands</span></div>
+          </div>
+
+          <div class="skill-card">
+            <div class="skill-name">Formula 1</div>
+            <div class="skill-desc">
+              Full season schedules, race results,
+              lap-by-lap timing, driver and team
+              info. All sessions from practice
+              to race.
+            </div>
+            <div class="skill-meta"><span>All GPs</span><span>6 commands</span></div>
+          </div>
+
+          <div class="skill-card">
+            <div class="skill-name">Prediction Markets</div>
+            <div class="skill-desc">
+              Kalshi (CFTC-regulated) and Polymarket
+              (crypto-native). Odds, order books,
+              trade history, candlestick data
+              across 58+ market types.
+            </div>
+            <div class="skill-meta"><span>2 platforms</span><span>22 commands</span></div>
+          </div>
+
+          <div class="skill-card">
+            <div class="skill-name">Sports News</div>
+            <div class="skill-desc">
+              Any RSS feed plus Google News.
+              Filter by date, language, country.
+              BBC Sport, ESPN, Sky Sports,
+              and any custom feed URL.
+            </div>
+            <div class="skill-meta"><span>Any feed</span><span>2 commands</span></div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; font-size: 12px; color: var(--text-dim);" class="fade-in">
+          Coming soon via <a href="https://machina.gg" target="_blank" rel="noopener" style="color: var(--amber);">Machina Sports</a>:
+          Sportradar, Stats Perform, API-Football, Data Sports Group.
+        </div>
+      </div>
+    </section>
+
+    <!-- DIVIDER -->
+    <div class="ascii-divider">────────────────────────────────────────────────────────────────────────</div>
+
+    <!-- CTA -->
+    <section class="cta-section">
+      <div class="container">
+        <div class="fade-in" style="margin-bottom: 32px;">
+          <div class="install-box" onclick="copyInstall(this)">
+            <span class="prompt">$</span>
+            <code>npx skills add machina-sports/sports-skills</code>
+            <button class="copy-btn" aria-label="Copy install command">copy</button>
+          </div>
+        </div>
+
+        <h2 class="cta-title fade-in">Start building with live sports data.</h2>
+        <p class="cta-desc fade-in">
+          Free and open source. MIT licensed.
+          Works with every major AI coding agent.
+        </p>
+
+        <div class="cta-buttons fade-in">
+          <a href="https://github.com/machina-sports/sports-skills" target="_blank" rel="noopener" class="btn-primary">View on GitHub</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <pre class="footer-ascii">╭──────────────────────────────────────────╮
+│  the operating system for sports AI      │
+╰──────────────────────────────────────────╯</pre>
+      <div class="footer-inner">
+        <div class="footer-left">
+          Built by <a href="https://machina.gg" target="_blank" rel="noopener">Machina Sports</a>
+          &nbsp;&middot;&nbsp; MIT License &nbsp;&middot;&nbsp; 2026
+        </div>
+        <div class="footer-right">
+          <a href="https://github.com/machina-sports/sports-skills" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://machina.gg" target="_blank" rel="noopener">machina.gg</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function copyInstall(el) {
+      const text = 'npx skills add machina-sports/sports-skills';
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = el.querySelector('.copy-btn');
+        btn.textContent = 'copied!';
+        setTimeout(() => { btn.textContent = 'copy'; }, 2000);
+      });
+    }
+
+    // Intersection Observer for fade-in
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = 'running';
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in').forEach(el => {
+        el.style.animationPlayState = 'paused';
+        observer.observe(el);
+      });
+    }
+  </script>
+
+</body>
+</html>
