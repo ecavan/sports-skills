@@ -206,9 +206,9 @@ Get match timeline/key events (goals, cards, substitutions). Works for all leagu
 Returns `data.timeline[]` with goal, card, and substitution events.
 
 ### get_team_schedule
-Get schedule for a specific team. Works for all leagues.
+Get schedule for a specific team — includes both past results and upcoming fixtures. Works for all leagues.
 - `team_id` (str, required): ESPN team ID
-- `league_slug` (str, optional): League hint
+- `league_slug` (str, optional): League hint (faster resolution)
 - `season_year` (str, optional): Season year filter
 
 ### get_head_to_head
