@@ -262,6 +262,8 @@ We're actively expanding to cover more sports and data sources — and always lo
 
 See the existing SKILL.md files and the [Agent Skills spec](https://agentskills.io/specification) for format details.
 
+Join the [Machina Sports Discord](https://discord.gg/PBYd6FbBSK) to discuss ideas, get help, or coordinate on new skills.
+
 ---
 
 ## World Cup 2026
