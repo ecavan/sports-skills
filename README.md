@@ -256,6 +256,7 @@ Instructions for the AI agent...
 Works with every agent that supports the SKILL.md format:
 
 - Claude Code
+- OpenClaw (clawdbot / moltbot)
 - Cursor
 - GitHub Copilot
 - VS Code Copilot
