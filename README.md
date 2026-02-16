@@ -12,14 +12,16 @@ npx skills add machina-sports/sports-skills
 
 ## What This Is
 
-A collection of free, production-grade data connectors that give AI agents access to:
+A collection of agent skills that wrap **publicly available** sports data sources and APIs. These skills don't provide proprietary data — they give AI agents a structured interface to data that's already freely accessible on the web:
 
-- **Football**: 20 commands across 12 leagues (Premier League, La Liga, Champions League, World Cup, and more)
-- **Formula 1**: Sessions, lap data, race results, driver and team info
-- **Prediction Markets**: Kalshi and Polymarket sports markets, prices, order books
-- **Sports News**: RSS feeds and Google News integration
+- **Football**: ESPN, Understat, FPL, Transfermarkt — 20 commands across 12 leagues
+- **Formula 1**: FastF1 open-source library — sessions, lap data, race results
+- **Prediction Markets**: Kalshi and Polymarket public APIs — markets, prices, order books
+- **Sports News**: RSS feeds and Google News — any public feed
 
-Each connector is a SKILL.md file that any compatible AI agent can load and use immediately.
+Each skill is a SKILL.md file that any compatible AI agent can load and use immediately. Data comes from third-party public sources and is subject to their respective terms of use.
+
+> **Personal use only.** These open-source skills rely on third-party public APIs and are intended for personal, non-commercial use. For commercial or production workloads with licensed data, SLAs, and enterprise support, see [machina.gg](https://machina.gg).
 
 ---
 
@@ -86,7 +88,7 @@ Once installed, your agent can call commands directly:
 
 ### football-data
 
-The most comprehensive open-source football data connector. Aggregates 4 sources (ESPN, Understat, FPL, Transfermarkt) with zero API keys required.
+Community football data skill. Aggregates publicly accessible web sources (ESPN, Understat, FPL, Transfermarkt). Data is sourced from these third-party sites and is subject to their respective terms of use.
 
 **Commands:**
 
@@ -115,7 +117,7 @@ The most comprehensive open-source football data connector. Aggregates 4 sources
 
 ### fastf1
 
-Full Formula 1 data via the FastF1 library.
+Formula 1 data via the [FastF1](https://github.com/theOehrly/Fast-F1) open-source library.
 
 | Command | Description |
 |---------|-------------|
@@ -128,7 +130,7 @@ Full Formula 1 data via the FastF1 library.
 
 ### kalshi
 
-Public endpoints from Kalshi prediction markets. No API key needed for market data.
+Kalshi's [official public API](https://trading-api.readme.io/reference/getmarkets). No API key needed for read-only market data.
 
 | Command | Description |
 |---------|-------------|
@@ -146,7 +148,7 @@ Public endpoints from Kalshi prediction markets. No API key needed for market da
 
 ### polymarket
 
-Public endpoints from Polymarket (Gamma + CLOB APIs). No API key needed.
+Polymarket's official public APIs ([Gamma](https://gamma-api.polymarket.com) + [CLOB](https://docs.polymarket.com)). No API key needed for read-only data.
 
 | Command | Description |
 |---------|-------------|
@@ -241,7 +243,7 @@ Licensed data skills — coming soon via [Machina Sports](https://machina.gg):
 | API-Football | 900+ leagues, live scores, odds | Coming Soon |
 | Data Sports Group | US sports, player props, projections | Coming Soon |
 
-These will ship as additional skills that drop in alongside the free ones. Same interface, same JSON envelope — just licensed data underneath.
+These will ship as additional skills that drop in alongside the open-source ones. Same interface, same JSON envelope — just licensed data underneath. Built for commercial and production use with proper data licensing, SLAs, and enterprise support.
 
 For early access or enterprise needs, see [machina.gg](https://machina.gg).
 
@@ -266,22 +268,45 @@ This project ships with World Cup 2026 coverage built in. The `football-data` sk
 
 ---
 
+## Data Sources & Disclaimer
+
+This project does not own, license, or redistribute any sports data. Each skill is a thin wrapper that accesses publicly available third-party sources on behalf of the user.
+
+| Source | Access Method | Official API |
+|--------|--------------|--------------|
+| ESPN | Public web endpoints | No — undocumented, may change without notice |
+| Understat | Public web data | No — community access, subject to their ToS |
+| FPL | Public API | Semi-official — widely used by the community |
+| Transfermarkt | Public web data | No — subject to their ToS |
+| FastF1 | Open-source library | Yes — [FastF1](https://github.com/theOehrly/Fast-F1) (MIT) |
+| Kalshi | Official public API | Yes — [Trade API v2](https://trading-api.readme.io) |
+| Polymarket | Official public APIs | Yes — [Gamma](https://gamma-api.polymarket.com) + [CLOB](https://docs.polymarket.com) |
+| RSS / Google News | Standard RSS protocol | Yes — RSS is designed for syndication |
+
+**Important:**
+- This project is intended for **personal, educational, and research use**.
+- You are responsible for complying with each data source's terms of service.
+- Data from unofficial sources (ESPN, Understat, Transfermarkt) may break without notice if those sites change their structure.
+- For commercial or production use with properly licensed data, see [machina.gg](https://machina.gg).
+- This project is not affiliated with or endorsed by any of the data sources listed above.
+
+---
+
 ## Acknowledgments
 
-This project is built on top of incredible open-source work and public APIs:
+This project is built on top of great open-source work and public APIs:
 
-- **[FastF1](https://github.com/theOehrly/Fast-F1)** — the backbone of our Formula 1 skill. Huge thanks to theOehrly and contributors for making F1 data accessible.
-- **[feedparser](https://github.com/kurtmckee/feedparser)** — powers our sports news skill with reliable RSS/Atom parsing.
-- **[ESPN](https://www.espn.com)**, **[Understat](https://understat.com)**, **[FPL](https://fantasy.premierleague.com)**, **[Transfermarkt](https://www.transfermarkt.com)** — the public data sources behind the football skill.
+- **[FastF1](https://github.com/theOehrly/Fast-F1)** — the backbone of our Formula 1 skill. Thanks to theOehrly and contributors.
+- **[feedparser](https://github.com/kurtmckee/feedparser)** — reliable RSS/Atom parsing for the news skill.
 - **[Kalshi](https://kalshi.com)** and **[Polymarket](https://polymarket.com)** — for their public market data APIs.
-- **[skills.sh](https://skills.sh)** — the open agent skills directory and CLI that makes `npx skills add` work.
-- **[Agent Skills](https://agentskills.io)** — the open spec that makes all of this interoperable across agents.
+- **[skills.sh](https://skills.sh)** — the open agent skills directory and CLI.
+- **[Agent Skills](https://agentskills.io)** — the open spec that makes skills interoperable across agents.
 
 ---
 
 ## License
 
-MIT
+MIT — applies to the skill code and wrappers in this repository. Does not grant any rights to the underlying third-party data.
 
 ---
 

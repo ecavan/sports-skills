@@ -766,9 +766,9 @@
         </div>
 
         <p class="hero-tagline fade-in delay-1">
-          Open-source agent skills for <strong>live sports data</strong>
-          and <strong>prediction markets</strong>.<br>
-          Zero API keys. Zero signup. Just works.
+          Open-source agent skills wrapping <strong>public sports data</strong>
+          and <strong>prediction market APIs</strong>.<br>
+          Zero API keys. Zero signup. For personal use.
         </p>
 
         <div class="fade-in delay-2">
@@ -817,8 +817,9 @@
         <div class="section-label fade-in">// skills</div>
         <h2 class="section-title fade-in">Five skills. Zero config.</h2>
         <p class="section-desc fade-in">
-          Each skill is a self-contained SKILL.md that any compatible agent
-          can read and use immediately. No tokens, no OAuth, no .env files.
+          Each skill wraps publicly available data sources into a
+          self-contained SKILL.md. No tokens, no OAuth, no .env files.
+          Data comes from third-party public APIs.
         </p>
 
         <div class="skills-grid fade-in">
@@ -829,12 +830,12 @@
             </div>
             <div class="skill-desc">
               Standings, fixtures, match stats, xG, transfers,
-              player profiles across Premier League, La Liga,
-              Champions League, and 9 more.
+              player profiles. Wraps public web sources
+              (ESPN, Understat, FPL, Transfermarkt).
             </div>
             <div class="skill-meta">
               <span>20 commands</span>
-              <span>ESPN + Understat + FPL</span>
+              <span>community data</span>
             </div>
           </div>
 
@@ -845,12 +846,12 @@
             </div>
             <div class="skill-desc">
               Race schedules, session results, lap-by-lap timing,
-              driver and team info. Full season data powered by
-              the FastF1 library.
+              driver and team info. Powered by the open-source
+              FastF1 library.
             </div>
             <div class="skill-meta">
               <span>6 commands</span>
-              <span>FastF1 library</span>
+              <span>open-source library</span>
             </div>
           </div>
 
@@ -861,12 +862,12 @@
             </div>
             <div class="skill-desc">
               CFTC-regulated prediction markets. Event contracts
-              for NBA, NFL, MLB, soccer, and more. Candlestick
-              data, trade history, order books.
+              for NBA, NFL, MLB, soccer, and more. Uses Kalshi's
+              official public API.
             </div>
             <div class="skill-meta">
               <span>12 commands</span>
-              <span>Trade API v2</span>
+              <span>official API</span>
             </div>
           </div>
 
@@ -877,12 +878,12 @@
             </div>
             <div class="skill-desc">
               Crypto-native prediction markets. Moneylines,
-              spreads, totals, player props across NFL, NBA,
-              soccer, MMA, tennis, and esports.
+              spreads, totals, player props. Uses Polymarket's
+              official public APIs.
             </div>
             <div class="skill-meta">
               <span>10 commands</span>
-              <span>Gamma + CLOB APIs</span>
+              <span>official API</span>
             </div>
           </div>
 
@@ -894,23 +895,23 @@
             <div class="skill-desc">
               Aggregate sports news from RSS feeds and
               Google News. Filter by date, language, country.
-              Works with any feed URL.
+              Standard RSS protocol.
             </div>
             <div class="skill-meta">
               <span>2 commands</span>
-              <span>feedparser + Google News</span>
+              <span>open standard</span>
             </div>
           </div>
 
           <div class="skill-card">
             <div class="skill-name" style="color: var(--text-dim);">
-              coming soon
-              <span class="skill-tag tag-amber">via Machina Sports</span>
+              commercial use
+              <span class="skill-tag tag-amber">licensed data</span>
             </div>
             <div class="skill-desc">
               Sportradar, Stats Perform, API-Football,
-              Data Sports Group. Licensed data, same interface.
-              World Cup 2026 coverage built in.
+              Data Sports Group. Licensed data providers
+              for production and commercial workloads.
             </div>
             <div class="skill-meta">
               <span><a href="https://machina.gg" target="_blank" rel="noopener" style="color: var(--amber);">machina.gg</a></span>
@@ -1106,9 +1107,9 @@
           </div>
         </div>
 
-        <div style="margin-top: 24px; font-size: 12px; color: var(--text-dim);" class="fade-in">
-          Coming soon via <a href="https://machina.gg" target="_blank" rel="noopener" style="color: var(--amber);">Machina Sports</a>:
-          Sportradar, Stats Perform, API-Football, Data Sports Group.
+        <div style="margin-top: 24px; font-size: 12px; color: var(--text-dim); line-height: 1.7;" class="fade-in">
+          For commercial use with licensed data (Sportradar, Stats Perform, API-Football, Data Sports Group)
+          &mdash; see <a href="https://machina.gg" target="_blank" rel="noopener" style="color: var(--amber);">machina.gg</a>
         </div>
       </div>
     </section>
@@ -1129,8 +1130,8 @@
 
         <h2 class="cta-title fade-in">Start building with live sports data.</h2>
         <p class="cta-desc fade-in">
-          Free and open source. MIT licensed.
-          Works with every major AI coding agent.
+          Free and open source for personal use. MIT licensed.
+          For commercial use, see <a href="https://machina.gg" target="_blank" rel="noopener">machina.gg</a>.
         </p>
 
         <div class="cta-buttons fade-in">
@@ -1143,9 +1144,14 @@
   <!-- FOOTER -->
   <footer>
     <div class="container">
-      <pre class="footer-ascii">╭──────────────────────────────────────────╮
-│  the operating system for sports AI      │
-╰──────────────────────────────────────────╯</pre>
+      <div style="font-size: 11px; color: var(--text-dim); line-height: 1.7; max-width: 640px; margin: 0 auto 24px; text-align: center;">
+        This project wraps publicly available third-party data sources
+        for personal and educational use. Not affiliated with or endorsed
+        by any data provider. You are responsible for complying with each
+        source's terms of service. For commercial use with licensed data,
+        see <a href="https://machina.gg" target="_blank" rel="noopener" style="color: var(--text-muted);">machina.gg</a>.
+      </div>
+      <div class="ascii-divider" style="padding: 0 0 24px;">───</div>
       <div class="footer-inner">
         <div class="footer-left">
           Built by <a href="https://machina.gg" target="_blank" rel="noopener">Machina Sports</a>
