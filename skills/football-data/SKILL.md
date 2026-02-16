@@ -43,6 +43,16 @@ standings = football.get_season_standings(season_id="premier-league-2025")
 schedule = football.get_daily_schedule()
 ```
 
+## Choosing the Season
+
+Derive the current year from the system prompt's date (e.g., `currentDate: 2026-02-16` → current year is 2026).
+
+- **If the user specifies a season**, use it as-is.
+- **If the user says "current", "latest", or doesn't specify**: Call `get_current_season(competition_id="...")` to get the active season_id. Do NOT guess or hardcode the year.
+- **Season format**: Always `{league-slug}-{year}` (e.g., `"premier-league-2025"` for the 2025-26 season). The year is the start year of the season, not the end year.
+- **MLS exception**: MLS runs spring-fall within a single calendar year. Use `get_current_season(competition_id="mls")` — don't assume MLS follows European calendar.
+- **Never hardcode a season_id.** Always derive it via `get_current_season()` or from the system date.
+
 ## Data Coverage by League
 
 Not all data is available for every league. Use the right command for the right league.
@@ -320,8 +330,8 @@ For licensed data with full coverage across all sports (Sportradar, Opta, Genius
 ## Examples
 
 User: "Show me the Premier League table"
-1. Call `get_current_season(competition_id="premier-league")` to get current season_id
-2. Call `get_season_standings(season_id="premier-league-2025")`
+1. Call `get_current_season(competition_id="premier-league")` to get the current season_id
+2. Call `get_season_standings(season_id=<season_id from step 1>)`
 3. Present standings table with position, team, played, won, drawn, lost, GD, points
 
 User: "How did Arsenal vs Liverpool go?"
@@ -338,8 +348,8 @@ User: "Deep dive on Chelsea's recent form"
    - `get_event_xg(event_id="...")` for xG comparison and shot map
    - `get_event_statistics(event_id="...")` for possession, shots, passes
    - `get_event_players_statistics(event_id="...")` for individual player xG/xA
-4. Call `get_missing_players(season_id="premier-league-2025")` → filter Chelsea's injured/doubtful players
-5. Call `get_season_leaders(season_id="premier-league-2025")` → filter Chelsea players, get their FPL IDs
+4. Call `get_missing_players(season_id=<season_id>)` → filter Chelsea's injured/doubtful players
+5. Call `get_season_leaders(season_id=<season_id>)` → filter Chelsea players, get their FPL IDs
 6. Call `get_player_profile(fpl_id="...", tm_player_id="...")` for key players — combine FPL stats (form, ownership, ICT) with Transfermarkt data (market value, transfer history)
 7. Present: xG trend across matches, key player stats, injury report, market values
 
@@ -353,6 +363,56 @@ User: "Tell me about Corinthians"
 2. Call `get_team_schedule(team_id="874", competition_id="serie-a-brazil")` for fixtures
 3. Pick a recent match and call `get_event_timeline(event_id="...")` for goals, cards, subs
 4. Note: xG, FPL stats, and season leaders are NOT available for Brazilian Serie A
+
+## Error Handling
+
+When a command fails (wrong event_id, missing data, network error, etc.), **do not surface the raw error to the user**. Instead:
+
+1. **Catch it silently** — treat the failure as an exploratory miss, not a fatal error.
+2. **Try alternatives** — e.g., if an event_id returns no data, call `get_daily_schedule()` or `get_team_schedule()` to discover the correct ID. If ESPN is down, openfootball data may still be available via `get_season_standings` or `get_season_schedule`.
+3. **Only report failure after exhausting alternatives** — and when you do, give a clean human-readable message (e.g., "I couldn't find that match — can you confirm the teams or date?"), not a traceback or raw CLI output.
+
+This is especially important when the agent is responding through messaging platforms (Telegram, Slack, etc.) where raw exec failures look broken.
+
+## Common Mistakes
+
+**These are the ONLY valid commands.** Do not invent or guess command names:
+- `get_current_season`
+- `get_competitions`
+- `get_competition_seasons`
+- `get_season_schedule`
+- `get_season_standings`
+- `get_season_leaders`
+- `get_season_teams`
+- `search_team`
+- `get_team_profile`
+- `get_daily_schedule`
+- `get_event_summary`
+- `get_event_lineups`
+- `get_event_statistics`
+- `get_event_timeline`
+- `get_team_schedule`
+- `get_head_to_head`
+- `get_event_xg`
+- `get_event_players_statistics`
+- `get_missing_players`
+- `get_season_transfers`
+- `get_player_profile`
+
+**Commands that DO NOT exist** (commonly hallucinated):
+- ~~`get_standings`~~ — the correct command is `get_season_standings` (requires `season_id`).
+- ~~`get_live_scores`~~ — not available. Use `get_daily_schedule()` for today's matches; status field shows "live" for in-progress games.
+- ~~`get_team_squad`~~ / ~~`get_team_roster`~~ — `get_team_profile` does NOT return players. Use `get_season_leaders` for PL player IDs, then `get_player_profile` for individual data.
+- ~~`get_transfers`~~ — the correct command is `get_season_transfers` (requires `season_id` + `tm_player_ids`).
+- ~~`get_match_results`~~ / ~~`get_match`~~ — use `get_event_summary` with an `event_id`.
+- ~~`get_player_stats`~~ — use `get_event_players_statistics` for match-level stats, or `get_player_profile` for career data.
+
+**Other common mistakes:**
+- Using `get_season_leaders` or `get_missing_players` on non-PL leagues — they return empty. Check the Data Coverage table.
+- Using `get_event_xg` on leagues outside the top 5 — returns empty. Only works for EPL, La Liga, Bundesliga, Serie A, Ligue 1.
+- Guessing `team_id` or `event_id` instead of discovering them via `search_team`, `get_daily_schedule`, or `get_season_schedule`.
+
+If you're unsure whether a command exists, check this list. Do not try commands that aren't listed above.
 
 ## Troubleshooting
 

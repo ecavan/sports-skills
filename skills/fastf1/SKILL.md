@@ -48,6 +48,14 @@ schedule = f1.get_race_schedule(year=2025)
 results = f1.get_race_results(year=2025, event="Monza")
 ```
 
+## Choosing the Year
+
+Derive the current year from the system prompt's date (e.g., `currentDate: 2026-02-16` → current year is 2026).
+
+- **If the user specifies a year**, use it as-is.
+- **If the user says "latest", "recent", "last season", or doesn't specify a year**: The F1 season runs roughly March–December. If the current month is January or February (i.e., before the new season starts), use `year = current_year - 1` since that's the most recent completed season. From March onward, use the current year — races will have started or be imminent.
+- **Never hardcode a year.** Always derive it from the system date.
+
 ## Commands
 
 ### get_race_schedule
@@ -84,19 +92,58 @@ Get lap-by-lap timing data.
 
 ## Examples
 
-User: "Show me the 2025 F1 calendar"
-1. Call `get_race_schedule(year=2025)`
+In these examples, `{year}` means the year derived using the rules in "Choosing the Year" above.
+
+User: "Show me the F1 calendar"
+1. Call `get_race_schedule(year={year})`
 2. Present schedule with event names, dates, and circuits
 
 User: "How did Verstappen do at Monza?"
-1. Call `get_race_results(year=2025, event="Monza")` for final classification
-2. Call `get_lap_data(year=2025, event="Monza", session_type="R", driver="VER")` for lap times
-3. Present finishing position, gap to leader, fastest lap, and tire strategy
+1. Derive the year (if unspecified, use the latest completed season per the rules above)
+2. Call `get_race_results(year={year}, event="Monza")` for final classification
+3. Call `get_lap_data(year={year}, event="Monza", session_type="R", driver="VER")` for lap times
+4. Present finishing position, gap to leader, fastest lap, and tire strategy
 
 User: "Compare qualifying times at Silverstone"
-1. Call `get_session_data(session_year=2025, session_name="Silverstone", session_type="Q")`
-2. Call `get_lap_data(year=2025, event="Silverstone", session_type="Q")` for all drivers
-3. Present Q1/Q2/Q3 times sorted by position
+1. Derive the year
+2. Call `get_session_data(session_year={year}, session_name="Silverstone", session_type="Q")`
+3. Call `get_lap_data(year={year}, event="Silverstone", session_type="Q")` for all drivers
+4. Present Q1/Q2/Q3 times sorted by position
+
+User: "What were the latest F1 results?" (asked in February 2026)
+1. Current month is February → season hasn't started → use `year = 2025`
+2. Call `get_race_schedule(year=2025)` to find the last event of that season
+3. Call `get_race_results(year=2025, event=<last_event>)` for the final race results
+4. Present the results
+
+## Error Handling
+
+When a command fails (wrong event name, no data for that session, network error, etc.), **do not surface the raw error to the user**. Instead:
+
+1. **Catch it silently** — treat the failure as an exploratory miss, not a fatal error.
+2. **Try alternatives** — e.g., if an event name doesn't match, call `get_race_schedule()` first to find the correct name, then retry. If a session type has no data, try a different session type.
+3. **Only report failure after exhausting alternatives** — and when you do, give a clean human-readable message (e.g., "No qualifying data is available for that event yet"), not a traceback or raw CLI output.
+
+This is especially important when the agent is responding through messaging platforms (Telegram, Slack, etc.) where raw exec failures look broken.
+
+## Common Mistakes
+
+**These are the ONLY valid commands.** Do not invent or guess command names:
+- `get_race_schedule`
+- `get_race_results`
+- `get_session_data`
+- `get_driver_info`
+- `get_team_info`
+- `get_lap_data`
+
+**Commands that DO NOT exist** (commonly hallucinated):
+- ~~`get_driver_results`~~ — use `get_race_results` and filter by driver, or use `get_lap_data` with the `driver` parameter.
+- ~~`get_standings`~~ / ~~`get_championship_standings`~~ — not available. To approximate standings, call `get_race_results` across multiple events and sum points.
+- ~~`get_fastest_laps`~~ — use `get_lap_data` and find the minimum `lap_time`.
+- ~~`get_tire_strategy`~~ — tire data is embedded in `get_lap_data` results (compound column).
+- ~~`get_circuit_info`~~ — circuit details are included in `get_race_schedule` output.
+
+If you're unsure whether a command exists, check this list. Do not try commands that aren't listed above.
 
 ## Troubleshooting
 

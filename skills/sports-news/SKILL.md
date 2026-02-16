@@ -43,6 +43,15 @@ articles = news.fetch_items(google_news=True, query="Arsenal transfer news", lim
 feed = news.fetch_feed(url="https://feeds.bbci.co.uk/sport/football/rss.xml")
 ```
 
+## Choosing Dates
+
+Derive the current date from the system prompt's date (e.g., `currentDate: 2026-02-16` → today is 2026-02-16).
+
+- **If the user specifies a date range**, use it as-is.
+- **If the user says "recent", "latest", "this week", or doesn't specify a timeframe**: Derive `after` from the system date. For "this week", use `after = today - 7 days`. For "recent" or "latest", use `after = today - 3 days`.
+- **Never hardcode dates in commands.** Always derive them from the system date.
+- **Always use `sort_by_date=True`** for recency queries to show newest articles first.
+
 ## Commands
 
 ### fetch_feed
@@ -89,8 +98,37 @@ User: "Show me BBC Sport football headlines"
 2. Present feed title, last updated, and recent entries
 
 User: "Any Champions League news from this week?"
-1. Call `fetch_items(google_news=True, query="Champions League", after="2026-02-09", sort_by_date=True, limit=10)`
-2. Present articles filtered to the last 7 days, sorted newest first
+1. Derive `after` from system date: today minus 7 days (e.g., if today is 2026-02-16, then after="2026-02-09")
+2. Call `fetch_items(google_news=True, query="Champions League", after=<derived_date>, sort_by_date=True, limit=10)`
+3. Present articles filtered to the last 7 days, sorted newest first
+
+## Error Handling
+
+When a command fails (RSS feed down, Google News returning empty, network error, etc.), **do not surface the raw error to the user**. Instead:
+
+1. **Catch it silently** — treat the failure as an exploratory miss, not a fatal error.
+2. **Try alternatives** — if a specific RSS feed fails, try Google News as a fallback. If Google News returns empty, try a broader or different query. If one feed URL is down, try another source from the RSS feeds table.
+3. **Only report failure after exhausting alternatives** — and when you do, give a clean human-readable message (e.g., "I couldn't find any recent news on that topic"), not a traceback or raw CLI output.
+
+This is especially important when the agent is responding through messaging platforms (Telegram, Slack, etc.) where raw exec failures look broken.
+
+## Common Mistakes
+
+**These are the ONLY valid commands.** Do not invent or guess command names:
+- `fetch_feed`
+- `fetch_items`
+
+**Commands that DO NOT exist** (commonly hallucinated):
+- ~~`get_latest_news`~~ / ~~`get_news`~~ — use `fetch_items(google_news=True, query="...", limit=10)`.
+- ~~`search_news`~~ — use `fetch_items` with `google_news=True` and a `query` parameter.
+- ~~`get_headlines`~~ — use `fetch_feed` with an RSS URL or `fetch_items` with Google News.
+
+**Other common mistakes:**
+- Using `google_news=True` without a `query` — Google News requires a search query.
+- Using `url` and `google_news=True` together — they are mutually exclusive. Use `url` for specific RSS feeds, or `google_news=True` + `query` for Google News searches.
+- Forgetting `sort_by_date=True` when the user wants recent articles — without it, results may be in relevance order, not chronological.
+
+If you're unsure whether a command exists, check this list. Do not try commands that aren't listed above.
 
 ## Troubleshooting
 

@@ -141,6 +141,44 @@ User: "Show me the price history for this NBA game"
 2. Call `get_market_candlesticks(series_ticker="KXNBA", ticker="...", start_ts=..., end_ts=..., period_interval=60)`
 3. Present OHLC data with volume
 
+## Error Handling
+
+When a command fails (invalid ticker, no open markets, network error, etc.), **do not surface the raw error to the user**. Instead:
+
+1. **Catch it silently** — treat the failure as an exploratory miss, not a fatal error.
+2. **Try alternatives** — if a series ticker returns no results, call `get_series_list()` to discover available tickers. If an event ticker is invalid, use `get_events(series_ticker="...")` to find valid events. If markets are empty for a sport, check `get_sports_filters()` for available categories.
+3. **Only report failure after exhausting alternatives** — and when you do, give a clean human-readable message (e.g., "No open markets found for that sport on Kalshi right now"), not a traceback or raw CLI output.
+
+This is especially important when the agent is responding through messaging platforms (Telegram, Slack, etc.) where raw exec failures look broken.
+
+## Common Mistakes
+
+**These are the ONLY valid commands.** Do not invent or guess command names:
+- `get_exchange_status`
+- `get_exchange_schedule`
+- `get_series_list`
+- `get_series`
+- `get_events`
+- `get_event`
+- `get_markets`
+- `get_market`
+- `get_trades`
+- `get_market_candlesticks`
+- `get_sports_filters`
+
+**Commands that DO NOT exist** (commonly hallucinated):
+- ~~`get_odds`~~ / ~~`get_probability`~~ — market prices ARE the implied probability. Use `get_market(ticker="...")` and read the `last_price` field (e.g., 20 = 20% implied probability).
+- ~~`get_market_odds`~~ — use `get_market` or `get_markets` and interpret `last_price` as probability.
+- ~~`search_markets`~~ — Kalshi has no search endpoint. Use `get_events(series_ticker="...")` or `get_markets(series_ticker="...")` to filter by sport.
+- ~~`get_series_by_sport`~~ — use `get_series_list()` and filter, or check the Common Series Tickers table.
+
+**Other common mistakes:**
+- Confusing "Football" (NFL) with "Soccer" on Kalshi — see the Common Series Tickers table.
+- Guessing series or event tickers instead of discovering them via `get_series_list()` or `get_events()`.
+- Forgetting `status="open"` when querying markets — without it, results include settled/closed markets mixed with active ones.
+
+If you're unsure whether a command exists, check this list. Do not try commands that aren't listed above.
+
 ## Troubleshooting
 
 - **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills`. If pip fails with a Python version error, you need Python 3.10+ — see Setup section.
