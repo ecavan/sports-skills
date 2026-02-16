@@ -1,5 +1,6 @@
 import gzip
 import json
+import logging
 import re
 import time
 import threading
@@ -7,6 +8,8 @@ import urllib.request
 import urllib.error
 import urllib.parse
 from datetime import datetime, timedelta
+
+logger = logging.getLogger("sports_skills.football")
 
 
 # ============================================================
@@ -170,49 +173,126 @@ _tm_rate_limiter = _RateLimiter(max_tokens=2, refill_rate=2.0 / 60.0)
 
 
 # ============================================================
-# HTTP Helpers
+# HTTP Helpers — Retry, Error Handling, Request Functions
 # ============================================================
 
 _USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 
+# HTTP status codes worth retrying (transient server/infra errors)
+_RETRYABLE_CODES = {429, 500, 502, 503, 504}
+
+# Default retry config
+_MAX_RETRIES = 2          # up to 2 retries (3 total attempts)
+_RETRY_BASE_DELAY = 1.0   # 1s, 2s (exponential)
+_RETRY_MAX_DELAY = 4.0    # cap delay at 4s
+
+
+def _is_retryable(exc):
+    """Check if an exception is worth retrying (transient failures only)."""
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code in _RETRYABLE_CODES
+    # Timeouts, connection resets, DNS failures — all transient
+    if isinstance(exc, (urllib.error.URLError, OSError, TimeoutError)):
+        return True
+    return False
+
+
+def _http_fetch(url, headers=None, rate_limiter=None, timeout=30,
+                max_retries=_MAX_RETRIES, decode_gzip=False):
+    """Core HTTP fetch with retry + exponential backoff.
+
+    Returns (data_bytes, None) on success or (None, error_dict) on failure.
+    Only retries on transient errors (5xx, 429, timeouts, connection errors).
+    Client errors (4xx except 429) fail immediately.
+    """
+    last_error = None
+    for attempt in range(1 + max_retries):
+        if rate_limiter:
+            rate_limiter.acquire()
+        req = urllib.request.Request(url)
+        for key, value in (headers or {}).items():
+            req.add_header(key, value)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = resp.read()
+                if decode_gzip and resp.headers.get("Content-Encoding") == "gzip":
+                    raw = gzip.decompress(raw)
+                return raw, None
+        except urllib.error.HTTPError as e:
+            body = ""
+            try:
+                body = e.read().decode() if e.fp else ""
+            except Exception:
+                pass
+            last_error = {"error": True, "status_code": e.code, "message": body}
+            if not _is_retryable(e):
+                # Client error (400, 401, 403, 404) — don't retry
+                logger.debug("HTTP %d (non-retryable) for %s", e.code, url)
+                return None, last_error
+            logger.debug("HTTP %d (retryable, attempt %d/%d) for %s",
+                         e.code, attempt + 1, 1 + max_retries, url)
+        except Exception as e:
+            last_error = {"error": True, "message": str(e)}
+            if not _is_retryable(e):
+                logger.debug("Non-retryable error for %s: %s", url, e)
+                return None, last_error
+            logger.debug("Retryable error (attempt %d/%d) for %s: %s",
+                         attempt + 1, 1 + max_retries, url, e)
+
+        # Exponential backoff before retry
+        if attempt < max_retries:
+            delay = min(_RETRY_BASE_DELAY * (2 ** attempt), _RETRY_MAX_DELAY)
+            # Extra backoff for 429 rate limits
+            if isinstance(last_error, dict) and last_error.get("status_code") == 429:
+                delay = min(delay * 2, _RETRY_MAX_DELAY * 2)
+            time.sleep(delay)
+
+    if max_retries > 0:
+        logger.warning("All %d attempts failed for %s: %s",
+                       1 + max_retries, url, last_error.get("message", ""))
+    else:
+        logger.debug("Request failed for %s: %s", url, last_error.get("message", ""))
+    return None, last_error
+
 
 def _fd_request(endpoint, api_key, params=None):
     """football-data.org API (rate-limited, requires API key)."""
-    _fd_rate_limiter.acquire()
     url = f"https://api.football-data.org/v4{endpoint}"
     if params:
         url += "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url)
-    req.add_header("X-Auth-Token", api_key)
+    headers = {"X-Auth-Token": api_key}
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_fd_rate_limiter)
+    if err:
+        return err
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode())
-    except urllib.error.HTTPError as e:
-        body = e.read().decode() if e.fp else ""
-        return {"error": True, "status_code": e.code, "message": body}
-    except Exception as e:
-        return {"error": True, "message": str(e)}
+        return json.loads(raw.decode())
+    except (json.JSONDecodeError, ValueError) as e:
+        return {"error": True, "message": f"JSON parse error: {e}"}
 
 
-def _espn_request(league_slug, resource="scoreboard", params=None):
-    """ESPN public API (no auth required). Rate-limited, cached."""
+def _espn_request(league_slug, resource="scoreboard", params=None, max_retries=_MAX_RETRIES):
+    """ESPN public API (no auth required). Rate-limited, cached.
+
+    Set max_retries=0 for exploratory requests (e.g. probing multiple leagues).
+    """
     cache_key = f"espn:{league_slug}:{resource}:{json.dumps(params or {}, sort_keys=True)}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
-    _espn_rate_limiter.acquire()
     url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{league_slug}/{resource}"
     if params:
         url += "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url)
-    req.add_header("User-Agent", _USER_AGENT)
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_espn_rate_limiter,
+                           max_retries=max_retries)
+    if err:
+        return err
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode())
+        data = json.loads(raw.decode())
         _cache_set(cache_key, data, ttl=120)
         return data
-    except Exception:
-        return {"error": True}
+    except (json.JSONDecodeError, ValueError):
+        return {"error": True, "message": "ESPN returned invalid JSON"}
 
 
 def _espn_web_request(league_slug, resource, params=None):
@@ -221,58 +301,71 @@ def _espn_web_request(league_slug, resource, params=None):
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
-    _espn_rate_limiter.acquire()
     url = f"https://site.web.api.espn.com/apis/v2/sports/soccer/{league_slug}/{resource}"
     if params:
         url += "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url)
-    req.add_header("User-Agent", _USER_AGENT)
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_espn_rate_limiter)
+    if err:
+        return err
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode())
+        data = json.loads(raw.decode())
         _cache_set(cache_key, data, ttl=300)
         return data
-    except Exception:
-        return {"error": True}
+    except (json.JSONDecodeError, ValueError):
+        return {"error": True, "message": "ESPN web API returned invalid JSON"}
 
 
-def _espn_summary(league_slug, event_id):
-    """ESPN match summary endpoint (rich data: stats, lineups, player stats)."""
+def _espn_summary(league_slug, event_id, max_retries=_MAX_RETRIES):
+    """ESPN match summary endpoint (rich data: stats, lineups, player stats).
+
+    Returns parsed JSON dict on success, None on failure.
+    Set max_retries=0 for exploratory requests (e.g. probing multiple leagues).
+    """
     if not league_slug or not event_id:
         return None
     cache_key = f"espn_summary:{league_slug}:{event_id}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached if cached else None
-    _espn_rate_limiter.acquire()
     url = (
         f"https://site.web.api.espn.com/apis/site/v2/sports/soccer"
         f"/{league_slug}/summary?event={event_id}"
     )
-    req = urllib.request.Request(url)
-    req.add_header("User-Agent", _USER_AGENT)
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_espn_rate_limiter,
+                           max_retries=max_retries)
+    if err:
+        logger.debug("ESPN summary failed for %s/%s: %s", league_slug, event_id,
+                      err.get("message", ""))
+        _cache_set(cache_key, {}, ttl=60)
+        return None
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode())
+        data = json.loads(raw.decode())
         _cache_set(cache_key, data, ttl=300)
         return data
-    except Exception:
+    except (json.JSONDecodeError, ValueError):
         _cache_set(cache_key, {}, ttl=60)
         return None
 
 
 def _understat_html(url):
-    """Fetch Understat HTML page (for embedded match_info parsing)."""
+    """Fetch Understat HTML page (for embedded match_info parsing).
+
+    Returns HTML string on success, None on failure.
+    """
     cache_key = f"ustat_html:{url}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached if cached else None
-    _understat_rate_limiter.acquire()
-    req = urllib.request.Request(url)
-    req.add_header("User-Agent", _USER_AGENT)
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_understat_rate_limiter)
+    if err:
+        logger.debug("Understat HTML failed for %s: %s", url, err.get("message", ""))
+        _cache_set(cache_key, "", ttl=60)
+        return None
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            html = resp.read().decode()
+        html = raw.decode()
         _cache_set(cache_key, html, ttl=600)
         return html
     except Exception:
@@ -281,67 +374,82 @@ def _understat_html(url):
 
 
 def _understat_api(path, ttl=300):
-    """Fetch JSON from Understat AJAX API (requires X-Requested-With header)."""
+    """Fetch JSON from Understat AJAX API (requires X-Requested-With header).
+
+    Returns parsed JSON on success, None on failure.
+    """
     cache_key = f"ustat_api:{path}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached if cached else None
-    _understat_rate_limiter.acquire()
     url = f"https://understat.com{path}"
-    req = urllib.request.Request(url)
-    req.add_header("User-Agent", _USER_AGENT)
-    req.add_header("X-Requested-With", "XMLHttpRequest")
-    req.add_header("Accept-Encoding", "gzip, deflate")
+    headers = {
+        "User-Agent": _USER_AGENT,
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept-Encoding": "gzip, deflate",
+    }
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_understat_rate_limiter,
+                           decode_gzip=True)
+    if err:
+        logger.debug("Understat API failed for %s: %s", path, err.get("message", ""))
+        _cache_set(cache_key, "", ttl=60)
+        return None
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            raw = resp.read()
-            if resp.headers.get("Content-Encoding") == "gzip":
-                raw = gzip.decompress(raw)
-            data = json.loads(raw.decode())
+        data = json.loads(raw.decode())
         _cache_set(cache_key, data, ttl=ttl)
         return data
-    except Exception:
+    except (json.JSONDecodeError, ValueError):
         _cache_set(cache_key, "", ttl=60)
         return None
 
 
 def _fpl_request(endpoint, ttl=300):
-    """FPL API (fantasy.premierleague.com). No auth, cached, rate-limited."""
+    """FPL API (fantasy.premierleague.com). No auth, cached, rate-limited.
+
+    Returns parsed JSON on success, None on failure.
+    """
     cache_key = f"fpl:{endpoint}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached if cached else None
-    _fpl_rate_limiter.acquire()
     url = f"https://fantasy.premierleague.com/api{endpoint}"
-    req = urllib.request.Request(url)
-    req.add_header("User-Agent", _USER_AGENT)
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_fpl_rate_limiter)
+    if err:
+        logger.debug("FPL request failed for %s: %s", endpoint, err.get("message", ""))
+        _cache_set(cache_key, "", ttl=60)
+        return None
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode())
+        data = json.loads(raw.decode())
         _cache_set(cache_key, data, ttl=ttl)
         return data
-    except Exception:
+    except (json.JSONDecodeError, ValueError):
         _cache_set(cache_key, "", ttl=60)
         return None
 
 
 def _tm_request(endpoint, ttl=3600):
-    """Transfermarkt ceapi (no auth, JSON). Cached, conservative rate limit."""
+    """Transfermarkt ceapi (no auth, JSON). Cached, conservative rate limit.
+
+    Returns parsed JSON on success, None on failure.
+    """
     cache_key = f"tm:{endpoint}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached if cached else None
-    _tm_rate_limiter.acquire()
     url = f"https://www.transfermarkt.com{endpoint}"
-    req = urllib.request.Request(url)
-    req.add_header("User-Agent", _USER_AGENT)
-    req.add_header("Accept", "application/json")
+    headers = {"User-Agent": _USER_AGENT, "Accept": "application/json"}
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_tm_rate_limiter)
+    if err:
+        logger.debug("Transfermarkt request failed for %s: %s", endpoint,
+                      err.get("message", ""))
+        _cache_set(cache_key, "", ttl=60)
+        return None
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode())
+        data = json.loads(raw.decode())
         _cache_set(cache_key, data, ttl=ttl)
         return data
-    except Exception:
+    except (json.JSONDecodeError, ValueError):
         _cache_set(cache_key, "", ttl=60)
         return None
 
@@ -425,12 +533,12 @@ def _resolve_espn_event(event_id, params):
         league = LEAGUES.get(comp_slug)
         if league and league.get("espn"):
             return league["espn"], eid
-    # 4. Try all leagues as last resort (check scoreboard for the event)
+    # 4. Try all leagues as last resort (skip retries when probing)
     for slug, league in LEAGUES.items():
         espn_slug = league.get("espn")
         if not espn_slug:
             continue
-        summary = _espn_summary(espn_slug, eid)
+        summary = _espn_summary(espn_slug, eid, max_retries=0)
         if summary and summary.get("header"):
             return espn_slug, eid
     return None, eid
@@ -1889,8 +1997,10 @@ def get_team_profile(params):
                 leagues_to_try.append(league["espn"])
         if not leagues_to_try:
             leagues_to_try = [lg["espn"] for lg in LEAGUES.values() if lg.get("espn")]
+        # Skip retries when probing multiple leagues (ESPN returns 500 for wrong league)
+        probe_retries = 0 if len(leagues_to_try) > 1 else _MAX_RETRIES
         for espn_slug in leagues_to_try:
-            data = _espn_request(espn_slug, f"teams/{tid}")
+            data = _espn_request(espn_slug, f"teams/{tid}", max_retries=probe_retries)
             if data.get("error"):
                 continue
             team_data = data.get("team", data)
@@ -2117,16 +2227,33 @@ def get_team_schedule(params):
             leagues_to_try.append((_, league))
     if not leagues_to_try:
         leagues_to_try = [(s, lg) for s, lg in LEAGUES.items() if lg.get("espn")]
+    # When probing multiple leagues, skip retries (ESPN returns 500 for wrong league)
+    probe_retries = 0 if len(leagues_to_try) > 1 else _MAX_RETRIES
     for slug, league in leagues_to_try:
         espn_slug = league["espn"]
         espn_params = {"season": str(season_year)} if season_year else {}
-        data = _espn_request(espn_slug, f"teams/{tid}/schedule", espn_params)
+        # Fetch past results
+        data = _espn_request(espn_slug, f"teams/{tid}/schedule", espn_params,
+                             max_retries=probe_retries)
         if data.get("error"):
             continue
         events_raw = data.get("events", [])
+        # Fetch upcoming fixtures (ESPN requires fixture=true separately)
+        fixture_params = {**espn_params, "fixture": "true"}
+        fixture_data = _espn_request(espn_slug, f"teams/{tid}/schedule", fixture_params,
+                                     max_retries=probe_retries)
+        if not fixture_data.get("error"):
+            fixture_events = fixture_data.get("events", [])
+            # Merge, dedup by event ID
+            seen_ids = {e.get("id", "") for e in events_raw}
+            for fe in fixture_events:
+                if fe.get("id", "") not in seen_ids:
+                    events_raw.append(fe)
+                    seen_ids.add(fe.get("id", ""))
         if not events_raw:
             continue
         events = [_normalize_espn_event(e, slug) for e in events_raw]
+        events.sort(key=lambda e: e.get("start_time", ""))
         team_data = {}
         if events and events[0].get("competitors"):
             for comp in events[0]["competitors"]:
