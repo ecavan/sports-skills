@@ -877,8 +877,9 @@ def get_teammate_comparison(request_data):
 
                     drivers.append({'code': drv, 'grid': grid, 'pos': pos, 'pts': pts, 'avg_pace': avg_pace})
 
-                # H2H for this race
+                # H2H for this race — sort by driver code for consistent ordering
                 if len(drivers) >= 2:
+                    drivers.sort(key=lambda x: x['code'])
                     d1, d2 = drivers[0], drivers[1]
                     # Qualifying H2H
                     if d1['grid'] < d2['grid']:
@@ -892,8 +893,6 @@ def get_teammate_comparison(request_data):
                     elif d2['pos'] < d1['pos']:
                         h2h_race[d2['code']] += 1
 
-                    # Qualifying gap (seconds) — try to get from Q session
-                    quali_gap = None
                     pace_gap = None
                     if d1['avg_pace'] and d2['avg_pace']:
                         pace_gap = round(d1['avg_pace'] - d2['avg_pace'], 3)
