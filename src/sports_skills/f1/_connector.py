@@ -25,6 +25,22 @@ def _format_timedelta(td):
         return f"{seconds:.3f}"
 
 
+def _validate_event(year, event_name):
+    """Validate that event_name matches an actual event. Returns the exact event name or raises ValueError."""
+    schedule = fastf1.get_event_schedule(year)
+    real_events = schedule[schedule['EventFormat'] != 'testing']
+    exact = real_events[real_events['EventName'].str.lower() == event_name.lower()]
+    if not exact.empty:
+        return exact.iloc[0]['EventName']
+    # Try substring match
+    partial = real_events[real_events['EventName'].str.lower().str.contains(event_name.lower())]
+    if len(partial) == 1:
+        return partial.iloc[0]['EventName']
+    # No valid match — list available events
+    available = ', '.join(real_events['EventName'].tolist())
+    raise ValueError(f"Event '{event_name}' not found in {year} calendar. Available events: {available}")
+
+
 def get_session_data(request_data):
     try:
         params = request_data.get('params', {})
@@ -33,6 +49,7 @@ def get_session_data(request_data):
         event = params.get('session_name', 'Monza')
         session_type = params.get('session_type', 'Q')
 
+        event = _validate_event(year, event)
         session = fastf1.get_session(year, event, session_type)
 
         session.load()
@@ -56,46 +73,64 @@ def get_session_data(request_data):
 
 
 def get_driver_info(request_data):
+    """Get driver info by loading the last race session of the season and extracting from results."""
     try:
         params = request_data.get('params', {})
 
         year = params.get('year', 2023)
         driver = params.get('driver')
 
-        if not driver:
-            drivers = fastf1.api.driver_info(year=year)
-            drivers_list = []
+        # Get the schedule and find the last completed race
+        schedule = fastf1.get_event_schedule(year)
+        races = schedule[schedule['EventFormat'] != 'testing']
 
-            for _, row in drivers.iterrows():
-                drivers_list.append({
-                    "driver_number": row.get('DriverNumber', ''),
-                    "driver_id": row.get('DriverId', ''),
-                    "driver_code": row.get('Abbreviation', ''),
-                    "first_name": row.get('FirstName', ''),
-                    "last_name": row.get('LastName', ''),
-                    "full_name": row.get('FullName', ''),
-                    "team_name": row.get('TeamName', '')
-                })
+        # Load the last race to get driver info from results
+        last_race = races.iloc[-1]['EventName']
+        session = fastf1.get_session(year, last_race, 'R')
+        session.load()
+        results = session.results
 
-            return {"status": True, "data": drivers_list, "message": f"Driver information for {year} retrieved successfully"}
-        else:
-            driver_info = fastf1.api.driver_info(driver=driver, year=year)
+        if driver:
+            # Filter by driver code or name
+            driver_upper = driver.upper()
+            match = results[
+                (results['Abbreviation'].str.upper() == driver_upper) |
+                (results['FullName'].str.lower().str.contains(driver.lower()))
+            ]
+            if match.empty:
+                return {"status": False, "data": None, "message": f"No information found for driver '{driver}' in {year}"}
 
-            if driver_info.empty:
-                return {"status": False, "data": None, "message": f"No information found for driver {driver} in {year}"}
-
-            row = driver_info.iloc[0]
+            row = match.iloc[0]
             driver_data = {
-                "driver_number": row.get('DriverNumber', ''),
+                "driver_number": str(row.get('DriverNumber', '')),
                 "driver_id": row.get('DriverId', ''),
                 "driver_code": row.get('Abbreviation', ''),
                 "first_name": row.get('FirstName', ''),
                 "last_name": row.get('LastName', ''),
                 "full_name": row.get('FullName', ''),
-                "team_name": row.get('TeamName', '')
+                "team_name": row.get('TeamName', ''),
+                "team_color": row.get('TeamColor', ''),
+                "headshot_url": row.get('HeadshotUrl', ''),
+                "country_code": row.get('CountryCode', '')
             }
+            return {"status": True, "data": [driver_data], "message": f"Driver information for {driver} in {year} retrieved successfully"}
+        else:
+            drivers_list = []
+            for _, row in results.iterrows():
+                drivers_list.append({
+                    "driver_number": str(row.get('DriverNumber', '')),
+                    "driver_id": row.get('DriverId', ''),
+                    "driver_code": row.get('Abbreviation', ''),
+                    "first_name": row.get('FirstName', ''),
+                    "last_name": row.get('LastName', ''),
+                    "full_name": row.get('FullName', ''),
+                    "team_name": row.get('TeamName', ''),
+                    "team_color": row.get('TeamColor', ''),
+                    "headshot_url": row.get('HeadshotUrl', ''),
+                    "country_code": row.get('CountryCode', '')
+                })
 
-            return {"status": True, "data": driver_data, "message": f"Driver information for {driver} in {year} retrieved successfully"}
+            return {"status": True, "data": drivers_list, "message": f"Driver information for {year} retrieved successfully"}
 
     except Exception as e:
         return {
@@ -106,38 +141,58 @@ def get_driver_info(request_data):
 
 
 def get_team_info(request_data):
+    """Get team info by loading the last race session of the season and extracting unique teams from results."""
     try:
         params = request_data.get('params', {})
 
         year = params.get('year', 2023)
         team = params.get('team')
 
-        if not team:
-            teams = fastf1.api.team_info(year=year)
-            teams_list = []
+        # Get the schedule and find the last completed race
+        schedule = fastf1.get_event_schedule(year)
+        races = schedule[schedule['EventFormat'] != 'testing']
 
-            for _, row in teams.iterrows():
-                teams_list.append({
-                    "team_id": row.get('TeamId', ''),
-                    "team_name": row.get('TeamName', ''),
-                    "nationality": row.get('Nationality', '')
-                })
+        last_race = races.iloc[-1]['EventName']
+        session = fastf1.get_session(year, last_race, 'R')
+        session.load()
+        results = session.results
 
-            return {"status": True, "data": teams_list, "message": f"Team information for {year} retrieved successfully"}
-        else:
-            team_info = fastf1.api.team_info(team=team, year=year)
+        # Extract unique teams
+        seen_teams = set()
+        teams_list = []
+        for _, row in results.iterrows():
+            team_id = row.get('TeamId', '')
+            if team_id in seen_teams:
+                continue
+            seen_teams.add(team_id)
 
-            if team_info.empty:
-                return {"status": False, "data": None, "message": f"No information found for team {team} in {year}"}
-
-            row = team_info.iloc[0]
             team_data = {
-                "team_id": row.get('TeamId', ''),
+                "team_id": team_id,
                 "team_name": row.get('TeamName', ''),
-                "nationality": row.get('Nationality', '')
+                "team_color": row.get('TeamColor', ''),
+                "drivers": []
             }
 
-            return {"status": True, "data": team_data, "message": f"Team information for {team} in {year} retrieved successfully"}
+            # Collect all drivers for this team
+            team_drivers = results[results['TeamId'] == team_id]
+            for _, d in team_drivers.iterrows():
+                team_data["drivers"].append({
+                    "driver_code": d.get('Abbreviation', ''),
+                    "full_name": d.get('FullName', ''),
+                    "driver_number": str(d.get('DriverNumber', ''))
+                })
+
+            teams_list.append(team_data)
+
+        if team:
+            team_lower = team.lower()
+            match = [t for t in teams_list if team_lower in t['team_name'].lower() or team_lower in t['team_id'].lower()]
+            if not match:
+                available = ', '.join(t['team_name'] for t in teams_list)
+                return {"status": False, "data": None, "message": f"No information found for team '{team}' in {year}. Available teams: {available}"}
+            return {"status": True, "data": match, "message": f"Team information for {team} in {year} retrieved successfully"}
+
+        return {"status": True, "data": teams_list, "message": f"Team information for {year} retrieved successfully"}
 
     except Exception as e:
         return {
@@ -187,6 +242,7 @@ def get_lap_data(request_data):
         session_type = params.get('session_type', 'R')
         driver = params.get('driver')
 
+        event = _validate_event(year, event)
         session = fastf1.get_session(year, event, session_type)
         session.load()
 
@@ -252,6 +308,7 @@ def get_race_results(request_data):
         year = int(params.get('year', 2023))
         event = params.get('event', 'Monza')
 
+        event = _validate_event(year, event)
         session = fastf1.get_session(year, event, 'R')
         session.load()
 
