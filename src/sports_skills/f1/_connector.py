@@ -673,6 +673,431 @@ def get_season_stats(request_data):
         return {"status": False, "data": f"Error: {str(e)}", "message": "Error getting season stats"}
 
 
+def get_team_comparison(request_data):
+    """Compare two teams head-to-head: qualifying, race pace, sectors, points."""
+    try:
+        params = request_data.get('params', {})
+        year = int(params.get('year', 2025))
+        team1 = params.get('team1', '')
+        team2 = params.get('team2', '')
+        event = params.get('event')
+
+        if event:
+            event = _validate_event(year, event)
+            race_names = [event]
+        else:
+            race_names = _get_completed_races(year)
+
+        def _match_team(team_name, query):
+            return query.lower() in team_name.lower()
+
+        t1_stats = {'points': 0, 'wins': 0, 'podiums': 0, 'poles': 0, 'best_quali': 99, 'best_race': 99,
+                     'sector1_times': [], 'sector2_times': [], 'sector3_times': [], 'race_paces': [],
+                     'team_name': '', 'drivers': set(), 'quali_positions': [], 'race_positions': []}
+        t2_stats = {'points': 0, 'wins': 0, 'podiums': 0, 'poles': 0, 'best_quali': 99, 'best_race': 99,
+                     'sector1_times': [], 'sector2_times': [], 'sector3_times': [], 'race_paces': [],
+                     'team_name': '', 'drivers': set(), 'quali_positions': [], 'race_positions': []}
+        per_race = []
+
+        for race_name in race_names:
+            try:
+                session = _load_session_cached(year, race_name)
+                results = session.results
+                laps = session.laps
+
+                race_entry = {'race': race_name, 'team1': {}, 'team2': {}}
+                for stats, query in [(t1_stats, team1), (t2_stats, team2)]:
+                    team_key = 'team1' if query == team1 else 'team2'
+                    team_results = results[results['TeamName'].apply(lambda x: _match_team(x, query))]
+                    if team_results.empty:
+                        continue
+                    stats['team_name'] = team_results.iloc[0].get('TeamName', '')
+
+                    race_pts = 0
+                    best_pos = 99
+                    best_grid = 99
+                    for _, row in team_results.iterrows():
+                        drv = row.get('Abbreviation', '')
+                        stats['drivers'].add(drv)
+                        pts = float(row.get('Points', 0)) if pd.notna(row.get('Points')) else 0
+                        pos = int(row.get('Position', 99)) if pd.notna(row.get('Position')) else 99
+                        grid = int(row.get('GridPosition', 99)) if pd.notna(row.get('GridPosition')) else 99
+
+                        race_pts += pts
+                        stats['points'] += pts
+                        if pos == 1:
+                            stats['wins'] += 1
+                        if pos <= 3:
+                            stats['podiums'] += 1
+                        if grid == 1:
+                            stats['poles'] += 1
+                        if grid < best_grid:
+                            best_grid = grid
+                        if pos < best_pos:
+                            best_pos = pos
+                        if grid < stats['best_quali']:
+                            stats['best_quali'] = grid
+                        if pos < stats['best_race']:
+                            stats['best_race'] = pos
+                        stats['quali_positions'].append(grid)
+                        stats['race_positions'].append(pos)
+
+                    race_entry[team_key] = {'points': race_pts, 'best_finish': best_pos, 'best_grid': best_grid}
+
+                    # Sector and pace analysis from laps
+                    team_laps = laps[laps['Team'].apply(lambda x: _match_team(x, query))]
+                    accurate = team_laps[team_laps['LapTime'].notna() & team_laps['IsAccurate']]
+                    if not accurate.empty:
+                        avg_pace = accurate['LapTime'].mean().total_seconds()
+                        stats['race_paces'].append(avg_pace)
+                        race_entry[team_key]['avg_pace'] = round(avg_pace, 3)
+
+                        for col, key in [('Sector1Time', 'sector1_times'), ('Sector2Time', 'sector2_times'), ('Sector3Time', 'sector3_times')]:
+                            valid = accurate[col].dropna()
+                            if not valid.empty:
+                                avg_s = valid.mean().total_seconds()
+                                stats[key].append(avg_s)
+
+                per_race.append(race_entry)
+
+            except Exception:
+                continue
+
+        def _build_summary(stats):
+            avg_quali = round(sum(stats['quali_positions']) / len(stats['quali_positions']), 1) if stats['quali_positions'] else None
+            avg_race = round(sum(stats['race_positions']) / len(stats['race_positions']), 1) if stats['race_positions'] else None
+            avg_pace = round(sum(stats['race_paces']) / len(stats['race_paces']), 3) if stats['race_paces'] else None
+            return {
+                'team': stats['team_name'],
+                'drivers': sorted(stats['drivers']),
+                'points': stats['points'],
+                'wins': stats['wins'],
+                'podiums': stats['podiums'],
+                'poles': stats['poles'],
+                'best_qualifying': stats['best_quali'] if stats['best_quali'] < 99 else None,
+                'best_finish': stats['best_race'] if stats['best_race'] < 99 else None,
+                'avg_qualifying_position': avg_quali,
+                'avg_race_position': avg_race,
+                'avg_race_pace_seconds': avg_pace,
+                'avg_sector1': round(sum(stats['sector1_times']) / len(stats['sector1_times']), 3) if stats['sector1_times'] else None,
+                'avg_sector2': round(sum(stats['sector2_times']) / len(stats['sector2_times']), 3) if stats['sector2_times'] else None,
+                'avg_sector3': round(sum(stats['sector3_times']) / len(stats['sector3_times']), 3) if stats['sector3_times'] else None,
+            }
+
+        return {
+            "status": True,
+            "data": {
+                "team1": _build_summary(t1_stats),
+                "team2": _build_summary(t2_stats),
+                "per_race": per_race,
+                "races_compared": len(race_names)
+            },
+            "message": f"Team comparison for {year}" + (f" {event}" if event else " (full season)")
+        }
+
+    except Exception as e:
+        return {"status": False, "data": f"Error: {str(e)}", "message": "Error comparing teams"}
+
+
+def get_teammate_comparison(request_data):
+    """Compare teammates within the same team: qualifying H2H, race H2H, pace delta."""
+    try:
+        params = request_data.get('params', {})
+        year = int(params.get('year', 2025))
+        team = params.get('team', '')
+        event = params.get('event')
+
+        if event:
+            event = _validate_event(year, event)
+            race_names = [event]
+        else:
+            race_names = _get_completed_races(year)
+
+        def _match_team(team_name, query):
+            return query.lower() in team_name.lower()
+
+        # Collect per-race data for both drivers
+        driver_stats = {}  # driver_code -> accumulated stats
+        h2h_quali = {}  # driver_code -> count of quali wins
+        h2h_race = {}   # driver_code -> count of race wins
+        per_race = []
+
+        for race_name in race_names:
+            try:
+                session = _load_session_cached(year, race_name)
+                results = session.results
+                laps = session.laps
+
+                team_results = results[results['TeamName'].apply(lambda x: _match_team(x, team))]
+                if len(team_results) < 2:
+                    continue
+
+                drivers = []
+                for _, row in team_results.iterrows():
+                    drv = row.get('Abbreviation', '')
+                    pos = int(row.get('Position', 99)) if pd.notna(row.get('Position')) else 99
+                    grid = int(row.get('GridPosition', 99)) if pd.notna(row.get('GridPosition')) else 99
+                    pts = float(row.get('Points', 0)) if pd.notna(row.get('Points')) else 0
+                    status = row.get('Status', '')
+
+                    if drv not in driver_stats:
+                        driver_stats[drv] = {
+                            'driver_code': drv,
+                            'full_name': row.get('FullName', ''),
+                            'team': row.get('TeamName', ''),
+                            'points': 0, 'wins': 0, 'podiums': 0,
+                            'races': 0, 'dnfs': 0,
+                            'quali_positions': [], 'race_positions': [],
+                            'race_paces': [], 'fastest_laps': []
+                        }
+                        h2h_quali[drv] = 0
+                        h2h_race[drv] = 0
+
+                    ds = driver_stats[drv]
+                    ds['points'] += pts
+                    ds['races'] += 1
+                    if pos == 1:
+                        ds['wins'] += 1
+                    if pos <= 3:
+                        ds['podiums'] += 1
+                    if status not in ('Finished', '+1 Lap', '+2 Laps', '+3 Laps'):
+                        ds['dnfs'] += 1
+                    ds['quali_positions'].append(grid)
+                    ds['race_positions'].append(pos)
+
+                    # Pace from laps
+                    drv_laps = laps[(laps['Driver'] == drv) & laps['LapTime'].notna() & laps['IsAccurate']]
+                    avg_pace = drv_laps['LapTime'].mean().total_seconds() if not drv_laps.empty else None
+                    fastest = drv_laps['LapTime'].min() if not drv_laps.empty else None
+
+                    if avg_pace:
+                        ds['race_paces'].append(avg_pace)
+                    if fastest:
+                        ds['fastest_laps'].append(fastest)
+
+                    drivers.append({'code': drv, 'grid': grid, 'pos': pos, 'pts': pts, 'avg_pace': avg_pace})
+
+                # H2H for this race
+                if len(drivers) >= 2:
+                    d1, d2 = drivers[0], drivers[1]
+                    # Qualifying H2H
+                    if d1['grid'] < d2['grid']:
+                        h2h_quali[d1['code']] += 1
+                    elif d2['grid'] < d1['grid']:
+                        h2h_quali[d2['code']] += 1
+
+                    # Race H2H
+                    if d1['pos'] < d2['pos']:
+                        h2h_race[d1['code']] += 1
+                    elif d2['pos'] < d1['pos']:
+                        h2h_race[d2['code']] += 1
+
+                    # Qualifying gap (seconds) — try to get from Q session
+                    quali_gap = None
+                    pace_gap = None
+                    if d1['avg_pace'] and d2['avg_pace']:
+                        pace_gap = round(d1['avg_pace'] - d2['avg_pace'], 3)
+
+                    per_race.append({
+                        'race': race_name,
+                        'drivers': [
+                            {'driver': d1['code'], 'grid': d1['grid'], 'position': d1['pos'], 'points': d1['pts']},
+                            {'driver': d2['code'], 'grid': d2['grid'], 'position': d2['pos'], 'points': d2['pts']}
+                        ],
+                        'pace_gap_seconds': pace_gap
+                    })
+
+            except Exception:
+                continue
+
+        if not driver_stats:
+            # Validate team name by checking available teams
+            schedule = fastf1.get_event_schedule(year)
+            races = schedule[schedule['EventFormat'] != 'testing']
+            last_race = races.iloc[-1]['EventName']
+            session = fastf1.get_session(year, last_race, 'R')
+            session.load()
+            teams = session.results['TeamName'].unique().tolist()
+            return {"status": False, "data": None,
+                    "message": f"No data found for team '{team}' in {year}. Available teams: {', '.join(teams)}"}
+
+        # Build driver summaries
+        driver_summaries = []
+        for drv, ds in sorted(driver_stats.items(), key=lambda x: x[1]['points'], reverse=True):
+            avg_quali = round(sum(ds['quali_positions']) / len(ds['quali_positions']), 2) if ds['quali_positions'] else None
+            avg_race = round(sum(ds['race_positions']) / len(ds['race_positions']), 2) if ds['race_positions'] else None
+            avg_pace = round(sum(ds['race_paces']) / len(ds['race_paces']), 3) if ds['race_paces'] else None
+            best_lap = min(ds['fastest_laps']) if ds['fastest_laps'] else None
+
+            driver_summaries.append({
+                'driver_code': ds['driver_code'],
+                'full_name': ds['full_name'],
+                'team': ds['team'],
+                'points': ds['points'],
+                'wins': ds['wins'],
+                'podiums': ds['podiums'],
+                'races': ds['races'],
+                'dnfs': ds['dnfs'],
+                'avg_qualifying_position': avg_quali,
+                'avg_race_position': avg_race,
+                'avg_race_pace_seconds': avg_pace,
+                'fastest_lap': _format_timedelta(best_lap),
+                'qualifying_h2h': h2h_quali.get(drv, 0),
+                'race_h2h': h2h_race.get(drv, 0)
+            })
+
+        return {
+            "status": True,
+            "data": {
+                "drivers": driver_summaries,
+                "per_race": per_race,
+                "races_compared": len(per_race)
+            },
+            "message": f"Teammate comparison for {team} in {year}" + (f" {event}" if event else " (full season)")
+        }
+
+    except Exception as e:
+        return {"status": False, "data": f"Error: {str(e)}", "message": "Error comparing teammates"}
+
+
+def get_tire_analysis(request_data):
+    """Tire strategy and degradation analysis: compound usage, stint lengths, deg rates."""
+    try:
+        params = request_data.get('params', {})
+        year = int(params.get('year', 2025))
+        event = params.get('event')
+        driver = params.get('driver')
+
+        if event:
+            event = _validate_event(year, event)
+            race_names = [event]
+        else:
+            race_names = _get_completed_races(year)
+
+        compound_stats = {}  # compound -> {laps, stints, deg data}
+        strategy_counts = {}  # strategy string -> count
+        driver_stints = []
+
+        for race_name in race_names:
+            try:
+                session = _load_session_cached(year, race_name)
+                laps = session.laps.copy()
+
+                if driver:
+                    laps = laps[laps['Driver'].str.upper() == driver.upper()]
+
+                for drv in laps['Driver'].unique():
+                    dl = laps[laps['Driver'] == drv].sort_values('LapNumber')
+                    team = dl['Team'].iloc[0] if not dl.empty else ''
+
+                    # Identify stints by compound changes or pit stops
+                    stints = []
+                    current_stint = None
+                    for _, lap in dl.iterrows():
+                        compound = lap.get('Compound', '')
+                        tyre_life = lap.get('TyreLife', 0)
+                        lap_time = lap.get('LapTime')
+                        lap_num = lap.get('LapNumber', 0)
+
+                        if not compound or pd.isna(compound):
+                            continue
+
+                        tyre_life = int(tyre_life) if pd.notna(tyre_life) else 0
+
+                        # New stint if compound changed or tyre_life reset
+                        if current_stint is None or compound != current_stint['compound'] or (tyre_life == 1 and current_stint['laps'] > 0):
+                            if current_stint:
+                                stints.append(current_stint)
+                            current_stint = {
+                                'compound': compound,
+                                'start_lap': int(lap_num),
+                                'laps': 0,
+                                'lap_times': []
+                            }
+
+                        current_stint['laps'] += 1
+                        if pd.notna(lap_time) and lap.get('IsAccurate', False):
+                            current_stint['lap_times'].append(lap_time.total_seconds())
+
+                    if current_stint:
+                        stints.append(current_stint)
+
+                    # Build strategy string
+                    strategy = '-'.join(s['compound'] for s in stints) if stints else ''
+                    if strategy:
+                        strategy_counts[strategy] = strategy_counts.get(strategy, 0) + 1
+
+                    # Record stint data
+                    for stint in stints:
+                        compound = stint['compound']
+                        if compound not in compound_stats:
+                            compound_stats[compound] = {
+                                'total_laps': 0,
+                                'stint_count': 0,
+                                'stint_lengths': [],
+                                'deg_rates': []
+                            }
+                        cs = compound_stats[compound]
+                        cs['total_laps'] += stint['laps']
+                        cs['stint_count'] += 1
+                        cs['stint_lengths'].append(stint['laps'])
+
+                        # Degradation: linear fit of lap times over the stint
+                        times = stint['lap_times']
+                        if len(times) >= 5:
+                            # Simple degradation: (last 3 avg - first 3 avg) / stint length
+                            first_avg = sum(times[:3]) / 3
+                            last_avg = sum(times[-3:]) / 3
+                            deg_per_lap = (last_avg - first_avg) / max(len(times) - 1, 1)
+                            cs['deg_rates'].append(deg_per_lap)
+
+                        driver_stints.append({
+                            'race': race_name,
+                            'driver': drv,
+                            'team': team,
+                            'compound': compound,
+                            'stint_length': stint['laps'],
+                            'start_lap': stint['start_lap'],
+                            'avg_pace': round(sum(times) / len(times), 3) if times else None,
+                            'deg_per_lap': round((sum(times[-3:]) / 3 - sum(times[:3]) / 3) / max(len(times) - 1, 1), 3) if len(times) >= 5 else None
+                        })
+
+            except Exception:
+                continue
+
+        # Build compound summary
+        compound_summary = []
+        for compound, cs in sorted(compound_stats.items(), key=lambda x: x[1]['total_laps'], reverse=True):
+            avg_stint = round(sum(cs['stint_lengths']) / len(cs['stint_lengths']), 1) if cs['stint_lengths'] else 0
+            avg_deg = round(sum(cs['deg_rates']) / len(cs['deg_rates']), 3) if cs['deg_rates'] else None
+            compound_summary.append({
+                'compound': compound,
+                'total_laps': cs['total_laps'],
+                'stint_count': cs['stint_count'],
+                'avg_stint_length': avg_stint,
+                'max_stint_length': max(cs['stint_lengths']) if cs['stint_lengths'] else 0,
+                'min_stint_length': min(cs['stint_lengths']) if cs['stint_lengths'] else 0,
+                'avg_degradation_per_lap': avg_deg
+            })
+
+        # Top strategies
+        top_strategies = [{'strategy': s, 'count': c} for s, c in sorted(strategy_counts.items(), key=lambda x: x[1], reverse=True)][:10]
+
+        return {
+            "status": True,
+            "data": {
+                "compound_summary": compound_summary,
+                "top_strategies": top_strategies,
+                "stints": driver_stints,
+                "total_stints": len(driver_stints)
+            },
+            "message": f"Tire analysis for {year}" + (f" {event}" if event else " (full season)") + (f" driver {driver}" if driver else "") + " retrieved successfully"
+        }
+
+    except Exception as e:
+        return {"status": False, "data": f"Error: {str(e)}", "message": "Error getting tire analysis"}
+
+
 def get_race_results(request_data):
     try:
         params = request_data.get('params', {})

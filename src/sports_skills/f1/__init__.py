@@ -14,6 +14,9 @@ from sports_skills.f1._connector import (
     get_speed_data as _get_speed_data,
     get_championship_standings as _get_championship_standings,
     get_season_stats as _get_season_stats,
+    get_team_comparison as _get_team_comparison,
+    get_teammate_comparison as _get_teammate_comparison,
+    get_tire_analysis as _get_tire_analysis,
 )
 
 
@@ -118,3 +121,37 @@ def get_season_stats(*, year: int) -> dict:
         year: Season year.
     """
     return _get_season_stats(_req(year=year))
+
+
+def get_team_comparison(*, year: int, team1: str, team2: str, event: str | None = None) -> dict:
+    """Compare two teams head-to-head: qualifying, race pace, sectors, points.
+
+    Args:
+        year: Season year.
+        team1: First team name (e.g., "Red Bull").
+        team2: Second team name (e.g., "McLaren").
+        event: Event name (optional — omit for full season).
+    """
+    return _get_team_comparison(_req(year=year, team1=team1, team2=team2, event=event))
+
+
+def get_teammate_comparison(*, year: int, team: str, event: str | None = None) -> dict:
+    """Compare teammates within the same team: qualifying H2H, race H2H, pace delta.
+
+    Args:
+        year: Season year.
+        team: Team name (e.g., "McLaren").
+        event: Event name (optional — omit for full season).
+    """
+    return _get_teammate_comparison(_req(year=year, team=team, event=event))
+
+
+def get_tire_analysis(*, year: int, event: str | None = None, driver: str | None = None) -> dict:
+    """Tire strategy and degradation analysis: compound usage, stint lengths, deg rates.
+
+    Args:
+        year: Season year.
+        event: Event name (optional — omit for full season).
+        driver: Driver code (optional — omit for all drivers).
+    """
+    return _get_tire_analysis(_req(year=year, event=event, driver=driver))

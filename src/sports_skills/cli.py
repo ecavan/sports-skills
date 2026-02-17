@@ -82,6 +82,9 @@ _REGISTRY = {
         "get_speed_data": {"required": ["year"], "optional": ["event", "driver"]},
         "get_championship_standings": {"required": ["year"]},
         "get_season_stats": {"required": ["year"]},
+        "get_team_comparison": {"required": ["year", "team1", "team2"], "optional": ["event"]},
+        "get_teammate_comparison": {"required": ["year", "team"], "optional": ["event"]},
+        "get_tire_analysis": {"required": ["year"], "optional": ["event", "driver"]},
     },
 }
 

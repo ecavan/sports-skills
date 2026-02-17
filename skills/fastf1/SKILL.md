@@ -90,6 +90,45 @@ Get lap-by-lap timing data.
 - `session_type` (str, optional): Session type. Default: "R"
 - `driver` (str, optional): Driver code. Omit for all drivers.
 
+### get_pit_stops
+Get pit stop durations (PitIn → PitOut) for a race or full season.
+- `year` (int, required): Season year
+- `event` (str, optional): Event name. Omit for full season.
+- `driver` (str, optional): Driver code. Omit for all drivers.
+
+### get_speed_data
+Get speed trap and intermediate speed data for a race or full season.
+- `year` (int, required): Season year
+- `event` (str, optional): Event name. Omit for full season.
+- `driver` (str, optional): Driver code. Omit for all drivers.
+
+### get_championship_standings
+Get driver and constructor championship standings aggregated from all race results.
+- `year` (int, required): Season year
+
+### get_season_stats
+Get aggregated season stats: fastest laps, top speeds, points, wins, podiums per driver/team.
+- `year` (int, required): Season year
+
+### get_team_comparison
+Compare two teams head-to-head: qualifying, race pace, sectors, points.
+- `year` (int, required): Season year
+- `team1` (str, required): First team name (e.g., "Red Bull")
+- `team2` (str, required): Second team name (e.g., "McLaren")
+- `event` (str, optional): Event name. Omit for full season.
+
+### get_teammate_comparison
+Compare teammates within the same team: qualifying H2H, race H2H, pace delta.
+- `year` (int, required): Season year
+- `team` (str, required): Team name (e.g., "McLaren")
+- `event` (str, optional): Event name. Omit for full season.
+
+### get_tire_analysis
+Tire strategy and degradation analysis: compound usage, stint lengths, degradation rates.
+- `year` (int, required): Season year
+- `event` (str, optional): Event name. Omit for full season.
+- `driver` (str, optional): Driver code. Omit for all drivers.
+
 ## Examples
 
 In these examples, `{year}` means the year derived using the rules in "Choosing the Year" above.
@@ -135,12 +174,19 @@ This is especially important when the agent is responding through messaging plat
 - `get_driver_info`
 - `get_team_info`
 - `get_lap_data`
+- `get_pit_stops`
+- `get_speed_data`
+- `get_championship_standings`
+- `get_season_stats`
+- `get_team_comparison`
+- `get_teammate_comparison`
+- `get_tire_analysis`
 
 **Commands that DO NOT exist** (commonly hallucinated):
 - ~~`get_driver_results`~~ — use `get_race_results` and filter by driver, or use `get_lap_data` with the `driver` parameter.
-- ~~`get_standings`~~ / ~~`get_championship_standings`~~ — not available. To approximate standings, call `get_race_results` across multiple events and sum points.
-- ~~`get_fastest_laps`~~ — use `get_lap_data` and find the minimum `lap_time`.
-- ~~`get_tire_strategy`~~ — tire data is embedded in `get_lap_data` results (compound column).
+- ~~`get_standings`~~ — use `get_championship_standings`.
+- ~~`get_fastest_laps`~~ — use `get_lap_data` and find the minimum `lap_time`, or use `get_season_stats` for season-wide fastest laps.
+- ~~`get_tire_strategy`~~ — use `get_tire_analysis` for full tire strategy and degradation data.
 - ~~`get_circuit_info`~~ — circuit details are included in `get_race_schedule` output.
 
 If you're unsure whether a command exists, check this list. Do not try commands that aren't listed above.
