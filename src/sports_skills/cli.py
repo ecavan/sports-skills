@@ -78,6 +78,10 @@ _REGISTRY = {
         "get_race_schedule": {"required": ["year"]},
         "get_lap_data": {"required": ["year", "event"], "optional": ["session_type", "driver"]},
         "get_race_results": {"required": ["year", "event"]},
+        "get_pit_stops": {"required": ["year"], "optional": ["event", "driver"]},
+        "get_speed_data": {"required": ["year"], "optional": ["event", "driver"]},
+        "get_championship_standings": {"required": ["year"]},
+        "get_season_stats": {"required": ["year"]},
     },
 }
 

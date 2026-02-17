@@ -10,6 +10,10 @@ from sports_skills.f1._connector import (
     get_race_schedule as _get_race_schedule,
     get_lap_data as _get_lap_data,
     get_race_results as _get_race_results,
+    get_pit_stops as _get_pit_stops,
+    get_speed_data as _get_speed_data,
+    get_championship_standings as _get_championship_standings,
+    get_season_stats as _get_season_stats,
 )
 
 
@@ -74,3 +78,43 @@ def get_race_results(*, year: int, event: str) -> dict:
         event: Event name (e.g., "Monza").
     """
     return _get_race_results(_req(year=year, event=event))
+
+
+def get_pit_stops(*, year: int, event: str | None = None, driver: str | None = None) -> dict:
+    """Get pit stop durations (PitIn → PitOut) for a race or full season.
+
+    Args:
+        year: Season year.
+        event: Event name (optional — omit for full season).
+        driver: Driver code (optional — omit for all drivers).
+    """
+    return _get_pit_stops(_req(year=year, event=event, driver=driver))
+
+
+def get_speed_data(*, year: int, event: str | None = None, driver: str | None = None) -> dict:
+    """Get speed trap and intermediate speed data for a race or full season.
+
+    Args:
+        year: Season year.
+        event: Event name (optional — omit for full season).
+        driver: Driver code (optional — omit for all drivers).
+    """
+    return _get_speed_data(_req(year=year, event=event, driver=driver))
+
+
+def get_championship_standings(*, year: int) -> dict:
+    """Get driver and constructor championship standings aggregated from all race results.
+
+    Args:
+        year: Season year.
+    """
+    return _get_championship_standings(_req(year=year))
+
+
+def get_season_stats(*, year: int) -> dict:
+    """Get aggregated season stats: fastest laps, top speeds, points, wins, podiums per driver/team.
+
+    Args:
+        year: Season year.
+    """
+    return _get_season_stats(_req(year=year))
