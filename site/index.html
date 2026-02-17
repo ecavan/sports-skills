@@ -89,6 +89,8 @@
       color: var(--white);
       font-weight: 600;
       font-size: 14px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .nav-brand .dot {
@@ -186,6 +188,7 @@
       margin-bottom: 16px;
       transition: border-color 0.2s;
       cursor: pointer;
+      max-width: 100%;
     }
 
     .install-box:hover {
@@ -672,13 +675,59 @@
     }
 
     /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .nav-brand {
+        white-space: nowrap;
+        min-width: 0;
+        font-size: 13px;
+      }
+
+      .nav-links a:not(.nav-cta) {
+        display: none;
+      }
+
+      .install-box {
+        font-size: 12px;
+        padding: 12px 14px;
+        gap: 8px;
+        max-width: 100%;
+      }
+
+      .install-box code {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+      }
+
+      .ascii-divider {
+        overflow: hidden;
+        text-overflow: clip;
+      }
+
+      .step-code {
+        white-space: normal !important;
+        overflow-wrap: break-word;
+        word-break: break-all;
+      }
+
+      .skills-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
     @media (max-width: 640px) {
       nav {
         padding: 12px 16px;
       }
 
       .nav-links {
-        gap: 14px;
+        gap: 10px;
+      }
+
+      .nav-cta {
+        font-size: 11px;
+        padding: 5px 10px;
       }
 
       .container {
@@ -696,6 +745,57 @@
 
       .ascii-art {
         font-size: clamp(3.5px, 2.2vw, 7px);
+      }
+
+      .badges {
+        gap: 6px;
+      }
+
+      .badge {
+        font-size: 10px;
+        padding: 3px 8px;
+      }
+
+      .stat-value {
+        font-size: 22px;
+      }
+
+      .stat {
+        padding: 16px;
+      }
+
+      .cta-section {
+        padding: 60px 0;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .nav-brand {
+        font-size: 12px;
+      }
+
+      .ascii-art {
+        font-size: clamp(2.8px, 2vw, 5px);
+      }
+
+      .install-box {
+        font-size: 11px;
+        padding: 10px 12px;
+      }
+
+      .agent-chip {
+        font-size: 11px;
+        padding: 6px 12px;
+      }
+
+      .agents-row {
+        gap: 8px;
       }
     }
 
@@ -1023,7 +1123,7 @@
               Structured JSON back instantly. No rate limits, no
               auth headers, no pagination headaches.
             </div>
-            <div class="step-code" style="white-space: nowrap;">{ "status": true, "data": { ... } }</div>
+            <div class="step-code">{ "status": true, "data": { ... } }</div>
           </div>
         </div>
 
