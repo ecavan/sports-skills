@@ -55,6 +55,7 @@ ESPN_US_SPORTS = {
     "nba": "basketball/nba",
     "wnba": "basketball/wnba",
     "nhl": "hockey/nhl",
+    "mlb": "baseball/mlb",
 }
 FPL_BASE = "https://fantasy.premierleague.com/api"
 UNDERSTAT_BASE = "https://understat.com"

@@ -25,6 +25,7 @@ A collection of agent skills that wrap **publicly available** sports data source
 - **NBA**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
 - **WNBA**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
 - **NHL**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
+- **MLB**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
 - **Formula 1**: FastF1 open-source library — sessions, lap data, race results
 - **Prediction Markets**: Kalshi and Polymarket public APIs — markets, prices, order books
 - **Sports News**: RSS feeds and Google News — any public feed
@@ -46,6 +47,7 @@ Each skill is a SKILL.md file that any compatible AI agent can load and use imme
 | `nba-data` | NBA | 9 | ESPN |
 | `wnba-data` | WNBA | 9 | ESPN |
 | `nhl-data` | NHL | 9 | ESPN |
+| `mlb-data` | MLB | 9 | ESPN |
 | `fastf1` | Formula 1 | 6 | FastF1 (free library) |
 | `sports-news` | Multi-sport | 2 | Any RSS feed, Google News |
 
@@ -102,6 +104,8 @@ Once installed, your agent can call commands directly:
 
 **Get NHL scores:**
 > "What are today's NHL scores?"
+**Get MLB scores:**
+> "What are today's MLB scores?"
 
 **Check prediction market odds:**
 > "What are the Polymarket odds for the Champions League final?"
@@ -205,6 +209,20 @@ NHL data via ESPN public endpoints. Scores, standings, rosters, schedules, game 
 | `get_game_summary` | Detailed box score and scoring plays |
 | `get_leaders` | Statistical leaders (goals, assists, points) |
 | `get_news` | NHL news articles |
+### mlb-data
+
+MLB data via ESPN public endpoints. Scores, standings, rosters, schedules, game summaries, and more.
+
+| Command | Description |
+|---------|-------------|
+| `get_scoreboard` | Live/recent MLB scores |
+| `get_standings` | Standings by league and division |
+| `get_teams` | All 30 MLB teams |
+| `get_team_roster` | Full roster for a team |
+| `get_team_schedule` | Schedule for a specific team |
+| `get_game_summary` | Detailed box score and scoring plays |
+| `get_leaders` | Statistical leaders (batting avg, home runs, ERA) |
+| `get_news` | MLB news articles |
 | `get_schedule` | Schedule for a date |
 
 ### fastf1
@@ -279,6 +297,7 @@ sports-skills.sh
 │   ├── nba-data/SKILL.md             # NBA scores, standings, rosters
 │   ├── wnba-data/SKILL.md            # WNBA scores, standings, rosters
 │   ├── nhl-data/SKILL.md             # NHL scores, standings, rosters
+│   ├── mlb-data/SKILL.md             # MLB scores, standings, rosters
 │   ├── fastf1/SKILL.md               # F1 sessions, laps, results
 │   ├── kalshi/SKILL.md               # Prediction markets (CFTC)
 │   ├── polymarket/SKILL.md           # Prediction markets (crypto)
@@ -396,6 +415,7 @@ This project does not own, license, or redistribute any sports data. Each skill 
 This project is built on top of great open-source work and public APIs:
 
 - **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues. Also powers the NFL, NBA, WNBA, and NHL skills.
+- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues. Also powers the NFL, NBA, WNBA, and MLB skills.
 - **[Fantasy Premier League](https://fantasy.premierleague.com)** — for their community API powering injury news, player stats, ownership data, and ICT index for Premier League players.
 - **[Transfermarkt](https://www.transfermarkt.com)** — for player market values, transfer history, and the richest player data in football.
 - **[Understat](https://understat.com)** — for xG data across the top 5 European leagues.

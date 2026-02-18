@@ -217,6 +217,7 @@ _REGISTRY = {
         "get_schedule": {"optional": ["date", "season"]},
     },
     "nhl": {
+    "mlb": {
         "get_scoreboard": {"optional": ["date"]},
         "get_standings": {"optional": ["season"]},
         "get_teams": {},
@@ -312,6 +313,10 @@ def _load_module(name):
         from sports_skills import nhl
 
         return nhl
+    elif name == "mlb":
+        from sports_skills import mlb
+
+        return mlb
     else:
         _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
@@ -336,6 +341,10 @@ def main():
     )
     parser.add_argument(
         "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, polymarket, kalshi, news"
+        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, MLB, prediction markets, and news.",
+    )
+    parser.add_argument(
+        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, mlb, polymarket, kalshi, news"
     )
     parser.add_argument(
         "command", nargs="?", help="Command name (e.g., get_season_standings)"
