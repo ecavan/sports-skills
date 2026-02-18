@@ -8,6 +8,12 @@ Open-source agent skills for live sports data and prediction markets. Built for 
 npx skills add machina-sports/sports-skills
 ```
 
+To upgrade to the latest version, run the same command with the `--yes` flag:
+
+```bash
+npx skills add machina-sports/sports-skills --yes
+```
+
 ---
 
 ## What This Is

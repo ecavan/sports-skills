@@ -446,7 +446,7 @@ def get_standings(request_data):
     }
 
 
-def get_teams(request_data):
+def get_teams(request_data=None):
     """Get all NFL teams."""
     data = espn_request(SPORT_PATH, "teams")
     if data.get("error"):
