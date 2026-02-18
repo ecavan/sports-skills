@@ -1,12 +1,12 @@
 {
   "date": "2026-02-18",
-  "run_at": "2026-02-18T13:52:28+00:00",
+  "run_at": "2026-02-18T14:20:05+00:00",
   "timeout_s": 10,
   "degraded_threshold_ms": 3000,
   "sources": {
     "espn": {
       "status": "ok",
-      "response_time_ms": 122,
+      "response_time_ms": 125,
       "error": null,
       "sample_data": {
         "leagues_checked": 12,
@@ -17,7 +17,7 @@
       "per_league": {
         "premier-league": {
           "status": "ok",
-          "response_time_ms": 231,
+          "response_time_ms": 121,
           "sample_data": {
             "event_count": 1,
             "first_event": "Arsenal at Wolverhampton Wanderers"
@@ -26,7 +26,7 @@
         },
         "la-liga": {
           "status": "ok",
-          "response_time_ms": 91,
+          "response_time_ms": 89,
           "sample_data": {
             "event_count": 1,
             "first_event": "Villarreal at Levante"
@@ -35,7 +35,7 @@
         },
         "bundesliga": {
           "status": "ok",
-          "response_time_ms": 112,
+          "response_time_ms": 93,
           "sample_data": {
             "event_count": 1,
             "first_event": "Hamburg SV at Mainz"
@@ -44,7 +44,7 @@
         },
         "serie-a": {
           "status": "ok",
-          "response_time_ms": 98,
+          "response_time_ms": 177,
           "sample_data": {
             "event_count": 1,
             "first_event": "Como at AC Milan"
@@ -53,7 +53,7 @@
         },
         "ligue-1": {
           "status": "ok",
-          "response_time_ms": 86,
+          "response_time_ms": 84,
           "sample_data": {
             "event_count": 1,
             "first_event": "Marseille at Brest"
@@ -62,7 +62,7 @@
         },
         "championship": {
           "status": "ok",
-          "response_time_ms": 163,
+          "response_time_ms": 96,
           "sample_data": {
             "event_count": 1,
             "first_event": "Preston North End at Blackburn Rovers"
@@ -71,7 +71,7 @@
         },
         "eredivisie": {
           "status": "ok",
-          "response_time_ms": 109,
+          "response_time_ms": 96,
           "sample_data": {
             "event_count": 1,
             "first_event": "Excelsior at Fortuna Sittard"
@@ -80,7 +80,7 @@
         },
         "primeira-liga": {
           "status": "ok",
-          "response_time_ms": 114,
+          "response_time_ms": 178,
           "sample_data": {
             "event_count": 1,
             "first_event": "Tondela at Estrela"
@@ -89,7 +89,7 @@
         },
         "serie-a-brazil": {
           "status": "ok",
-          "response_time_ms": 88,
+          "response_time_ms": 132,
           "sample_data": {
             "event_count": 1,
             "first_event": "Corinthians at Athletico Paranaense"
@@ -98,7 +98,7 @@
         },
         "mls": {
           "status": "ok",
-          "response_time_ms": 178,
+          "response_time_ms": 126,
           "sample_data": {
             "event_count": 13,
             "first_event": "Charlotte FC at St. Louis CITY SC"
@@ -107,7 +107,7 @@
         },
         "champions-league": {
           "status": "ok",
-          "response_time_ms": 84,
+          "response_time_ms": 125,
           "sample_data": {
             "event_count": 4,
             "first_event": "Newcastle United at FK Qarabag"
@@ -116,7 +116,7 @@
         },
         "world-cup": {
           "status": "ok",
-          "response_time_ms": 112,
+          "response_time_ms": 190,
           "sample_data": {
             "event_count": 2,
             "first_event": "South Africa at Mexico"
@@ -127,7 +127,7 @@
     },
     "fpl": {
       "status": "ok",
-      "response_time_ms": 439,
+      "response_time_ms": 358,
       "sample_data": {
         "players": 817,
         "teams": 20,
@@ -137,7 +137,7 @@
     },
     "understat": {
       "status": "ok",
-      "response_time_ms": 811,
+      "response_time_ms": 922,
       "error": null,
       "sample_data": {
         "leagues_checked": 5,
@@ -148,7 +148,7 @@
       "per_league": {
         "EPL": {
           "status": "ok",
-          "response_time_ms": 1052,
+          "response_time_ms": 1137,
           "sample_data": {
             "bytes": 18653,
             "has_datesData": false
@@ -157,7 +157,7 @@
         },
         "La_Liga": {
           "status": "ok",
-          "response_time_ms": 699,
+          "response_time_ms": 768,
           "sample_data": {
             "bytes": 18669,
             "has_datesData": false
@@ -166,7 +166,7 @@
         },
         "Bundesliga": {
           "status": "ok",
-          "response_time_ms": 794,
+          "response_time_ms": 849,
           "sample_data": {
             "bytes": 18681,
             "has_datesData": false
@@ -175,7 +175,7 @@
         },
         "Serie_A": {
           "status": "ok",
-          "response_time_ms": 704,
+          "response_time_ms": 691,
           "sample_data": {
             "bytes": 18669,
             "has_datesData": false
@@ -184,7 +184,7 @@
         },
         "Ligue_1": {
           "status": "ok",
-          "response_time_ms": 808,
+          "response_time_ms": 1166,
           "sample_data": {
             "bytes": 18669,
             "has_datesData": false
@@ -195,17 +195,17 @@
     },
     "kalshi": {
       "status": "ok",
-      "response_time_ms": 278,
+      "response_time_ms": 218,
       "sample_data": {
         "market_count": 5,
-        "first_ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S20263C86CCCBF48-76D9121B4BC",
-        "first_title": "yes Arkansas,yes Loyola Maryland,yes Auburn,yes Bradley,yes Arizona,yes Tulsa,yes Clemson,yes Youngstown St.,yes UConn,yes Seton Hall,yes Florida Atlantic,yes Gonzaga,yes Florida Gulf Coast,yes Duquesne,yes Fordham,yes Navy,yes Lipscomb,yes Northwestern,yes Texas A&M,yes Sam Houston,yes North Carolina Central,yes Tennessee,yes Omaha,yes Northern Kentucky,yes Queens University,yes Davidson,yes Marquette,yes Saint Mary's,yes Troy,yes UIC,yes Northern Iowa,yes West Virginia,yes Virginia,yes Vanderbilt,yes Wofford,yes Wichita St.,yes Western Kentucky"
+        "first_ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S2026462D4CE3A1C-698A4293A34",
+        "first_title": "yes Bucknell,yes Alabama,yes Loyola Maryland,yes Auburn,yes Bradley,yes Georgetown,yes Arizona,yes Tulsa,yes Clemson,yes Youngstown St.,yes UConn,yes George Mason,yes Seton Hall,yes Furman,yes Florida Atlantic,yes Illinois,yes Florida Gulf Coast,yes Coastal Carolina,yes St. Bonaventure,yes Louisiana Tech,yes Missouri St.,yes Kansas,yes Holy Cross,yes Duquesne,yes Fordham,yes Navy,yes Lipscomb,yes Northwestern,yes Texas A&M,yes Sam Houston,yes Illinois St.,yes North Carolina Central,yes North Dakota St.,yes Tennessee,yes Omaha,yes Washington St.,yes Northern Kentucky,yes Queens University,yes Davidson,yes Penn St.,yes Southern Illinois,yes St. John's,yes Saint Mary's,yes Troy,yes Temple,yes UIC,yes Northern Iowa,yes West Virginia,yes Virginia,yes Eastern Kentucky,yes Vanderbilt,yes Wofford,yes Wichita St.,yes Western Kentucky"
       },
       "url": "https://api.elections.kalshi.com/trade-api/v2/markets?limit=5"
     },
     "polymarket_gamma": {
       "status": "ok",
-      "response_time_ms": 288,
+      "response_time_ms": 543,
       "sample_data": {
         "market_count": 5,
         "first_question": "Will Joe Biden get Coronavirus before the election?"
@@ -214,16 +214,16 @@
     },
     "polymarket_clob": {
       "status": "ok",
-      "response_time_ms": 807,
+      "response_time_ms": 1005,
       "sample_data": {
         "market_count": 1000,
-        "first_condition_id": "0xa1b936b7b692e2\u2026"
+        "first_condition_id": "0x662270576ae01d\u2026"
       },
       "url": "https://clob.polymarket.com/sampling-markets?count=5"
     },
     "fastf1": {
       "status": "ok",
-      "response_time_ms": 575,
+      "response_time_ms": 395,
       "sample_data": {
         "events_in_schedule": 25,
         "year": 2024
@@ -231,10 +231,10 @@
     },
     "bbc_rss": {
       "status": "ok",
-      "response_time_ms": 443,
+      "response_time_ms": 418,
       "sample_data": {
-        "items_found": 70,
-        "bytes": 54602,
+        "items_found": 71,
+        "bytes": 55312,
         "first_headline": "BBC Sport"
       },
       "url": "https://feeds.bbci.co.uk/sport/rss.xml"
