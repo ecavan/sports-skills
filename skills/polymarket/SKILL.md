@@ -19,7 +19,11 @@ Before first use, check if the CLI is available:
 ```bash
 which sports-skills || pip install sports-skills
 ```
-If `pip install` fails with a Python version error, the package requires Python 3.10+. Find a compatible Python:
+If `pip install` fails (package not found or Python version error), install from GitHub:
+```bash
+pip install git+https://github.com/machina-sports/sports-skills.git
+```
+The package requires Python 3.10+. If your default Python is older, use a specific version:
 ```bash
 python3 --version  # check version
 # If < 3.10, try: python3.12 -m pip install sports-skills
@@ -166,7 +170,7 @@ If you're unsure whether a command exists, check this list. Do not try commands 
 
 ## Troubleshooting
 
-- **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills`. If pip fails with a Python version error, you need Python 3.10+ — see Setup section.
+- **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills`. If the package is not found on PyPI, install from GitHub: `pip install git+https://github.com/machina-sports/sports-skills.git`. Requires Python 3.10+ — see Setup section.
 - **`ModuleNotFoundError: No module named 'sports_skills'`**: Same as above — install the package. Prefer the CLI over Python imports to avoid path issues.
 - **token_id vs market_id**: Price/orderbook endpoints need the CLOB `token_id` (found in market details under `clobTokenIds`), not the Gamma `market_id`. Always fetch market details first to get the token_id.
 - **Search returns 0 results**: `search_markets` matches event titles, not sport categories. Don't search "soccer" or "football" — search by league name: "Premier League", "Champions League", "La Liga", "Bundesliga", "Serie A", "NBA Finals", etc.

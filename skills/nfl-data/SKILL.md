@@ -19,7 +19,11 @@ Before first use, check if the CLI is available:
 ```bash
 which sports-skills || pip install sports-skills
 ```
-If `pip install` fails with a Python version error, the package requires Python 3.10+. Find a compatible Python:
+If `pip install` fails (package not found or Python version error), install from GitHub:
+```bash
+pip install git+https://github.com/machina-sports/sports-skills.git
+```
+The package requires Python 3.10+. If your default Python is older, use a specific version:
 ```bash
 python3 --version  # check version
 # If < 3.10, try: python3.12 -m pip install sports-skills
@@ -163,7 +167,7 @@ When a command fails, **do not surface raw errors to the user**. Instead:
 
 ## Troubleshooting
 
-- **`sports-skills` command not found**: Run `pip install sports-skills`
+- **`sports-skills` command not found**: Run `pip install sports-skills`. If the package is not found on PyPI, install from GitHub: `pip install git+https://github.com/machina-sports/sports-skills.git`
 - **Team not found**: Use `get_teams` to list all teams and find the correct ID
 - **No data for future games**: ESPN only returns data for completed or in-progress games
 - **Week numbers**: Regular season is weeks 1-18, playoffs are 19+ (Wild Card=19, Divisional=20, Conference=21, Super Bowl=22)
