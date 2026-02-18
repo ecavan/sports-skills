@@ -52,6 +52,8 @@ UNDERSTAT_LEAGUES = ["EPL", "La_Liga", "Bundesliga", "Serie_A", "Ligue_1"]
 ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
 ESPN_US_SPORTS = {
     "nfl": "football/nfl",
+    "nba": "basketball/nba",
+    "wnba": "basketball/wnba",
 }
 FPL_BASE = "https://fantasy.premierleague.com/api"
 UNDERSTAT_BASE = "https://understat.com"
