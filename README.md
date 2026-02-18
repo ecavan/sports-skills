@@ -15,6 +15,7 @@ npx skills add machina-sports/sports-skills
 A collection of agent skills that wrap **publicly available** sports data sources and APIs. These skills don't provide proprietary data — they give AI agents a structured interface to data that's already freely accessible on the web:
 
 - **Football**: ESPN, Understat, FPL, Transfermarkt — 21 commands across 13 leagues
+- **NFL**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
 - **Formula 1**: FastF1 open-source library — sessions, lap data, race results
 - **Prediction Markets**: Kalshi and Polymarket public APIs — markets, prices, order books
 - **Sports News**: RSS feeds and Google News — any public feed
@@ -32,6 +33,7 @@ Each skill is a SKILL.md file that any compatible AI agent can load and use imme
 | Skill | Sport | Commands | Data Sources |
 |-------|-------|----------|-------------|
 | `football-data` | Football | 21 | ESPN, FPL, Understat, Transfermarkt |
+| `nfl-data` | NFL | 9 | ESPN |
 | `fastf1` | Formula 1 | 6 | FastF1 (free library) |
 | `sports-news` | Multi-sport | 2 | Any RSS feed, Google News |
 
@@ -77,6 +79,9 @@ Once installed, your agent can call commands directly:
 **Get today's matches:**
 > "Show me all Premier League matches today"
 
+**Get NFL scores:**
+> "What are today's NFL scores?"
+
 **Check prediction market odds:**
 > "What are the Polymarket odds for the Champions League final?"
 
@@ -116,6 +121,22 @@ Community football data skill. Aggregates publicly accessible web sources (ESPN,
 | `get_player_profile` | Biography, career stats, market value |
 | `get_season_transfers` | Transfer history |
 | `get_competition_seasons` | Available seasons for a competition |
+
+### nfl-data
+
+NFL data via ESPN public endpoints. Scores, standings, rosters, schedules, game summaries, and more.
+
+| Command | Description |
+|---------|-------------|
+| `get_scoreboard` | Live/recent NFL scores |
+| `get_standings` | Standings by conference and division |
+| `get_teams` | All 32 NFL teams |
+| `get_team_roster` | Full roster for a team |
+| `get_team_schedule` | Schedule for a specific team |
+| `get_game_summary` | Detailed box score and scoring plays |
+| `get_leaders` | Statistical leaders (passing, rushing, receiving) |
+| `get_news` | NFL news articles |
+| `get_schedule` | Season schedule by week |
 
 ### fastf1
 
@@ -185,6 +206,7 @@ Supports any RSS/Atom feed URL and Google News queries.
 sports-skills.sh
 ├── skills/                            # SKILL.md files (agent instructions)
 │   ├── football-data/SKILL.md         # 21 commands, 13 leagues
+│   ├── nfl-data/SKILL.md             # NFL scores, standings, rosters
 │   ├── fastf1/SKILL.md               # F1 sessions, laps, results
 │   ├── kalshi/SKILL.md               # Prediction markets (CFTC)
 │   ├── polymarket/SKILL.md           # Prediction markets (crypto)
@@ -301,7 +323,7 @@ This project does not own, license, or redistribute any sports data. Each skill 
 
 This project is built on top of great open-source work and public APIs:
 
-- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues.
+- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues. Also powers the NFL skill.
 - **[Fantasy Premier League](https://fantasy.premierleague.com)** — for their community API powering injury news, player stats, ownership data, and ICT index for Premier League players.
 - **[Transfermarkt](https://www.transfermarkt.com)** — for player market values, transfer history, and the richest player data in football.
 - **[Understat](https://understat.com)** — for xG data across the top 5 European leagues.

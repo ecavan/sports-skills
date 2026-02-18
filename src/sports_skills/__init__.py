@@ -2,7 +2,7 @@
 
 __version__ = "0.2.0"
 
-from sports_skills import football, polymarket, kalshi, news
+from sports_skills import football, polymarket, kalshi, news, nfl
 
 # F1 is optional — requires fastf1 + pandas
 try:
@@ -10,4 +10,4 @@ try:
 except ImportError:
     f1 = None
 
-__all__ = ["football", "f1", "polymarket", "kalshi", "news"]
+__all__ = ["football", "f1", "polymarket", "kalshi", "news", "nfl"]

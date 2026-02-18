@@ -50,6 +50,9 @@ LEAGUES = {
 UNDERSTAT_LEAGUES = ["EPL", "La_Liga", "Bundesliga", "Serie_A", "Ligue_1"]
 
 ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
+ESPN_US_SPORTS = {
+    "nfl": "football/nfl",
+}
 FPL_BASE = "https://fantasy.premierleague.com/api"
 UNDERSTAT_BASE = "https://understat.com"
 KALSHI_BASE = "https://api.elections.kalshi.com/trade-api/v2"
@@ -150,6 +153,24 @@ def check_espn_all_leagues() -> dict:
         },
         "per_league": results,
     }
+
+
+def check_espn_us_sport(sport_name: str, sport_path: str) -> dict:
+    """Check a single ESPN US sport scoreboard endpoint."""
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_path}/scoreboard"
+    r = _timed_fetch(url)
+    if r["error"]:
+        return _result("down", r["elapsed_ms"], r["error"], url=url)
+    try:
+        data = json.loads(r["body"])
+        events = data.get("events", [])
+        sample = {"event_count": len(events)}
+        if events:
+            first = events[0]
+            sample["first_event"] = first.get("name", first.get("shortName", ""))
+        return _result("ok", r["elapsed_ms"], sample_data=sample, url=url)
+    except Exception as exc:
+        return _result("down", r["elapsed_ms"], f"JSON parse error: {exc}", url=url)
 
 
 def check_fpl() -> dict:
@@ -500,6 +521,11 @@ def main() -> int:
     print("  Checking ESPN (all leagues) …", end="", flush=True)
     results["espn"] = check_espn_all_leagues()
     print(f" {results['espn']['status']}")
+
+    for sport_name, sport_path in ESPN_US_SPORTS.items():
+        print(f"  Checking ESPN {sport_name.upper()} …", end="", flush=True)
+        results[f"espn_{sport_name}"] = check_espn_us_sport(sport_name, sport_path)
+        print(f" {results[f'espn_{sport_name}']['status']}")
 
     print("  Checking FPL …", end="", flush=True)
     results["fpl"] = check_fpl()

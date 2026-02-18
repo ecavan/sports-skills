@@ -9,6 +9,8 @@ Examples:
     sports-skills kalshi get_markets --series_ticker=KXNBA
     sports-skills news fetch_items --google_news --query="Arsenal" --limit=5
     sports-skills f1 get_race_schedule --year=2025
+    sports-skills nfl get_scoreboard
+    sports-skills nfl get_standings --season=2025
 """
 
 import argparse
@@ -181,6 +183,17 @@ _REGISTRY = {
         },
         "get_tire_analysis": {"required": ["year"], "optional": ["event", "driver"]},
     },
+    "nfl": {
+        "get_scoreboard": {"optional": ["date", "week"]},
+        "get_standings": {"optional": ["season"]},
+        "get_teams": {},
+        "get_team_roster": {"required": ["team_id"]},
+        "get_team_schedule": {"required": ["team_id"], "optional": ["season"]},
+        "get_game_summary": {"required": ["event_id"]},
+        "get_leaders": {"optional": ["season"]},
+        "get_news": {"optional": ["team_id"]},
+        "get_schedule": {"optional": ["season", "week"]},
+    },
 }
 
 # Params that should be parsed as boolean
@@ -206,6 +219,8 @@ _INT_PARAMS = {
     "period_interval",
     "min_ts",
     "max_ts",
+    "season",
+    "week",
 }
 
 # Params that should be parsed as list (comma-separated)
@@ -248,6 +263,10 @@ def _load_module(name):
             _cli_error(
                 "F1 module requires extra dependencies. Install with: pip install sports-skills[f1]"
             )
+    elif name == "nfl":
+        from sports_skills import nfl
+
+        return nfl
     else:
         _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
@@ -268,10 +287,10 @@ def _parse_value(key, value):
 def main():
     parser = argparse.ArgumentParser(
         prog="sports-skills",
-        description="Lightweight CLI for sports data — football, F1, prediction markets, and news.",
+        description="Lightweight CLI for sports data — football, F1, NFL, prediction markets, and news.",
     )
     parser.add_argument(
-        "module", nargs="?", help="Module name: football, f1, polymarket, kalshi, news"
+        "module", nargs="?", help="Module name: football, f1, nfl, polymarket, kalshi, news"
     )
     parser.add_argument(
         "command", nargs="?", help="Command name (e.g., get_season_standings)"
