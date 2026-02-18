@@ -127,72 +127,139 @@ def run_hygiene() -> dict:
 
 # ── Task 2: SKILL.md Freshness ────────────────────────────────────────────────
 
-def _extract_command_from_block(lines: list[str], start: int) -> str | None:
-    """Find the first `sports-skills ...` command in a code block starting at start."""
-    for line in lines[start:]:
-        stripped = line.strip()
-        if stripped.startswith("```"):
-            break
-        if stripped.startswith("sports-skills"):
-            return stripped
+# Zero-arg commands per skill — these can run without required params and
+# produce stable JSON output suitable for use as a live example.
+ZERO_ARG_COMMANDS: dict[str, list[str]] = {
+    "football-data": [
+        "sports-skills football get_daily_schedule",
+        "sports-skills football get_competitions",
+    ],
+    "fastf1": [
+        "sports-skills f1 get_race_schedule --year=2025",
+    ],
+    "kalshi": [
+        "sports-skills kalshi get_markets --limit=1",
+    ],
+    "polymarket": [
+        "sports-skills polymarket get_markets --limit=1",
+    ],
+    "sports-news": [
+        "sports-skills news get_headlines --source=bbc",
+    ],
+}
+
+
+def _run_cmd_fresh(cmd: str) -> str | None:
+    """Run a sports-skills CLI command, return a single trimmed JSON object or None."""
+    code, out, _ = _run(cmd.strip().split())
+    out = out.strip()
+    if code != 0 or not out:
+        return None
+    try:
+        data = json.loads(out)
+        # If it's a dict with a list value, grab the first item for a compact example
+        if isinstance(data, dict):
+            for v in data.values():
+                if isinstance(v, list) and v:
+                    return json.dumps(v[0], indent=2)
+            return json.dumps(data, indent=2)
+        if isinstance(data, list) and data:
+            return json.dumps(data[0], indent=2)
+        return json.dumps(data, indent=2)
+    except Exception:
+        return None
+
+
+def _find_json_block(lines: list[str], after: int, before: int) -> tuple[int, int] | None:
+    """Find the first ```json block between line indices after and before.
+    Returns (fence_line, close_line) or None."""
+    i = after
+    while i < before:
+        if lines[i].strip() in ("```json", "```"):
+            # find closing fence
+            j = i + 1
+            while j < len(lines):
+                if lines[j].strip() == "```":
+                    return i, j
+                j += 1
+        i += 1
     return None
 
 
 def refresh_skill_examples() -> dict:
+    """
+    For each skill, run its zero-arg commands, then find the first ```json block
+    in the matching ### section and update it with fresh live output.
+    """
     print("\n── Task 2: SKILL.md Freshness ──")
     updated: list[str] = []
     skipped: list[str] = []
 
-    skill_files = list(SKILLS_DIR.glob("*/SKILL.md"))
-    if not skill_files:
-        # also check symlinked dirs
-        skill_files = [p for p in SKILLS_DIR.iterdir() if (p / "SKILL.md").exists()]
-        skill_files = [p / "SKILL.md" for p in skill_files]
+    skill_paths: list[Path] = []
+    for entry in sorted(SKILLS_DIR.iterdir()):
+        candidate = entry / "SKILL.md"
+        if candidate.exists():
+            skill_paths.append(candidate)
 
-    for skill_path in sorted(skill_files):
+    for skill_path in skill_paths:
         skill_name = skill_path.parent.name
-        content = skill_path.read_text(encoding="utf-8")
-        lines = content.splitlines()
-        new_lines = lines.copy()
-        changed = False
+        cmds = ZERO_ARG_COMMANDS.get(skill_name, [])
+        if not cmds:
+            print(f"  {skill_name}: no zero-arg commands configured — skipping")
+            skipped.append(skill_name)
+            continue
 
-        i = 0
-        while i < len(lines):
-            line = lines[i]
-            # Look for bash/shell code blocks with a sports-skills command
-            if line.strip().startswith("```") and i + 1 < len(lines):
-                cmd = _extract_command_from_block(lines, i + 1)
-                if cmd:
-                    # Find the output block that follows (next ``` block after this one closes)
-                    block_end = i + 1
-                    while block_end < len(lines) and not lines[block_end].strip().startswith("```"):
-                        block_end += 1
-                    # Look for an output block right after
-                    if block_end + 1 < len(lines) and lines[block_end + 1].strip().startswith("```"):
-                        out_start = block_end + 1
-                        out_end = out_start + 1
-                        while out_end < len(lines) and not lines[out_end].strip().startswith("```"):
-                            out_end += 1
+        lines = skill_path.read_text(encoding="utf-8").splitlines()
+        new_lines = lines[:]
+        skill_changed = False
+        offset = 0  # track line shifts from replacements
 
-                        # Run the actual command
-                        code, fresh_out, _ = _run(cmd.split())
-                        fresh_out = fresh_out.strip()
-                        if code == 0 and fresh_out:
-                            old_content = "\n".join(lines[out_start + 1:out_end]).strip()
-                            if fresh_out != old_content and len(fresh_out) > 10:
-                                # Replace output block contents
-                                new_lines[out_start + 1:out_end] = fresh_out.splitlines()
-                                changed = True
-                        i = out_end
-            i += 1
+        for cmd in cmds:
+            # Derive the function name from the command (last segment before any --)
+            parts = cmd.split()
+            fn_name = next((p for p in parts if not p.startswith("--") and p not in ("sports-skills", "football", "f1", "kalshi", "polymarket", "news")), None)
+            if not fn_name:
+                continue
 
-        if changed:
+            # Find the ### section for this function
+            section_start = next(
+                (i for i, l in enumerate(new_lines) if l.strip().startswith(f"### {fn_name}")),
+                None,
+            )
+            if section_start is None:
+                continue
+
+            # Section ends at the next ### or end of file
+            section_end = next(
+                (i for i in range(section_start + 1, len(new_lines)) if new_lines[i].startswith("### ")),
+                len(new_lines),
+            )
+
+            block = _find_json_block(new_lines, section_start, section_end)
+            if block is None:
+                continue
+
+            fence_i, close_i = block
+            fresh = _run_cmd_fresh(cmd)
+            if not fresh:
+                continue
+
+            old_content = "\n".join(new_lines[fence_i + 1 : close_i]).strip()
+            if fresh.strip() == old_content:
+                continue  # already up to date
+
+            # Replace block contents
+            fresh_lines = fresh.splitlines()
+            new_lines[fence_i + 1 : close_i] = fresh_lines
+            skill_changed = True
+
+        if skill_changed:
             skill_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
             updated.append(skill_name)
-            print(f"  {skill_name}: examples refreshed")
+            print(f"  {skill_name}: examples refreshed ✓")
         else:
             skipped.append(skill_name)
-            print(f"  {skill_name}: up to date (or no runnable examples)")
+            print(f"  {skill_name}: already fresh")
 
     if updated:
         _git_commit(f"docs: refresh SKILL.md examples {TODAY}")
