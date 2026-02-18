@@ -22,6 +22,28 @@ logger = logging.getLogger("sports_skills.nfl")
 
 SPORT_PATH = "football/nfl"
 
+# ESPN uses separate seasontype (2=regular, 3=postseason) with its own week
+# numbering.  The SKILL.md exposes a unified scheme (19=Wild Card … 22=Super Bowl)
+# so agents don't need to know the ESPN internals.
+_POSTSEASON_THRESHOLD = 19
+_POSTSEASON_WEEK_MAP = {19: 1, 20: 2, 21: 3, 22: 4}
+
+
+def _resolve_week_params(week):
+    """Convert a unified week number to ESPN query params.
+
+    Regular season weeks (1-18) pass through as-is.
+    Postseason weeks (19-22) become ``seasontype=3`` + the ESPN-relative week.
+    """
+    if not week:
+        return {}
+    if week >= _POSTSEASON_THRESHOLD:
+        return {
+            "seasontype": 3,
+            "week": _POSTSEASON_WEEK_MAP.get(week, week - 18),
+        }
+    return {"week": week}
+
 
 # ============================================================
 # ESPN Response Normalizers
@@ -373,15 +395,11 @@ def get_scoreboard(request_data):
     params = request_data.get("params", {})
     date = params.get("date")
     week = params.get("week")
-    season = params.get("season")
 
     espn_params = {}
     if date:
         espn_params["dates"] = date.replace("-", "")
-    if week:
-        espn_params["week"] = week
-    if season:
-        espn_params["seasontype"] = season
+    espn_params.update(_resolve_week_params(week))
 
     data = espn_request(SPORT_PATH, "scoreboard", espn_params or None)
     if data.get("error"):
@@ -466,7 +484,7 @@ def get_team_roster(request_data):
 
 
 def get_team_schedule(request_data):
-    """Get schedule for a specific NFL team."""
+    """Get schedule for a specific NFL team (regular season + postseason)."""
     params = request_data.get("params", {})
     team_id = params.get("team_id")
     season = params.get("season")
@@ -477,13 +495,25 @@ def get_team_schedule(request_data):
     if season:
         espn_params["season"] = season
 
-    data = espn_request(SPORT_PATH, f"teams/{team_id}/schedule", espn_params or None)
+    resource = f"teams/{team_id}/schedule"
+    data = espn_request(SPORT_PATH, resource, espn_params or None)
     if data.get("error"):
         return data
 
     events = []
     for event in data.get("events", []):
         events.append(_normalize_event(event))
+
+    # ESPN defaults to regular season; fetch postseason separately and merge.
+    post_params = dict(espn_params)
+    post_params["seasontype"] = 3
+    post_data = espn_request(SPORT_PATH, resource, post_params, max_retries=0)
+    if not post_data.get("error"):
+        seen_ids = {e["id"] for e in events}
+        for event in post_data.get("events", []):
+            norm = _normalize_event(event)
+            if norm["id"] not in seen_ids:
+                events.append(norm)
 
     team_info = data.get("team", {})
     return {
@@ -587,8 +617,7 @@ def get_schedule(request_data):
     espn_params = {}
     if season:
         espn_params["dates"] = str(season)
-    if week:
-        espn_params["week"] = week
+    espn_params.update(_resolve_week_params(week))
 
     data = espn_request(SPORT_PATH, "scoreboard", espn_params or None)
     if data.get("error"):

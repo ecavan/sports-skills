@@ -61,8 +61,7 @@ Derive the current year from the system prompt's date (e.g., `currentDate: 2026-
 ### get_scoreboard
 Get live/recent NFL scores.
 - `date` (str, optional): Date in YYYY-MM-DD format
-- `week` (int, optional): Week number (1-18 regular, 19+ playoffs)
-- `season` (int, optional): Season year
+- `week` (int, optional): Week number (1-18 regular season, 19-22 postseason)
 
 Returns `events[]` with game info, scores, status, and competitors.
 
@@ -111,7 +110,7 @@ Returns `articles[]` with headline, description, published date, and link.
 ### get_schedule
 Get NFL season schedule by week.
 - `season` (int, optional): Season year
-- `week` (int, optional): Week number
+- `week` (int, optional): Week number (1-18 regular season, 19-22 postseason)
 
 Returns `events[]` for the specified week/season.
 
@@ -155,8 +154,9 @@ sports-skills nfl get_team_roster --team_id=12
 ```
 
 **User: "How did the Super Bowl go?"**
-1. Find the event_id from `get_scoreboard --week=22` (Super Bowl week)
+1. Find the event_id from `get_scoreboard --week=22` (Super Bowl = week 22)
 2. Call `get_game_summary --event_id=<id>` for full box score
+Alternatively, use `get_schedule --week=22` to find the event.
 
 ## Error Handling
 
@@ -170,4 +170,5 @@ When a command fails, **do not surface raw errors to the user**. Instead:
 - **`sports-skills` command not found**: Run `pip install sports-skills`. If the package is not found on PyPI, install from GitHub: `pip install git+https://github.com/machina-sports/sports-skills.git`
 - **Team not found**: Use `get_teams` to list all teams and find the correct ID
 - **No data for future games**: ESPN only returns data for completed or in-progress games
-- **Week numbers**: Regular season is weeks 1-18, playoffs are 19+ (Wild Card=19, Divisional=20, Conference=21, Super Bowl=22)
+- **Week numbers**: Regular season is weeks 1-18. Postseason uses unified numbering: Wild Card=19, Divisional=20, Conference Championship=21, Super Bowl=22. The connector translates these to ESPN's internal `seasontype=3` automatically.
+- **Team schedule includes postseason**: `get_team_schedule` returns both regular-season and postseason games.
