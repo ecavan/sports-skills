@@ -7,7 +7,9 @@ __pycache__/
 .cache/
 dist/
 .next/
+.agent/
 .agents/
 .claude/
 .cursor/
+.pi/
 .windsurf/
