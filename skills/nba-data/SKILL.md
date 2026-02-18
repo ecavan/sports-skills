@@ -1,8 +1,10 @@
 ---
 name: nba-data
 description: |
-  NBA data — scores, standings, rosters, schedules, game summaries, statistical leaders, and news.
-  Use when: user asks about NBA scores, standings, team rosters, schedules, game box scores, or NBA news.
+  NBA data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, statistical leaders, and news. Zero config, no API keys.
+
+  Use when: user asks about NBA scores, standings, team rosters, schedules, game stats, box scores, or NBA news.
+  Don't use when: user asks about WNBA (use wnba-data), basketball in other leagues, college basketball, or other sports. Don't use for live play-by-play — data updates post-play.
 license: MIT
 metadata:
   author: machina-sports
@@ -11,127 +13,95 @@ metadata:
 
 # NBA Data
 
-Community NBA data skill. Uses publicly accessible ESPN endpoints. Data is sourced from ESPN and is subject to their terms of use.
+## Setup
 
-## Installation
-
+Before first use, check if the CLI is available:
 ```bash
-pip install sports-skills
+which sports-skills || pip install sports-skills
 ```
-
-## Commands
-
-All commands are run via the `sports-skills` CLI:
-
+If `pip install` fails with a Python version error, the package requires Python 3.10+. Find a compatible Python:
 ```bash
-sports-skills nba <command> [--param=value ...]
+python3 --version  # check version
+# If < 3.10, try: python3.12 -m pip install sports-skills
+# On macOS with Homebrew: /opt/homebrew/bin/python3.12 -m pip install sports-skills
 ```
+No API keys required.
 
-### get_scoreboard
+## Quick Start
 
-Get live or recent NBA scores.
-
+Prefer the CLI — it avoids Python import path issues:
 ```bash
 sports-skills nba get_scoreboard
-sports-skills nba get_scoreboard --date=2026-02-18
-```
-
-**Parameters:**
-- `--date` (optional): Date in YYYY-MM-DD format. Defaults to today.
-
-### get_standings
-
-Get NBA standings by conference.
-
-```bash
-sports-skills nba get_standings
-sports-skills nba get_standings --season=2026
-```
-
-**Parameters:**
-- `--season` (optional): Season year (e.g. 2026). Defaults to current season.
-
-### get_teams
-
-Get all 30 NBA teams with logos and basic info.
-
-```bash
+sports-skills nba get_standings --season=2025
 sports-skills nba get_teams
 ```
 
+## Choosing the Season
+
+Derive the current year from the system prompt's date (e.g., `currentDate: 2026-02-18` → current year is 2026).
+
+- **If the user specifies a season**, use it as-is.
+- **If the user says "current", "this season", or doesn't specify**: The NBA season runs October–June. If the current month is October–December, the active season year matches the current year. If January–June, the active season started the previous calendar year (use that year as the season).
+- **Never hardcode a season.** Always derive it from the system date.
+
+## Commands
+
+### get_scoreboard
+Get live/recent NBA scores.
+- `date` (str, optional): Date in YYYY-MM-DD format. Defaults to today.
+
+Returns `events[]` with game info, scores, status, and competitors.
+
+### get_standings
+Get NBA standings by conference.
+- `season` (int, optional): Season year
+
+Returns `groups[]` with Eastern/Western conferences and team standings including W-L, PCT, GB, streak, home/away/conference records, and PPG.
+
+### get_teams
+Get all 30 NBA teams. No parameters.
+
+Returns `teams[]` with id, name, abbreviation, logo, and location.
+
 ### get_team_roster
+Get full roster for a team.
+- `team_id` (str, required): ESPN team ID (e.g., "13" for Lakers)
 
-Get the full roster for an NBA team.
-
-```bash
-sports-skills nba get_team_roster --team_id=13
-```
-
-**Parameters:**
-- `--team_id` (required): ESPN team ID.
+Returns `athletes[]` with name, position, jersey number, height, weight, experience.
 
 ### get_team_schedule
+Get schedule for a specific team.
+- `team_id` (str, required): ESPN team ID
+- `season` (int, optional): Season year
 
-Get the schedule for a specific NBA team.
-
-```bash
-sports-skills nba get_team_schedule --team_id=13
-sports-skills nba get_team_schedule --team_id=13 --season=2026
-```
-
-**Parameters:**
-- `--team_id` (required): ESPN team ID.
-- `--season` (optional): Season year. Defaults to current season.
+Returns `events[]` with opponent, date, score (if played), and venue.
 
 ### get_game_summary
+Get detailed box score and scoring plays.
+- `event_id` (str, required): ESPN event ID
 
-Get a detailed game summary with box score, scoring plays, and leaders.
-
-```bash
-sports-skills nba get_game_summary --event_id=401584793
-```
-
-**Parameters:**
-- `--event_id` (required): ESPN event ID.
+Returns `game_info`, `competitors`, `boxscore` (stats per player), `scoring_plays`, and `leaders`.
 
 ### get_leaders
-
 Get NBA statistical leaders (points, rebounds, assists, etc.).
+- `season` (int, optional): Season year
 
-```bash
-sports-skills nba get_leaders
-sports-skills nba get_leaders --season=2026
-```
-
-**Parameters:**
-- `--season` (optional): Season year. Defaults to current season.
+Returns `categories[]` with leader rankings per stat category.
 
 ### get_news
+Get NBA news articles.
+- `team_id` (str, optional): Filter by team
 
-Get NBA news articles, optionally filtered by team.
-
-```bash
-sports-skills nba get_news
-sports-skills nba get_news --team_id=13
-```
-
-**Parameters:**
-- `--team_id` (optional): ESPN team ID to filter news by team.
+Returns `articles[]` with headline, description, published date, and link.
 
 ### get_schedule
+Get NBA schedule for a specific date or season.
+- `date` (str, optional): Date in YYYY-MM-DD format
+- `season` (int, optional): Season year (used only if no date provided)
 
-Get NBA schedule for a specific date.
+Returns `events[]` for the specified date.
 
-```bash
-sports-skills nba get_schedule
-sports-skills nba get_schedule --date=2026-02-18
-```
-
-**Parameters:**
-- `--date` (optional): Date in YYYY-MM-DD format. Defaults to today.
-- `--season` (optional): Season year. Defaults to current season.
-
-## Common NBA Team IDs
+## Team IDs (Common)
 
 | Team | ID | Team | ID |
 |------|-----|------|-----|
@@ -151,28 +121,38 @@ sports-skills nba get_schedule --date=2026-02-18
 | Los Angeles Lakers | 13 | Toronto Raptors | 28 |
 | Utah Jazz | 26 | Washington Wizards | 27 |
 
-## Data Source
+## Examples
 
-All data comes from ESPN's public web endpoints. This skill does not use an official API and endpoints may change without notice. Intended for personal, educational, and research use.
+**User: "What are today's NBA scores?"**
+```bash
+sports-skills nba get_scoreboard
+```
+
+**User: "Show me the Western Conference standings"**
+```bash
+sports-skills nba get_standings --season=2025
+```
+Then filter results for Western Conference.
+
+**User: "Who's on the Lakers roster?"**
+```bash
+sports-skills nba get_team_roster --team_id=13
+```
+
+**User: "Show me the full box score for last night's Celtics game"**
+1. Find the event_id from `get_scoreboard --date=YYYY-MM-DD`
+2. Call `get_game_summary --event_id=<id>` for full box score
 
 ## Error Handling
 
-All commands return a JSON envelope:
+When a command fails, **do not surface raw errors to the user**. Instead:
+1. Catch silently and try alternatives
+2. If team name given instead of ID, use `get_teams` to find the ID first
+3. Only report failure with a clean message after exhausting alternatives
 
-```json
-{
-  "status": true,
-  "data": { ... },
-  "message": ""
-}
-```
+## Troubleshooting
 
-On error:
-
-```json
-{
-  "status": false,
-  "data": null,
-  "message": "Error description"
-}
-```
+- **`sports-skills` command not found**: Run `pip install sports-skills`
+- **Team not found**: Use `get_teams` to list all teams and find the correct ID
+- **No data for future games**: ESPN only returns data for completed or in-progress games
+- **Offseason**: `get_scoreboard` returns 0 events — expected. Use `get_standings` or `get_news` instead.

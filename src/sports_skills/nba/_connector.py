@@ -406,7 +406,7 @@ def get_standings(request_data):
     }
 
 
-def get_teams(request_data):
+def get_teams(request_data=None):
     """Get all NBA teams."""
     data = espn_request(SPORT_PATH, "teams")
     if data.get("error"):
@@ -493,17 +493,24 @@ def get_game_summary(request_data):
     return _normalize_game_summary(data)
 
 
+def _nba_current_season():
+    """Detect the most recent active NBA season year (season starts Oct, ends Jun)."""
+    import datetime
+    now = datetime.datetime.utcnow()
+    # NBA season starts in October; if Oct-Dec use current year, else previous year
+    return now.year if now.month >= 10 else now.year - 1
+
+
 def get_leaders(request_data):
     """Get NBA statistical leaders via ESPN core API."""
     params = request_data.get("params", {})
     season = params.get("season")
 
-    if season:
-        url = f"https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/{season}/types/2/leaders"
-    else:
-        url = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/leaders"
+    # Always use season-scoped URL with regular season type (2) for reliability.
+    resolved = season or _nba_current_season()
+    url = f"https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/{resolved}/types/2/leaders"
 
-    cache_key = f"nba_leaders:{season or 'current'}"
+    cache_key = f"nba_leaders:{resolved}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
@@ -567,8 +574,8 @@ def get_schedule(request_data):
     espn_params = {}
     if date:
         espn_params["dates"] = date.replace("-", "")
-    if season:
-        espn_params["dates"] = str(season)
+    elif season:
+        espn_params["season"] = str(season)
 
     data = espn_request(SPORT_PATH, "scoreboard", espn_params or None)
     if data.get("error"):

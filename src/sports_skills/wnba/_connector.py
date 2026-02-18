@@ -398,7 +398,7 @@ def get_standings(request_data):
     }
 
 
-def get_teams(request_data):
+def get_teams(request_data=None):
     """Get all WNBA teams."""
     data = espn_request(SPORT_PATH, "teams")
     if data.get("error"):
@@ -485,15 +485,23 @@ def get_game_summary(request_data):
     return _normalize_game_summary(data)
 
 
+def _wnba_current_season():
+    """Detect the most recent completed WNBA season year."""
+    import datetime
+    # WNBA season runs May-October. In offseason, use previous year.
+    now = datetime.datetime.utcnow()
+    return now.year if now.month >= 5 else now.year - 1
+
+
 def get_leaders(request_data):
     """Get WNBA statistical leaders via ESPN core API."""
     params = request_data.get("params", {})
     season = params.get("season")
 
-    if season:
-        url = f"https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/{season}/types/2/leaders"
-    else:
-        url = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/leaders"
+    # The generic /leaders endpoint returns 404 in offseason.
+    # Always use season-scoped URL with regular season type (2).
+    resolved = season or _wnba_current_season()
+    url = f"https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/{resolved}/types/2/leaders"
 
     cache_key = f"wnba_leaders:{season or 'current'}"
     cached = _cache_get(cache_key)
