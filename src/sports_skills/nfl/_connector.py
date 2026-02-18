@@ -23,17 +23,20 @@ logger = logging.getLogger("sports_skills.nfl")
 SPORT_PATH = "football/nfl"
 
 # ESPN uses separate seasontype (2=regular, 3=postseason) with its own week
-# numbering.  The SKILL.md exposes a unified scheme (19=Wild Card … 22=Super Bowl)
-# so agents don't need to know the ESPN internals.
+# numbering.  The SKILL.md exposes a unified scheme so agents don't need to
+# know the ESPN internals.
+#
+# ESPN postseason weeks:
+#   1 = Wild Card, 2 = Divisional, 3 = Conference, 4 = Pro Bowl, 5 = Super Bowl
 _POSTSEASON_THRESHOLD = 19
-_POSTSEASON_WEEK_MAP = {19: 1, 20: 2, 21: 3, 22: 4}
+_POSTSEASON_WEEK_MAP = {19: 1, 20: 2, 21: 3, 22: 4, 23: 5}
 
 
 def _resolve_week_params(week):
     """Convert a unified week number to ESPN query params.
 
     Regular season weeks (1-18) pass through as-is.
-    Postseason weeks (19-22) become ``seasontype=3`` + the ESPN-relative week.
+    Postseason weeks (19-23) become ``seasontype=3`` + the ESPN-relative week.
     """
     if not week:
         return {}
