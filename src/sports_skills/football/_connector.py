@@ -7,7 +7,7 @@ import threading
 import urllib.request
 import urllib.error
 import urllib.parse
-from datetime import datetime, timedelta
+from datetime import datetime
 
 logger = logging.getLogger("sports_skills.football")
 
@@ -18,79 +18,118 @@ logger = logging.getLogger("sports_skills.football")
 
 LEAGUES = {
     "premier-league": {
-        "espn": "eng.1", "understat": "EPL",
-        "fpl": True, "transfermarkt": "premier-league",
+        "espn": "eng.1",
+        "understat": "EPL",
+        "fpl": True,
+        "transfermarkt": "premier-league",
         "openfootball": {"file": "en.1", "season_format": "aug"},
-        "name": "Premier League", "country": "England",
+        "name": "Premier League",
+        "country": "England",
     },
     "la-liga": {
-        "espn": "esp.1", "understat": "La_Liga",
-        "fpl": None, "transfermarkt": "laliga",
+        "espn": "esp.1",
+        "understat": "La_Liga",
+        "fpl": None,
+        "transfermarkt": "laliga",
         "openfootball": {"file": "es.1", "season_format": "aug"},
-        "name": "La Liga", "country": "Spain",
+        "name": "La Liga",
+        "country": "Spain",
     },
     "bundesliga": {
-        "espn": "ger.1", "understat": "Bundesliga",
-        "fpl": None, "transfermarkt": "1-bundesliga",
+        "espn": "ger.1",
+        "understat": "Bundesliga",
+        "fpl": None,
+        "transfermarkt": "1-bundesliga",
         "openfootball": {"file": "de.1", "season_format": "aug"},
-        "name": "Bundesliga", "country": "Germany",
+        "name": "Bundesliga",
+        "country": "Germany",
     },
     "serie-a": {
-        "espn": "ita.1", "understat": "Serie_A",
-        "fpl": None, "transfermarkt": "serie-a",
+        "espn": "ita.1",
+        "understat": "Serie_A",
+        "fpl": None,
+        "transfermarkt": "serie-a",
         "openfootball": {"file": "it.1", "season_format": "aug"},
-        "name": "Serie A", "country": "Italy",
+        "name": "Serie A",
+        "country": "Italy",
     },
     "ligue-1": {
-        "espn": "fra.1", "understat": "Ligue_1",
-        "fpl": None, "transfermarkt": "ligue-1",
+        "espn": "fra.1",
+        "understat": "Ligue_1",
+        "fpl": None,
+        "transfermarkt": "ligue-1",
         "openfootball": {"file": "fr.1", "season_format": "aug"},
-        "name": "Ligue 1", "country": "France",
+        "name": "Ligue 1",
+        "country": "France",
     },
     "championship": {
-        "espn": "eng.2", "understat": None,
-        "fpl": None, "transfermarkt": "championship",
+        "espn": "eng.2",
+        "understat": None,
+        "fpl": None,
+        "transfermarkt": "championship",
         "openfootball": {"file": "en.2", "season_format": "aug"},
-        "name": "Championship", "country": "England",
+        "name": "Championship",
+        "country": "England",
     },
     "eredivisie": {
-        "espn": "ned.1", "understat": None,
-        "fpl": None, "transfermarkt": "eredivisie",
+        "espn": "ned.1",
+        "understat": None,
+        "fpl": None,
+        "transfermarkt": "eredivisie",
         "openfootball": {"file": "nl.1", "season_format": "aug"},
-        "name": "Eredivisie", "country": "Netherlands",
+        "name": "Eredivisie",
+        "country": "Netherlands",
     },
     "primeira-liga": {
-        "espn": "por.1", "understat": None,
-        "fpl": None, "transfermarkt": "primeira-liga",
+        "espn": "por.1",
+        "understat": None,
+        "fpl": None,
+        "transfermarkt": "primeira-liga",
         "openfootball": {"file": "pt.1", "season_format": "aug"},
-        "name": "Primeira Liga", "country": "Portugal",
+        "name": "Primeira Liga",
+        "country": "Portugal",
     },
     "serie-a-brazil": {
-        "espn": "bra.1", "understat": None,
-        "fpl": None, "transfermarkt": "campeonato-brasileiro-serie-a",
+        "espn": "bra.1",
+        "understat": None,
+        "fpl": None,
+        "transfermarkt": "campeonato-brasileiro-serie-a",
         "openfootball": {"file": "br.1", "season_format": "jan"},
-        "name": "Serie A Brazil", "country": "Brazil",
+        "name": "Serie A Brazil",
+        "country": "Brazil",
     },
     "mls": {
-        "espn": "usa.1", "understat": None,
-        "fpl": None, "transfermarkt": "major-league-soccer",
+        "espn": "usa.1",
+        "understat": None,
+        "fpl": None,
+        "transfermarkt": "major-league-soccer",
         "openfootball": {"file": "mls", "season_format": "jan"},
-        "name": "MLS", "country": "USA",
+        "name": "MLS",
+        "country": "USA",
     },
     "champions-league": {
-        "espn": "uefa.champions", "understat": None,
-        "fpl": None, "transfermarkt": None,
-        "name": "Champions League", "country": "Europe",
+        "espn": "uefa.champions",
+        "understat": None,
+        "fpl": None,
+        "transfermarkt": None,
+        "name": "Champions League",
+        "country": "Europe",
     },
     "european-championship": {
-        "espn": None, "understat": None,
-        "fpl": None, "transfermarkt": None,
-        "name": "European Championship", "country": "Europe",
+        "espn": None,
+        "understat": None,
+        "fpl": None,
+        "transfermarkt": None,
+        "name": "European Championship",
+        "country": "Europe",
     },
     "world-cup": {
-        "espn": "fifa.world", "understat": None,
-        "fpl": None, "transfermarkt": None,
-        "name": "FIFA World Cup", "country": "International",
+        "espn": "fifa.world",
+        "understat": None,
+        "fpl": None,
+        "transfermarkt": None,
+        "name": "FIFA World Cup",
+        "country": "International",
     },
 }
 
@@ -158,6 +197,7 @@ def _cache_set(key, value, ttl=300):
 # Rate Limiters (Token Bucket)
 # ============================================================
 
+
 class _RateLimiter:
     def __init__(self, max_tokens=9, refill_rate=9.0 / 60.0):
         self.max_tokens = max_tokens
@@ -195,9 +235,9 @@ _USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.3
 _RETRYABLE_CODES = {429, 500, 502, 503, 504}
 
 # Default retry config
-_MAX_RETRIES = 2          # up to 2 retries (3 total attempts)
-_RETRY_BASE_DELAY = 1.0   # 1s, 2s (exponential)
-_RETRY_MAX_DELAY = 4.0    # cap delay at 4s
+_MAX_RETRIES = 2  # up to 2 retries (3 total attempts)
+_RETRY_BASE_DELAY = 1.0  # 1s, 2s (exponential)
+_RETRY_MAX_DELAY = 4.0  # cap delay at 4s
 
 
 def _is_retryable(exc):
@@ -210,8 +250,14 @@ def _is_retryable(exc):
     return False
 
 
-def _http_fetch(url, headers=None, rate_limiter=None, timeout=30,
-                max_retries=_MAX_RETRIES, decode_gzip=False):
+def _http_fetch(
+    url,
+    headers=None,
+    rate_limiter=None,
+    timeout=30,
+    max_retries=_MAX_RETRIES,
+    decode_gzip=False,
+):
     """Core HTTP fetch with retry + exponential backoff.
 
     Returns (data_bytes, None) on success or (None, error_dict) on failure.
@@ -242,47 +288,68 @@ def _http_fetch(url, headers=None, rate_limiter=None, timeout=30,
                 # Client error (400, 401, 403, 404) — don't retry
                 logger.debug("HTTP %d (non-retryable) for %s", e.code, url)
                 return None, last_error
-            logger.debug("HTTP %d (retryable, attempt %d/%d) for %s",
-                         e.code, attempt + 1, 1 + max_retries, url)
+            logger.debug(
+                "HTTP %d (retryable, attempt %d/%d) for %s",
+                e.code,
+                attempt + 1,
+                1 + max_retries,
+                url,
+            )
         except Exception as e:
             last_error = {"error": True, "message": str(e)}
             if not _is_retryable(e):
                 logger.debug("Non-retryable error for %s: %s", url, e)
                 return None, last_error
-            logger.debug("Retryable error (attempt %d/%d) for %s: %s",
-                         attempt + 1, 1 + max_retries, url, e)
+            logger.debug(
+                "Retryable error (attempt %d/%d) for %s: %s",
+                attempt + 1,
+                1 + max_retries,
+                url,
+                e,
+            )
 
         # Exponential backoff before retry
         if attempt < max_retries:
-            delay = min(_RETRY_BASE_DELAY * (2 ** attempt), _RETRY_MAX_DELAY)
+            delay = min(_RETRY_BASE_DELAY * (2**attempt), _RETRY_MAX_DELAY)
             # Extra backoff for 429 rate limits
             if isinstance(last_error, dict) and last_error.get("status_code") == 429:
                 delay = min(delay * 2, _RETRY_MAX_DELAY * 2)
             time.sleep(delay)
 
     if max_retries > 0:
-        logger.warning("All %d attempts failed for %s: %s",
-                       1 + max_retries, url, last_error.get("message", ""))
+        logger.warning(
+            "All %d attempts failed for %s: %s",
+            1 + max_retries,
+            url,
+            last_error.get("message", ""),
+        )
     else:
         logger.debug("Request failed for %s: %s", url, last_error.get("message", ""))
     return None, last_error
 
 
-def _espn_request(league_slug, resource="scoreboard", params=None, max_retries=_MAX_RETRIES):
+def _espn_request(
+    league_slug, resource="scoreboard", params=None, max_retries=_MAX_RETRIES
+):
     """ESPN public API (no auth required). Rate-limited, cached.
 
     Set max_retries=0 for exploratory requests (e.g. probing multiple leagues).
     """
-    cache_key = f"espn:{league_slug}:{resource}:{json.dumps(params or {}, sort_keys=True)}"
+    cache_key = (
+        f"espn:{league_slug}:{resource}:{json.dumps(params or {}, sort_keys=True)}"
+    )
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
-    url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{league_slug}/{resource}"
+    url = (
+        f"https://site.api.espn.com/apis/site/v2/sports/soccer/{league_slug}/{resource}"
+    )
     if params:
         url += "?" + urllib.parse.urlencode(params)
     headers = {"User-Agent": _USER_AGENT}
-    raw, err = _http_fetch(url, headers=headers, rate_limiter=_espn_rate_limiter,
-                           max_retries=max_retries)
+    raw, err = _http_fetch(
+        url, headers=headers, rate_limiter=_espn_rate_limiter, max_retries=max_retries
+    )
     if err:
         return err
     try:
@@ -295,11 +362,15 @@ def _espn_request(league_slug, resource="scoreboard", params=None, max_retries=_
 
 def _espn_web_request(league_slug, resource, params=None):
     """ESPN web API (standings, season lists). Different host from site API."""
-    cache_key = f"espn_web:{league_slug}:{resource}:{json.dumps(params or {}, sort_keys=True)}"
+    cache_key = (
+        f"espn_web:{league_slug}:{resource}:{json.dumps(params or {}, sort_keys=True)}"
+    )
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
-    url = f"https://site.web.api.espn.com/apis/v2/sports/soccer/{league_slug}/{resource}"
+    url = (
+        f"https://site.web.api.espn.com/apis/v2/sports/soccer/{league_slug}/{resource}"
+    )
     if params:
         url += "?" + urllib.parse.urlencode(params)
     headers = {"User-Agent": _USER_AGENT}
@@ -331,11 +402,16 @@ def _espn_summary(league_slug, event_id, max_retries=_MAX_RETRIES):
         f"/{league_slug}/summary?event={event_id}"
     )
     headers = {"User-Agent": _USER_AGENT}
-    raw, err = _http_fetch(url, headers=headers, rate_limiter=_espn_rate_limiter,
-                           max_retries=max_retries)
+    raw, err = _http_fetch(
+        url, headers=headers, rate_limiter=_espn_rate_limiter, max_retries=max_retries
+    )
     if err:
-        logger.debug("ESPN summary failed for %s/%s: %s", league_slug, event_id,
-                      err.get("message", ""))
+        logger.debug(
+            "ESPN summary failed for %s/%s: %s",
+            league_slug,
+            event_id,
+            err.get("message", ""),
+        )
         _cache_set(cache_key, {}, ttl=60)
         return None
     try:
@@ -386,8 +462,9 @@ def _understat_api(path, ttl=300):
         "X-Requested-With": "XMLHttpRequest",
         "Accept-Encoding": "gzip, deflate",
     }
-    raw, err = _http_fetch(url, headers=headers, rate_limiter=_understat_rate_limiter,
-                           decode_gzip=True)
+    raw, err = _http_fetch(
+        url, headers=headers, rate_limiter=_understat_rate_limiter, decode_gzip=True
+    )
     if err:
         logger.debug("Understat API failed for %s: %s", path, err.get("message", ""))
         _cache_set(cache_key, "", ttl=60)
@@ -439,8 +516,9 @@ def _tm_request(endpoint, ttl=3600):
     headers = {"User-Agent": _USER_AGENT, "Accept": "application/json"}
     raw, err = _http_fetch(url, headers=headers, rate_limiter=_tm_rate_limiter)
     if err:
-        logger.debug("Transfermarkt request failed for %s: %s", endpoint,
-                      err.get("message", ""))
+        logger.debug(
+            "Transfermarkt request failed for %s: %s", endpoint, err.get("message", "")
+        )
         _cache_set(cache_key, "", ttl=60)
         return None
     try:
@@ -455,6 +533,7 @@ def _tm_request(endpoint, ttl=3600):
 # ============================================================
 # Season Detection (ESPN-based)
 # ============================================================
+
 
 def _detect_current_season(slug, espn_slug):
     """Detect current season year/dates for a league using ESPN scoreboard."""
@@ -504,7 +583,9 @@ def _resolve_espn_event(event_id, params):
         if league and league.get("espn"):
             return league["espn"], eid
     # 2. Extract from season_id
-    season_id = params.get("season_id") or params.get("command_attribute", {}).get("season_id", "")
+    season_id = params.get("season_id") or params.get("command_attribute", {}).get(
+        "season_id", ""
+    )
     if season_id:
         league, slug, year = _resolve_season(season_id)
         if league and league.get("espn"):
@@ -525,7 +606,9 @@ def _resolve_espn_event(event_id, params):
         summary = _espn_summary(espn_slug, eid, max_retries=0)
         if summary and summary.get("header"):
             # Use actual league from response, not the probed slug
-            real_espn = summary.get("header", {}).get("league", {}).get("slug", espn_slug)
+            real_espn = (
+                summary.get("header", {}).get("league", {}).get("slug", espn_slug)
+            )
             resolved = ESPN_TO_SLUG.get(real_espn)
             if resolved and LEAGUES.get(resolved, {}).get("espn"):
                 return LEAGUES[resolved]["espn"], eid
@@ -537,7 +620,9 @@ def _resolve_espn_event(event_id, params):
 # openfootball/football.json Fallback
 # ============================================================
 
-_OPENFOOTBALL_BASE = "https://raw.githubusercontent.com/openfootball/football.json/master"
+_OPENFOOTBALL_BASE = (
+    "https://raw.githubusercontent.com/openfootball/football.json/master"
+)
 
 
 def _openfootball_season_path(league, year):
@@ -548,7 +633,9 @@ def _openfootball_season_path(league, year):
     file_name = of["file"]
     if of["season_format"] == "aug":
         # European leagues: {year}-{YY}/xx.1.json  (e.g. 2025-26)
-        return f"{_OPENFOOTBALL_BASE}/{year}-{(int(year) + 1) % 100:02d}/{file_name}.json"
+        return (
+            f"{_OPENFOOTBALL_BASE}/{year}-{(int(year) + 1) % 100:02d}/{file_name}.json"
+        )
     else:
         # Calendar-year leagues (MLS, Brazil): {year}/xx.json
         return f"{_OPENFOOTBALL_BASE}/{year}/{file_name}.json"
@@ -599,17 +686,30 @@ def _normalize_openfootball_match(match, slug, year):
         "venue": {"id": "", "name": "", "city": "", "country": ""},
         "competitors": [
             {
-                "team": {"id": "", "name": match.get("team1", ""), "short_name": "", "abbreviation": ""},
+                "team": {
+                    "id": "",
+                    "name": match.get("team1", ""),
+                    "short_name": "",
+                    "abbreviation": "",
+                },
                 "qualifier": "home",
                 "score": ft[0] if has_score else 0,
             },
             {
-                "team": {"id": "", "name": match.get("team2", ""), "short_name": "", "abbreviation": ""},
+                "team": {
+                    "id": "",
+                    "name": match.get("team2", ""),
+                    "short_name": "",
+                    "abbreviation": "",
+                },
                 "qualifier": "away",
                 "score": ft[1] if has_score else 0,
             },
         ],
-        "scores": {"home": ft[0] if has_score else 0, "away": ft[1] if has_score else 0},
+        "scores": {
+            "home": ft[0] if has_score else 0,
+            "away": ft[1] if has_score else 0,
+        },
         "source": "openfootball",
     }
 
@@ -619,7 +719,9 @@ def _openfootball_get_schedule(slug, year):
     data = _openfootball_fetch(slug, year)
     if not data:
         return []
-    return [_normalize_openfootball_match(m, slug, year) for m in data.get("matches", [])]
+    return [
+        _normalize_openfootball_match(m, slug, year) for m in data.get("matches", [])
+    ]
 
 
 def _openfootball_get_teams(slug, year):
@@ -634,12 +736,21 @@ def _openfootball_get_teams(slug, year):
             name = m.get(key, "")
             if name and name not in seen:
                 seen.add(name)
-                teams.append({
-                    "id": "", "name": name, "short_name": name,
-                    "abbreviation": "", "crest": "", "country": "",
-                    "country_code": "", "venue": "", "founded": None,
-                    "colors": "", "website": "",
-                })
+                teams.append(
+                    {
+                        "id": "",
+                        "name": name,
+                        "short_name": name,
+                        "abbreviation": "",
+                        "crest": "",
+                        "country": "",
+                        "country_code": "",
+                        "venue": "",
+                        "founded": None,
+                        "colors": "",
+                        "website": "",
+                    }
+                )
     teams.sort(key=lambda t: t["name"])
     return teams
 
@@ -658,8 +769,15 @@ def _openfootball_get_standings(slug, year):
         t1, t2 = m.get("team1", ""), m.get("team2", "")
         for team in (t1, t2):
             if team and team not in table:
-                table[team] = {"played": 0, "won": 0, "drawn": 0, "lost": 0,
-                               "goals_for": 0, "goals_against": 0, "points": 0}
+                table[team] = {
+                    "played": 0,
+                    "won": 0,
+                    "drawn": 0,
+                    "lost": 0,
+                    "goals_for": 0,
+                    "goals_against": 0,
+                    "points": 0,
+                }
         if t1 and t2:
             g1, g2 = ft[0], ft[1]
             table[t1]["played"] += 1
@@ -695,11 +813,12 @@ def _openfootball_get_standings(slug, year):
 # Understat HTML Parsing
 # ============================================================
 
+
 def _decode_understat_json(raw):
     """Decode Understat's hex-escaped JSON (\\xNN sequences)."""
     try:
         decoded = re.sub(
-            r'\\x([0-9a-fA-F]{2})',
+            r"\\x([0-9a-fA-F]{2})",
             lambda m: chr(int(m.group(1), 16)),
             raw,
         )
@@ -721,6 +840,7 @@ def _extract_understat_var(html, var_name):
 # Team Name Matching (fuzzy cross-source)
 # ============================================================
 
+
 def _normalize_name(name):
     """Normalize team name for comparison."""
     n = name.lower().strip()
@@ -729,23 +849,44 @@ def _normalize_name(name):
     for token in [" fc", " cf", " sc", " ac", "fc ", "sc ", " afc", " ssc"]:
         n = n.replace(token, " ")
     for old, new in [
-        ("á", "a"), ("à", "a"), ("â", "a"), ("ã", "a"),
-        ("é", "e"), ("è", "e"), ("ê", "e"),
-        ("í", "i"), ("ì", "i"),
-        ("ó", "o"), ("ò", "o"), ("ô", "o"), ("õ", "o"),
-        ("ú", "u"), ("ù", "u"), ("ü", "u"),
-        ("ñ", "n"), ("ç", "c"),
-        ("ö", "o"), ("ä", "a"), ("ß", "ss"),
+        ("á", "a"),
+        ("à", "a"),
+        ("â", "a"),
+        ("ã", "a"),
+        ("é", "e"),
+        ("è", "e"),
+        ("ê", "e"),
+        ("í", "i"),
+        ("ì", "i"),
+        ("ó", "o"),
+        ("ò", "o"),
+        ("ô", "o"),
+        ("õ", "o"),
+        ("ú", "u"),
+        ("ù", "u"),
+        ("ü", "u"),
+        ("ñ", "n"),
+        ("ç", "c"),
+        ("ö", "o"),
+        ("ä", "a"),
+        ("ß", "ss"),
     ]:
         n = n.replace(old, new)
     return " ".join(n.split())
 
 
 _ABBREV = {
-    "man": "manchester", "utd": "united", "spurs": "tottenham",
-    "wolves": "wolverhampton", "nottm": "nottingham", "sheff": "sheffield",
-    "inter": "internazionale", "barca": "barcelona", "psg": "paris",
-    "gladbach": "monchengladbach", "atletico": "atletico",
+    "man": "manchester",
+    "utd": "united",
+    "spurs": "tottenham",
+    "wolves": "wolverhampton",
+    "nottm": "nottingham",
+    "sheff": "sheffield",
+    "inter": "internazionale",
+    "barca": "barcelona",
+    "psg": "paris",
+    "gladbach": "monchengladbach",
+    "atletico": "atletico",
 }
 
 
@@ -785,6 +926,7 @@ def _teams_match(name1, name2):
 # ============================================================
 # Cross-Source Event Resolution
 # ============================================================
+
 
 def _find_understat_match_id(match_info):
     """Find Understat match ID by matching date + home team name via AJAX API."""
@@ -830,8 +972,12 @@ def _get_understat_match(match_id):
         return cached if cached else None
     # Fetch shots + rosters via AJAX API
     api_data = _understat_api(f"/getMatchData/{match_id}", ttl=300)
-    shots = api_data.get("shots", {"h": [], "a": []}) if api_data else {"h": [], "a": []}
-    rosters = api_data.get("rosters", {"h": {}, "a": {}}) if api_data else {"h": {}, "a": {}}
+    shots = (
+        api_data.get("shots", {"h": [], "a": []}) if api_data else {"h": [], "a": []}
+    )
+    rosters = (
+        api_data.get("rosters", {"h": {}, "a": {}}) if api_data else {"h": {}, "a": {}}
+    )
     # Fetch match_info from HTML page (still embedded as JSON.parse)
     match_info = None
     html = _understat_html(f"https://understat.com/match/{match_id}")
@@ -850,6 +996,7 @@ def _get_understat_match(match_id):
 # ============================================================
 # ID Resolvers
 # ============================================================
+
 
 def _resolve_competition(competition_id):
     if not competition_id:
@@ -881,7 +1028,7 @@ def _resolve_season(season_id):
             return league, slug, year
     for slug, league in LEAGUES.items():
         if sid.startswith(slug):
-            remainder = sid[len(slug):].lstrip("-")
+            remainder = sid[len(slug) :].lstrip("-")
             if remainder.isdigit():
                 return league, slug, int(remainder)
     return None, sid, None
@@ -920,6 +1067,7 @@ def _resolve_player_id(player_id):
 # Helpers
 # ============================================================
 
+
 def _slugify(name):
     return name.lower().replace(" ", "-").replace(".", "").replace("'", "")
 
@@ -927,6 +1075,7 @@ def _slugify(name):
 # ============================================================
 # ESPN Summary Normalizers
 # ============================================================
+
 
 def _espn_home_away_map(summary):
     """Build team_id → homeAway mapping from ESPN summary header."""
@@ -967,32 +1116,34 @@ def _normalize_espn_summary_statistics(summary):
         team_id = team.get("id", "")
         stats_raw = team_data.get("statistics", [])
         sd = {s.get("name", ""): s.get("displayValue", "0") for s in stats_raw}
-        teams.append({
-            "team": {
-                "id": team_id,
-                "name": team.get("displayName", ""),
-                "abbreviation": team.get("abbreviation", ""),
-            },
-            "qualifier": ha_map.get(team_id, ""),
-            "statistics": {
-                "ball_possession": sd.get("possessionPct", "0"),
-                "shots_total": sd.get("shotsTotal", "0"),
-                "shots_on_target": sd.get("shotsOnTarget", "0"),
-                "shots_off_target": sd.get("shotsOffTarget", "0"),
-                "shots_blocked": sd.get("shotsBlocked", "0"),
-                "corner_kicks": sd.get("wonCorners", "0"),
-                "free_kicks": "0",
-                "fouls": sd.get("foulsCommitted", "0"),
-                "offsides": sd.get("offsides", "0"),
-                "yellow_cards": sd.get("yellowCards", "0"),
-                "red_cards": sd.get("redCards", "0"),
-                "passes_total": sd.get("totalPasses", "0"),
-                "passes_accurate": sd.get("completedPasses", "0"),
-                "tackles": sd.get("tackles", "0"),
-                "crosses": "0",
-                "goalkeeper_saves": sd.get("saves", "0"),
-            },
-        })
+        teams.append(
+            {
+                "team": {
+                    "id": team_id,
+                    "name": team.get("displayName", ""),
+                    "abbreviation": team.get("abbreviation", ""),
+                },
+                "qualifier": ha_map.get(team_id, ""),
+                "statistics": {
+                    "ball_possession": sd.get("possessionPct", "0"),
+                    "shots_total": sd.get("shotsTotal", "0"),
+                    "shots_on_target": sd.get("shotsOnTarget", "0"),
+                    "shots_off_target": sd.get("shotsOffTarget", "0"),
+                    "shots_blocked": sd.get("shotsBlocked", "0"),
+                    "corner_kicks": sd.get("wonCorners", "0"),
+                    "free_kicks": "0",
+                    "fouls": sd.get("foulsCommitted", "0"),
+                    "offsides": sd.get("offsides", "0"),
+                    "yellow_cards": sd.get("yellowCards", "0"),
+                    "red_cards": sd.get("redCards", "0"),
+                    "passes_total": sd.get("totalPasses", "0"),
+                    "passes_accurate": sd.get("completedPasses", "0"),
+                    "tackles": sd.get("tackles", "0"),
+                    "crosses": "0",
+                    "goalkeeper_saves": sd.get("saves", "0"),
+                },
+            }
+        )
     return teams
 
 
@@ -1006,7 +1157,9 @@ def _normalize_espn_summary_timeline(summary):
         events = comps[0].get("details", []) if comps else []
     for ev in events:
         type_obj = ev.get("type", {})
-        type_text = type_obj.get("text", "") if isinstance(type_obj, dict) else str(type_obj)
+        type_text = (
+            type_obj.get("text", "") if isinstance(type_obj, dict) else str(type_obj)
+        )
         mapped_type = _map_espn_event_type(type_text)
         clock = ev.get("clock", {})
         minute_raw = clock.get("displayValue", "0'").replace("'", "").replace("+", " ")
@@ -1019,7 +1172,9 @@ def _normalize_espn_summary_timeline(summary):
         if not athletes:
             # Fallback: ESPN uses participants[].athlete for some leagues
             participants = ev.get("participants") or []
-            athletes = [p.get("athlete") or {} for p in participants if p.get("athlete")]
+            athletes = [
+                p.get("athlete") or {} for p in participants if p.get("athlete")
+            ]
         entry = {
             "id": str(ev.get("id", ev.get("sequenceNumber", ""))),
             "type": mapped_type,
@@ -1029,11 +1184,15 @@ def _normalize_espn_summary_timeline(summary):
             "team": {
                 "id": team_data.get("id", ""),
                 "name": team_data.get("displayName", team_data.get("name", "")),
-            } if team_data else None,
+            }
+            if team_data
+            else None,
             "player": {
                 "id": athletes[0].get("id", "") if athletes else "",
                 "name": athletes[0].get("displayName", "") if athletes else "",
-            } if athletes else None,
+            }
+            if athletes
+            else None,
         }
         if mapped_type == "substitution" and len(athletes) > 1:
             entry["player_in"] = {
@@ -1073,17 +1232,19 @@ def _normalize_espn_summary_lineups(summary):
             }
             (starting if p.get("starter") else bench).append(info)
         if starting or bench:
-            lineups.append({
-                "team": {
-                    "id": team_id,
-                    "name": team.get("displayName", ""),
-                    "abbreviation": team.get("abbreviation", ""),
-                },
-                "qualifier": ha_map.get(team_id, ""),
-                "formation": formations.get(team_id, ""),
-                "starting": starting,
-                "bench": bench,
-            })
+            lineups.append(
+                {
+                    "team": {
+                        "id": team_id,
+                        "name": team.get("displayName", ""),
+                        "abbreviation": team.get("abbreviation", ""),
+                    },
+                    "qualifier": ha_map.get(team_id, ""),
+                    "formation": formations.get(team_id, ""),
+                    "starting": starting,
+                    "bench": bench,
+                }
+            )
     return lineups
 
 
@@ -1102,36 +1263,43 @@ def _normalize_espn_summary_players(summary):
             jersey = p.get("jersey", "")
             stat_dict = {}
             for s in stats:
-                stat_dict[s.get("name", "")] = s.get("value", s.get("displayValue", "0"))
-            players.append({
-                "id": athlete.get("id", ""),
-                "name": athlete.get("displayName", ""),
-                "short_name": athlete.get("shortName", ""),
-                "position": pos.get("name", ""),
-                "position_abbreviation": pos.get("abbreviation", ""),
-                "shirt_number": jersey,
-                "starter": p.get("starter", False),
-                "subbed_in": p.get("subbedIn", False),
-                "subbed_out": p.get("subbedOut", False),
-                "sub_minute": p.get("subMinute"),
-                "statistics": stat_dict,
-            })
+                stat_dict[s.get("name", "")] = s.get(
+                    "value", s.get("displayValue", "0")
+                )
+            players.append(
+                {
+                    "id": athlete.get("id", ""),
+                    "name": athlete.get("displayName", ""),
+                    "short_name": athlete.get("shortName", ""),
+                    "position": pos.get("name", ""),
+                    "position_abbreviation": pos.get("abbreviation", ""),
+                    "shirt_number": jersey,
+                    "starter": p.get("starter", False),
+                    "subbed_in": p.get("subbedIn", False),
+                    "subbed_out": p.get("subbedOut", False),
+                    "sub_minute": p.get("subMinute"),
+                    "statistics": stat_dict,
+                }
+            )
         if players:
-            teams.append({
-                "team": {
-                    "id": team_id,
-                    "name": team.get("displayName", ""),
-                    "abbreviation": team.get("abbreviation", ""),
-                },
-                "qualifier": ha_map.get(team_id, ""),
-                "players": players,
-            })
+            teams.append(
+                {
+                    "team": {
+                        "id": team_id,
+                        "name": team.get("displayName", ""),
+                        "abbreviation": team.get("abbreviation", ""),
+                    },
+                    "qualifier": ha_map.get(team_id, ""),
+                    "players": players,
+                }
+            )
     return teams
 
 
 # ============================================================
 # Understat Normalizers
 # ============================================================
+
 
 def _normalize_understat_xg(shots_data, match_info_data):
     """Normalize Understat shot-level xG data."""
@@ -1147,32 +1315,39 @@ def _normalize_understat_xg(shots_data, match_info_data):
     if match_info_data:
         # match_info uses flat keys: team_h/team_a for names, h/a for team IDs
         for side, qualifier in [("h", "home"), ("a", "away")]:
-            teams.append({
-                "team": {
-                    "id": str(match_info_data.get(side, "")),
-                    "name": match_info_data.get(f"team_{side}", ""),
-                },
-                "qualifier": qualifier,
-                "xg": round(home_xg if side == "h" else away_xg, 3),
-            })
+            teams.append(
+                {
+                    "team": {
+                        "id": str(match_info_data.get(side, "")),
+                        "name": match_info_data.get(f"team_{side}", ""),
+                    },
+                    "qualifier": qualifier,
+                    "xg": round(home_xg if side == "h" else away_xg, 3),
+                }
+            )
     shots = []
     for shot in sorted(home_shots + away_shots, key=lambda s: int(s.get("minute", 0))):
-        shots.append({
-            "id": shot.get("id", ""),
-            "minute": int(shot.get("minute", 0)),
-            "result": shot.get("result", ""),
-            "xg": round(float(shot.get("xG", 0)), 4),
-            "player": {"id": shot.get("player_id", ""), "name": shot.get("player", "")},
-            "assist": shot.get("player_assisted", ""),
-            "situation": shot.get("situation", ""),
-            "shot_type": shot.get("shotType", ""),
-            "last_action": shot.get("lastAction", ""),
-            "coordinates": {
-                "x": float(shot.get("X", 0)),
-                "y": float(shot.get("Y", 0)),
-            },
-            "qualifier": "home" if shot.get("h_a") == "h" else "away",
-        })
+        shots.append(
+            {
+                "id": shot.get("id", ""),
+                "minute": int(shot.get("minute", 0)),
+                "result": shot.get("result", ""),
+                "xg": round(float(shot.get("xG", 0)), 4),
+                "player": {
+                    "id": shot.get("player_id", ""),
+                    "name": shot.get("player", ""),
+                },
+                "assist": shot.get("player_assisted", ""),
+                "situation": shot.get("situation", ""),
+                "shot_type": shot.get("shotType", ""),
+                "last_action": shot.get("lastAction", ""),
+                "coordinates": {
+                    "x": float(shot.get("X", 0)),
+                    "y": float(shot.get("Y", 0)),
+                },
+                "qualifier": "home" if shot.get("h_a") == "h" else "away",
+            }
+        )
     return {"teams": teams, "shots": shots}
 
 
@@ -1186,39 +1361,44 @@ def _normalize_understat_players(rosters_data, match_info_data):
         roster = rosters_data.get(side, {})
         players = []
         for pid, p in roster.items():
-            players.append({
-                "id": p.get("player_id", pid),
-                "name": p.get("player", ""),
-                "position_order": int(p.get("positionOrder", 99)),
-                "minutes": int(p.get("time", 0)),
-                "goals": int(p.get("goals", 0)),
-                "own_goals": int(p.get("own_goals", 0)),
-                "assists": int(p.get("assists", 0)),
-                "shots": int(p.get("shots", 0)),
-                "key_passes": int(p.get("key_passes", 0)),
-                "xg": round(float(p.get("xG", 0)), 3),
-                "xa": round(float(p.get("xA", 0)), 3),
-                "xg_chain": round(float(p.get("xGChain", 0)), 3),
-                "xg_buildup": round(float(p.get("xGBuildup", 0)), 3),
-                "yellow_card": int(p.get("yellow_card", 0)),
-                "red_card": int(p.get("red_card", 0)),
-            })
+            players.append(
+                {
+                    "id": p.get("player_id", pid),
+                    "name": p.get("player", ""),
+                    "position_order": int(p.get("positionOrder", 99)),
+                    "minutes": int(p.get("time", 0)),
+                    "goals": int(p.get("goals", 0)),
+                    "own_goals": int(p.get("own_goals", 0)),
+                    "assists": int(p.get("assists", 0)),
+                    "shots": int(p.get("shots", 0)),
+                    "key_passes": int(p.get("key_passes", 0)),
+                    "xg": round(float(p.get("xG", 0)), 3),
+                    "xa": round(float(p.get("xA", 0)), 3),
+                    "xg_chain": round(float(p.get("xGChain", 0)), 3),
+                    "xg_buildup": round(float(p.get("xGBuildup", 0)), 3),
+                    "yellow_card": int(p.get("yellow_card", 0)),
+                    "red_card": int(p.get("red_card", 0)),
+                }
+            )
         players.sort(key=lambda x: x["position_order"])
         if players:
-            teams.append({
-                "team": {
-                    "id": team_id,
-                    "name": team_name,
-                },
-                "qualifier": qualifier,
-                "players": players,
-            })
+            teams.append(
+                {
+                    "team": {
+                        "id": team_id,
+                        "name": team_name,
+                    },
+                    "qualifier": qualifier,
+                    "players": players,
+                }
+            )
     return teams
 
 
 # ============================================================
 # ESPN Event & Standings Normalizers
 # ============================================================
+
 
 def _parse_espn_score(score):
     """Parse ESPN score (can be string, int, or $ref dict)."""
@@ -1303,30 +1483,36 @@ def _normalize_espn_standings(espn_data, league_slug=""):
         for entry in standings.get("entries", []):
             team = entry.get("team", {})
             sd = {s.get("name", ""): s.get("value", 0) for s in entry.get("stats", [])}
-            entries.append({
-                "position": int(sd.get("rank", 0)),
-                "team": {
-                    "id": str(team.get("id", "")),
-                    "name": team.get("displayName", ""),
-                    "short_name": team.get("shortDisplayName", ""),
-                    "abbreviation": team.get("abbreviation", ""),
-                    "crest": team.get("logos", [{}])[0].get("href", "") if team.get("logos") else "",
-                },
-                "played": int(sd.get("gamesPlayed", 0)),
-                "won": int(sd.get("wins", 0)),
-                "drawn": int(sd.get("ties", 0)),
-                "lost": int(sd.get("losses", 0)),
-                "goals_for": int(sd.get("pointsFor", 0)),
-                "goals_against": int(sd.get("pointsAgainst", 0)),
-                "goal_difference": int(sd.get("pointDifferential", 0)),
-                "points": int(sd.get("points", 0)),
-                "form": "",
-            })
-        groups.append({
-            "name": child.get("name", "TOTAL"),
-            "type": "TOTAL",
-            "entries": entries,
-        })
+            entries.append(
+                {
+                    "position": int(sd.get("rank", 0)),
+                    "team": {
+                        "id": str(team.get("id", "")),
+                        "name": team.get("displayName", ""),
+                        "short_name": team.get("shortDisplayName", ""),
+                        "abbreviation": team.get("abbreviation", ""),
+                        "crest": team.get("logos", [{}])[0].get("href", "")
+                        if team.get("logos")
+                        else "",
+                    },
+                    "played": int(sd.get("gamesPlayed", 0)),
+                    "won": int(sd.get("wins", 0)),
+                    "drawn": int(sd.get("ties", 0)),
+                    "lost": int(sd.get("losses", 0)),
+                    "goals_for": int(sd.get("pointsFor", 0)),
+                    "goals_against": int(sd.get("pointsAgainst", 0)),
+                    "goal_difference": int(sd.get("pointDifferential", 0)),
+                    "points": int(sd.get("points", 0)),
+                    "form": "",
+                }
+            )
+        groups.append(
+            {
+                "name": child.get("name", "TOTAL"),
+                "type": "TOTAL",
+                "entries": entries,
+            }
+        )
     return groups
 
 
@@ -1337,7 +1523,9 @@ def _normalize_espn_team(espn_team):
         "name": espn_team.get("displayName", ""),
         "short_name": espn_team.get("shortDisplayName", ""),
         "abbreviation": espn_team.get("abbreviation", ""),
-        "crest": espn_team.get("logos", [{}])[0].get("href", "") if espn_team.get("logos") else "",
+        "crest": espn_team.get("logos", [{}])[0].get("href", "")
+        if espn_team.get("logos")
+        else "",
         "country": "",
         "country_code": "",
         "venue": "",
@@ -1347,10 +1535,10 @@ def _normalize_espn_team(espn_team):
     }
 
 
-
 # ============================================================
 # Match Context (ESPN-based, for cross-source resolution)
 # ============================================================
+
 
 def _get_match_context(espn_league, espn_event_id, summary=None):
     """Build match context from ESPN for cross-source resolution (no fd needed)."""
@@ -1383,8 +1571,12 @@ def _get_match_context(espn_league, espn_event_id, summary=None):
 
 _FPL_POSITION_MAP = {1: "Goalkeeper", 2: "Defender", 3: "Midfielder", 4: "Forward"}
 _FPL_STATUS_MAP = {
-    "a": "available", "d": "doubtful", "i": "injured",
-    "s": "suspended", "u": "unavailable", "n": "not_in_squad",
+    "a": "available",
+    "d": "doubtful",
+    "i": "injured",
+    "s": "suspended",
+    "u": "unavailable",
+    "n": "not_in_squad",
 }
 
 
@@ -1425,7 +1617,9 @@ def _normalize_fpl_player_enrichment(fpl_player):
         "points_per_game": fpl_player.get("points_per_game", "0.0"),
         "expected_goals": fpl_player.get("expected_goals", "0.00"),
         "expected_assists": fpl_player.get("expected_assists", "0.00"),
-        "expected_goal_involvements": fpl_player.get("expected_goal_involvements", "0.00"),
+        "expected_goal_involvements": fpl_player.get(
+            "expected_goal_involvements", "0.00"
+        ),
         "expected_goals_conceded": fpl_player.get("expected_goals_conceded", "0.00"),
         "ict_index": fpl_player.get("ict_index", "0.0"),
         "influence": fpl_player.get("influence", "0.0"),
@@ -1436,7 +1630,9 @@ def _normalize_fpl_player_enrichment(fpl_player):
         "assists": fpl_player.get("assists", 0),
         "clean_sheets": fpl_player.get("clean_sheets", 0),
         "penalties_order": fpl_player.get("penalties_order"),
-        "corners_and_indirect_freekicks_order": fpl_player.get("corners_and_indirect_freekicks_order"),
+        "corners_and_indirect_freekicks_order": fpl_player.get(
+            "corners_and_indirect_freekicks_order"
+        ),
         "direct_freekicks_order": fpl_player.get("direct_freekicks_order"),
     }
 
@@ -1507,17 +1703,23 @@ def _build_missing_players_from_fpl(bootstrap, season_id):
                     },
                     "players": [],
                 }
-            missing_by_team[team_name]["players"].append({
-                "id": str(player.get("code", player.get("id", ""))),
-                "name": f"{player.get('first_name', '')} {player.get('second_name', '')}".strip(),
-                "web_name": player.get("web_name", ""),
-                "position": _map_fpl_position(player.get("element_type")),
-                "status": _map_fpl_injury_status(status),
-                "news": player.get("news", ""),
-                "chance_of_playing_this_round": player.get("chance_of_playing_this_round"),
-                "chance_of_playing_next_round": player.get("chance_of_playing_next_round"),
-                "news_added": player.get("news_added", ""),
-            })
+            missing_by_team[team_name]["players"].append(
+                {
+                    "id": str(player.get("code", player.get("id", ""))),
+                    "name": f"{player.get('first_name', '')} {player.get('second_name', '')}".strip(),
+                    "web_name": player.get("web_name", ""),
+                    "position": _map_fpl_position(player.get("element_type")),
+                    "status": _map_fpl_injury_status(status),
+                    "news": player.get("news", ""),
+                    "chance_of_playing_this_round": player.get(
+                        "chance_of_playing_this_round"
+                    ),
+                    "chance_of_playing_next_round": player.get(
+                        "chance_of_playing_next_round"
+                    ),
+                    "news_added": player.get("news_added", ""),
+                }
+            )
     teams = sorted(missing_by_team.values(), key=lambda t: t["team"]["name"])
     return {"season_id": season_id, "teams": teams}
 
@@ -1530,28 +1732,30 @@ def _build_leaders_from_fpl(bootstrap):
         goals = p.get("goals_scored", 0)
         if goals > 0:
             team = team_map.get(p.get("team"), {})
-            scorers.append({
-                "player": {
-                    "id": str(p.get("code", p.get("id", ""))),
-                    "name": f"{p.get('first_name', '')} {p.get('second_name', '')}".strip(),
-                    "first_name": p.get("first_name", ""),
-                    "last_name": p.get("second_name", ""),
-                    "nationality": "",
-                    "position": _map_fpl_position(p.get("element_type")),
-                    "date_of_birth": "",
-                },
-                "team": {
-                    "id": str(team.get("code", team.get("id", ""))),
-                    "name": team.get("name", ""),
-                    "short_name": team.get("short_name", ""),
-                    "abbreviation": team.get("short_name", ""),
-                    "crest": "",
-                },
-                "goals": goals,
-                "assists": p.get("assists", 0),
-                "penalties": 0,
-                "played_matches": p.get("starts", 0),
-            })
+            scorers.append(
+                {
+                    "player": {
+                        "id": str(p.get("code", p.get("id", ""))),
+                        "name": f"{p.get('first_name', '')} {p.get('second_name', '')}".strip(),
+                        "first_name": p.get("first_name", ""),
+                        "last_name": p.get("second_name", ""),
+                        "nationality": "",
+                        "position": _map_fpl_position(p.get("element_type")),
+                        "date_of_birth": "",
+                    },
+                    "team": {
+                        "id": str(team.get("code", team.get("id", ""))),
+                        "name": team.get("name", ""),
+                        "short_name": team.get("short_name", ""),
+                        "abbreviation": team.get("short_name", ""),
+                        "crest": "",
+                    },
+                    "goals": goals,
+                    "assists": p.get("assists", 0),
+                    "penalties": 0,
+                    "played_matches": p.get("starts", 0),
+                }
+            )
     scorers.sort(key=lambda s: (-s["goals"], -s["assists"]))
     return scorers[:30]
 
@@ -1559,6 +1763,7 @@ def _build_leaders_from_fpl(bootstrap):
 # ============================================================
 # Transfermarkt Helpers (ceapi)
 # ============================================================
+
 
 def _tm_market_value(tm_player_id):
     """Fetch market value development for a Transfermarkt player ID. Cached 24hr."""
@@ -1576,10 +1781,13 @@ def _tm_transfer_history(tm_player_id):
 
 def _resolve_tm_player_id(params):
     """Resolve Transfermarkt player ID from explicit params."""
-    return str(
-        params.get("tm_player_id")
-        or params.get("command_attribute", {}).get("tm_player_id", "")
-    ) or None
+    return (
+        str(
+            params.get("tm_player_id")
+            or params.get("command_attribute", {}).get("tm_player_id", "")
+        )
+        or None
+    )
 
 
 def _normalize_tm_market_value(entry):
@@ -1596,7 +1804,9 @@ def _normalize_tm_market_value(entry):
 
 def _normalize_tm_transfer(transfer, tm_player_id=""):
     """Normalize a Transfermarkt transfer record."""
-    from_club = transfer.get("from", {}) if isinstance(transfer.get("from"), dict) else {}
+    from_club = (
+        transfer.get("from", {}) if isinstance(transfer.get("from"), dict) else {}
+    )
     to_club = transfer.get("to", {}) if isinstance(transfer.get("to"), dict) else {}
     return {
         "player_tm_id": tm_player_id,
@@ -1620,12 +1830,12 @@ def _normalize_tm_transfer(transfer, tm_player_id=""):
 # ESPN primary, openfootball fallback
 # ============================================================
 
+
 def get_current_season(params):
     """Detect current season for a competition using ESPN."""
-    competition_id = (
-        params.get("competition_id")
-        or params.get("command_attribute", {}).get("competition_id", "")
-    )
+    competition_id = params.get("competition_id") or params.get(
+        "command_attribute", {}
+    ).get("competition_id", "")
     league, slug = _resolve_competition(competition_id)
     if not league:
         return {"error": True, "message": f"Unknown competition: {competition_id}"}
@@ -1673,56 +1883,76 @@ def get_competitions(params):
 
 def get_competition_seasons(params):
     """Get available seasons for a competition."""
-    competition_id = (
-        params.get("competition_id")
-        or params.get("command_attribute", {}).get("competition_id", "")
-    )
+    competition_id = params.get("competition_id") or params.get(
+        "command_attribute", {}
+    ).get("competition_id", "")
     league, slug = _resolve_competition(competition_id)
     if not league:
-        return {"competition": {}, "seasons": [], "error": True,
-                "message": f"Unknown competition: {competition_id}"}
+        return {
+            "competition": {},
+            "seasons": [],
+            "error": True,
+            "message": f"Unknown competition: {competition_id}",
+        }
     comp_info = {
-        "id": slug, "name": league["name"],
+        "id": slug,
+        "name": league["name"],
         "category": {"id": _slugify(league["country"]), "name": league["country"]},
         "type": "LEAGUE",
     }
     espn_slug = league.get("espn")
     if not espn_slug:
-        return {"competition": comp_info, "seasons": [],
-                "message": "No ESPN coverage for this competition"}
+        return {
+            "competition": comp_info,
+            "seasons": [],
+            "message": "No ESPN coverage for this competition",
+        }
     data = _espn_web_request(espn_slug, "standings")
     if data.get("error"):
         season = _detect_current_season(slug, espn_slug)
         if season:
-            return {"competition": comp_info, "seasons": [{
-                "id": f"{slug}-{season['year']}", "name": season["display_name"],
-                "year": str(season["year"]), "start_date": season["start_date"],
-                "end_date": season["end_date"], "current_matchday": None,
-            }]}
+            return {
+                "competition": comp_info,
+                "seasons": [
+                    {
+                        "id": f"{slug}-{season['year']}",
+                        "name": season["display_name"],
+                        "year": str(season["year"]),
+                        "start_date": season["start_date"],
+                        "end_date": season["end_date"],
+                        "current_matchday": None,
+                    }
+                ],
+            }
         return {"competition": comp_info, "seasons": []}
     seasons = []
     for s in data.get("seasons", []):
         year = str(s.get("year", ""))
-        seasons.append({
-            "id": f"{slug}-{year}",
-            "name": s.get("displayName", year),
-            "year": year,
-            "start_date": s.get("startDate", ""),
-            "end_date": s.get("endDate", ""),
-            "current_matchday": None,
-        })
+        seasons.append(
+            {
+                "id": f"{slug}-{year}",
+                "name": s.get("displayName", year),
+                "year": year,
+                "start_date": s.get("startDate", ""),
+                "end_date": s.get("endDate", ""),
+                "current_matchday": None,
+            }
+        )
     return {"competition": comp_info, "seasons": seasons}
 
 
 def get_season_schedule(params):
     """Get full season match schedule."""
-    season_id = (
-        params.get("season_id")
-        or params.get("command_attribute", {}).get("season_id", "")
+    season_id = params.get("season_id") or params.get("command_attribute", {}).get(
+        "season_id", ""
     )
     league, slug, year = _resolve_season(season_id)
     if not league or not year:
-        return {"schedules": [], "error": True, "message": f"Unknown season: {season_id}"}
+        return {
+            "schedules": [],
+            "error": True,
+            "message": f"Unknown season: {season_id}",
+        }
     espn_slug = league.get("espn")
     if not espn_slug:
         return {"schedules": [], "message": "No ESPN coverage for this competition"}
@@ -1736,7 +1966,11 @@ def get_season_schedule(params):
                     team_ids.append(str(tid))
     if not team_ids:
         data = _espn_request(espn_slug, "scoreboard")
-        return {"schedules": [_normalize_espn_event(e, slug) for e in data.get("events", [])]}
+        return {
+            "schedules": [
+                _normalize_espn_event(e, slug) for e in data.get("events", [])
+            ]
+        }
     all_events = {}
     expected_total = len(team_ids) * (len(team_ids) - 1)
     for tid in team_ids:
@@ -1749,7 +1983,11 @@ def get_season_schedule(params):
         if len(all_events) >= expected_total:
             break
     if all_events:
-        return {"schedules": sorted(all_events.values(), key=lambda e: e.get("start_time", ""))}
+        return {
+            "schedules": sorted(
+                all_events.values(), key=lambda e: e.get("start_time", "")
+            )
+        }
     # openfootball fallback
     of_events = _openfootball_get_schedule(slug, year)
     if of_events:
@@ -1759,13 +1997,16 @@ def get_season_schedule(params):
 
 def get_season_standings(params):
     """Get season standings."""
-    season_id = (
-        params.get("season_id")
-        or params.get("command_attribute", {}).get("season_id", "")
+    season_id = params.get("season_id") or params.get("command_attribute", {}).get(
+        "season_id", ""
     )
     league, slug, year = _resolve_season(season_id)
     if not league:
-        return {"standings": [], "error": True, "message": f"Unknown season: {season_id}"}
+        return {
+            "standings": [],
+            "error": True,
+            "message": f"Unknown season: {season_id}",
+        }
     espn_slug = league.get("espn")
     if not espn_slug:
         return {"standings": [], "message": "No ESPN coverage for this competition"}
@@ -1779,15 +2020,17 @@ def get_season_standings(params):
     of_entries = _openfootball_get_standings(slug, year)
     if of_entries:
         league_name = league.get("name", "")
-        return {"standings": [{"group": league_name, "entries": of_entries}], "source": "openfootball"}
+        return {
+            "standings": [{"group": league_name, "entries": of_entries}],
+            "source": "openfootball",
+        }
     return {"standings": []}
 
 
 def get_season_leaders(params):
     """Get top scorers/leaders. fd primary, FPL fallback for PL."""
-    season_id = (
-        params.get("season_id")
-        or params.get("command_attribute", {}).get("season_id", "")
+    season_id = params.get("season_id") or params.get("command_attribute", {}).get(
+        "season_id", ""
     )
     league, slug, year = _resolve_season(season_id)
     if not league:
@@ -1799,14 +2042,16 @@ def get_season_leaders(params):
             leaders = _build_leaders_from_fpl(bootstrap)
             if leaders:
                 return {"leaders": leaders}
-    return {"leaders": [], "message": "Season leaders available for Premier League only (via FPL)"}
+    return {
+        "leaders": [],
+        "message": "Season leaders available for Premier League only (via FPL)",
+    }
 
 
 def get_season_teams(params):
     """Get teams in a season."""
-    season_id = (
-        params.get("season_id")
-        or params.get("command_attribute", {}).get("season_id", "")
+    season_id = params.get("season_id") or params.get("command_attribute", {}).get(
+        "season_id", ""
     )
     league, slug, year = _resolve_season(season_id)
     if not league:
@@ -1814,7 +2059,9 @@ def get_season_teams(params):
     espn_slug = league.get("espn")
     if not espn_slug:
         return {"teams": [], "message": "No ESPN coverage for this competition"}
-    data = _espn_web_request(espn_slug, "standings", {"season": str(year)} if year else {})
+    data = _espn_web_request(
+        espn_slug, "standings", {"season": str(year)} if year else {}
+    )
     if data.get("error"):
         return {"teams": []}
     teams = []
@@ -1837,23 +2084,23 @@ def get_season_teams(params):
 
 def search_team(params):
     """Search for a team by name across all leagues (or a specific one)."""
-    query = (
-        params.get("query")
-        or params.get("command_attribute", {}).get("query", "")
-    )
+    query = params.get("query") or params.get("command_attribute", {}).get("query", "")
     if not query:
         return {"results": [], "error": True, "message": "Missing query"}
-    competition_id = (
-        params.get("competition_id")
-        or params.get("command_attribute", {}).get("competition_id", "")
-    )
+    competition_id = params.get("competition_id") or params.get(
+        "command_attribute", {}
+    ).get("competition_id", "")
     leagues_to_search = []
     if competition_id:
         league, slug = _resolve_competition(competition_id)
         if league:
             leagues_to_search.append((slug, league))
         else:
-            return {"results": [], "error": True, "message": f"Unknown competition: {competition_id}"}
+            return {
+                "results": [],
+                "error": True,
+                "message": f"Unknown competition: {competition_id}",
+            }
     else:
         leagues_to_search = list(LEAGUES.items())
     results = []
@@ -1866,30 +2113,35 @@ def search_team(params):
             continue
         year = season["year"]
         season_id = f"{slug}-{year}"
-        teams_data = get_season_teams({"season_id": season_id, **{k: v for k, v in params.items() if k.startswith("fd_")}})
+        teams_data = get_season_teams(
+            {
+                "season_id": season_id,
+                **{k: v for k, v in params.items() if k.startswith("fd_")},
+            }
+        )
         for team in teams_data.get("teams", []):
             team_name = team.get("name", "")
             if _teams_match(query, team_name):
-                results.append({
-                    "team": team,
-                    "competition": {"id": slug, "name": league["name"]},
-                    "season": {"id": season_id, "year": str(year)},
-                })
+                results.append(
+                    {
+                        "team": team,
+                        "competition": {"id": slug, "name": league["name"]},
+                        "season": {"id": season_id, "year": str(year)},
+                    }
+                )
     return {"results": results}
 
 
 def get_team_profile(params):
     """Get team profile with squad/roster. FPL enrichment for PL teams."""
-    team_id = (
-        params.get("team_id")
-        or params.get("command_attribute", {}).get("team_id", "")
+    team_id = params.get("team_id") or params.get("command_attribute", {}).get(
+        "team_id", ""
     )
     tid = _resolve_team_id(team_id)
     if not tid:
         return {"team": {}, "players": [], "error": True, "message": "Missing team_id"}
-    league_slug = (
-        params.get("league_slug")
-        or params.get("command_attribute", {}).get("league_slug", "")
+    league_slug = params.get("league_slug") or params.get("command_attribute", {}).get(
+        "league_slug", ""
     )
     result = None
     if not result:
@@ -1915,7 +2167,8 @@ def get_team_profile(params):
                     "venue": {
                         "id": "",
                         "name": team_data.get("venue", {}).get("fullName", "")
-                        if isinstance(team_data.get("venue"), dict) else "",
+                        if isinstance(team_data.get("venue"), dict)
+                        else "",
                     },
                 }
                 break
@@ -1938,10 +2191,7 @@ def get_team_profile(params):
 
 def get_daily_schedule(params):
     """Get all matches for a specific date across all leagues."""
-    date = (
-        params.get("date")
-        or params.get("command_attribute", {}).get("date", "")
-    )
+    date = params.get("date") or params.get("command_attribute", {}).get("date", "")
     if not date:
         date = datetime.utcnow().strftime("%Y-%m-%d")
     date_key = date.replace("-", "")
@@ -1985,15 +2235,20 @@ def get_daily_schedule(params):
 
 # --- Event Details (ESPN summary primary) ---
 
+
 def get_event_summary(params):
     """Get match summary with basic info and scores."""
-    event_id = (
-        params.get("event_id")
-        or params.get("command_attribute", {}).get("event_id", "")
+    event_id = params.get("event_id") or params.get("command_attribute", {}).get(
+        "event_id", ""
     )
     eid = _resolve_event_id(event_id)
     if not eid:
-        return {"event": {}, "statistics": {}, "error": True, "message": "Missing event_id"}
+        return {
+            "event": {},
+            "statistics": {},
+            "error": True,
+            "message": "Missing event_id",
+        }
     # ESPN primary
     espn_league, espn_eid = _resolve_espn_event(eid, params)
     if espn_league:
@@ -2012,14 +2267,18 @@ def get_event_summary(params):
             }
             event = _normalize_espn_event(event_data, slug)
             return {"event": event, "statistics": {}}
-    return {"event": {}, "statistics": {}, "error": True, "message": "Could not resolve event"}
+    return {
+        "event": {},
+        "statistics": {},
+        "error": True,
+        "message": "Could not resolve event",
+    }
 
 
 def get_event_lineups(params):
     """Get match lineups from ESPN summary."""
-    event_id = (
-        params.get("event_id")
-        or params.get("command_attribute", {}).get("event_id", "")
+    event_id = params.get("event_id") or params.get("command_attribute", {}).get(
+        "event_id", ""
     )
     eid = _resolve_event_id(event_id)
     if not eid:
@@ -2037,9 +2296,8 @@ def get_event_lineups(params):
 
 def get_event_statistics(params):
     """Get match team statistics from ESPN summary."""
-    event_id = (
-        params.get("event_id")
-        or params.get("command_attribute", {}).get("event_id", "")
+    event_id = params.get("event_id") or params.get("command_attribute", {}).get(
+        "event_id", ""
     )
     eid = _resolve_event_id(event_id)
     if not eid:
@@ -2056,9 +2314,8 @@ def get_event_statistics(params):
 
 def get_event_timeline(params):
     """Get match timeline/key events from ESPN summary."""
-    event_id = (
-        params.get("event_id")
-        or params.get("command_attribute", {}).get("event_id", "")
+    event_id = params.get("event_id") or params.get("command_attribute", {}).get(
+        "event_id", ""
     )
     eid = _resolve_event_id(event_id)
     if not eid:
@@ -2075,29 +2332,25 @@ def get_event_timeline(params):
 
 def get_team_schedule(params):
     """Get schedule for a specific team."""
-    team_id = (
-        params.get("team_id")
-        or params.get("command_attribute", {}).get("team_id", "")
+    team_id = params.get("team_id") or params.get("command_attribute", {}).get(
+        "team_id", ""
     )
     tid = _resolve_team_id(team_id)
     if not tid:
         return {"team": {}, "events": [], "error": True, "message": "Missing team_id"}
-    competition_id = (
-        params.get("competition_id")
-        or params.get("command_attribute", {}).get("competition_id", "")
-    )
+    competition_id = params.get("competition_id") or params.get(
+        "command_attribute", {}
+    ).get("competition_id", "")
     # Resolve competition_id to a slug for filtering
     comp_filter_slug = None
     if competition_id:
         _, comp_filter_slug = _resolve_competition(competition_id)
     # ESPN path: try with league hint first
-    league_slug = (
-        params.get("league_slug")
-        or params.get("command_attribute", {}).get("league_slug", "")
+    league_slug = params.get("league_slug") or params.get("command_attribute", {}).get(
+        "league_slug", ""
     )
-    season_year = (
-        params.get("season_year")
-        or params.get("command_attribute", {}).get("season_year", "")
+    season_year = params.get("season_year") or params.get("command_attribute", {}).get(
+        "season_year", ""
     )
     leagues_to_try = []
     if league_slug:
@@ -2112,15 +2365,20 @@ def get_team_schedule(params):
         espn_slug = league["espn"]
         espn_params = {"season": str(season_year)} if season_year else {}
         # Fetch past results
-        data = _espn_request(espn_slug, f"teams/{tid}/schedule", espn_params,
-                             max_retries=probe_retries)
+        data = _espn_request(
+            espn_slug, f"teams/{tid}/schedule", espn_params, max_retries=probe_retries
+        )
         if data.get("error"):
             continue
         events_raw = data.get("events", [])
         # Fetch upcoming fixtures (ESPN requires fixture=true separately)
         fixture_params = {**espn_params, "fixture": "true"}
-        fixture_data = _espn_request(espn_slug, f"teams/{tid}/schedule", fixture_params,
-                                     max_retries=probe_retries)
+        fixture_data = _espn_request(
+            espn_slug,
+            f"teams/{tid}/schedule",
+            fixture_params,
+            max_retries=probe_retries,
+        )
         if not fixture_data.get("error"):
             fixture_events = fixture_data.get("events", [])
             # Merge, dedup by event ID
@@ -2133,7 +2391,11 @@ def get_team_schedule(params):
             continue
         events = [_normalize_espn_event(e, slug) for e in events_raw]
         if comp_filter_slug:
-            events = [e for e in events if e.get("competition", {}).get("id") == comp_filter_slug]
+            events = [
+                e
+                for e in events
+                if e.get("competition", {}).get("id") == comp_filter_slug
+            ]
         events.sort(key=lambda e: e.get("start_time", ""))
         team_data = {}
         if events and events[0].get("competitors"):
@@ -2147,22 +2409,30 @@ def get_team_schedule(params):
 
 def get_head_to_head(params):
     """Get head-to-head history (unavailable — use get_team_schedule for both teams instead)."""
-    return {"teams": [], "events": [],
-            "message": "Head-to-head history is unavailable. Use get_team_schedule for both teams and compare."}
+    return {
+        "teams": [],
+        "events": [],
+        "message": "Head-to-head history is unavailable. Use get_team_schedule for both teams and compare.",
+    }
 
 
 # --- Enrichment (Understat + ESPN) ---
 
+
 def get_event_xg(params):
     """Get expected goals (xG) data from Understat (5 top leagues)."""
-    event_id = (
-        params.get("event_id")
-        or params.get("command_attribute", {}).get("event_id", "")
+    event_id = params.get("event_id") or params.get("command_attribute", {}).get(
+        "event_id", ""
     )
     eid = _resolve_event_id(event_id)
     if not eid:
-        return {"event_id": event_id, "teams": [], "shots": [], "error": True,
-                "message": "Missing event_id"}
+        return {
+            "event_id": event_id,
+            "teams": [],
+            "shots": [],
+            "error": True,
+            "message": "Missing event_id",
+        }
     # Build match context from ESPN
     match_ctx = None
     espn_league, espn_eid = _resolve_espn_event(eid, params)
@@ -2171,11 +2441,17 @@ def get_event_xg(params):
         if summary:
             match_ctx = _get_match_context(espn_league, espn_eid, summary)
     if not match_ctx:
-        return {"event_id": event_id, "teams": [], "shots": [],
-                "message": "Could not resolve match"}
+        return {
+            "event_id": event_id,
+            "teams": [],
+            "shots": [],
+            "message": "Could not resolve match",
+        }
     if not match_ctx.get("understat_league"):
         return {
-            "event_id": event_id, "teams": [], "shots": [],
+            "event_id": event_id,
+            "teams": [],
+            "shots": [],
             "message": (
                 f"xG data not available for {match_ctx.get('slug', 'this league')}. "
                 "Understat covers: EPL, La Liga, Bundesliga, Serie A, Ligue 1"
@@ -2183,12 +2459,20 @@ def get_event_xg(params):
         }
     understat_id = _find_understat_match_id(match_ctx)
     if not understat_id:
-        return {"event_id": event_id, "teams": [], "shots": [],
-                "message": "Match not found on Understat"}
+        return {
+            "event_id": event_id,
+            "teams": [],
+            "shots": [],
+            "message": "Match not found on Understat",
+        }
     udata = _get_understat_match(understat_id)
     if not udata:
-        return {"event_id": event_id, "teams": [], "shots": [],
-                "message": "Could not fetch Understat data"}
+        return {
+            "event_id": event_id,
+            "teams": [],
+            "shots": [],
+            "message": "Could not fetch Understat data",
+        }
     result = _normalize_understat_xg(udata["shots"], udata["match_info"])
     result["event_id"] = event_id
     result["source"] = "understat"
@@ -2197,13 +2481,17 @@ def get_event_xg(params):
 
 def get_event_players_statistics(params):
     """Get player-level match statistics from ESPN + Understat xG."""
-    event_id = (
-        params.get("event_id")
-        or params.get("command_attribute", {}).get("event_id", "")
+    event_id = params.get("event_id") or params.get("command_attribute", {}).get(
+        "event_id", ""
     )
     eid = _resolve_event_id(event_id)
     if not eid:
-        return {"event_id": event_id, "teams": [], "error": True, "message": "Missing event_id"}
+        return {
+            "event_id": event_id,
+            "teams": [],
+            "error": True,
+            "message": "Missing event_id",
+        }
     # ESPN primary for player stats
     espn_league, espn_eid = _resolve_espn_event(eid, params)
     summary = None
@@ -2224,14 +2512,20 @@ def get_event_players_statistics(params):
                         )
                         _merge_understat_player_xg(teams, uteams)
             return {"event_id": event_id, "teams": teams}
-    return {"event_id": event_id, "teams": [], "message": "Player statistics not available"}
+    return {
+        "event_id": event_id,
+        "teams": [],
+        "message": "Player statistics not available",
+    }
 
 
 def _merge_understat_player_xg(espn_teams, ustat_teams):
     """Merge Understat xG data into ESPN player statistics (in-place)."""
     for espn_t in espn_teams:
         qualifier = espn_t.get("qualifier", "")
-        ustat_t = next((u for u in ustat_teams if u.get("qualifier") == qualifier), None)
+        ustat_t = next(
+            (u for u in ustat_teams if u.get("qualifier") == qualifier), None
+        )
         if not ustat_t:
             continue
         ustat_players = {p["name"].lower(): p for p in ustat_t.get("players", [])}
@@ -2253,38 +2547,41 @@ def _merge_understat_player_xg(espn_teams, ustat_teams):
 
 def get_missing_players(params):
     """Get injured/missing/doubtful players. FPL source for PL."""
-    season_id = (
-        params.get("season_id")
-        or params.get("command_attribute", {}).get("season_id", "")
+    season_id = params.get("season_id") or params.get("command_attribute", {}).get(
+        "season_id", ""
     )
     league, slug, year = _resolve_season(season_id)
     if not league:
-        return {"season_id": season_id, "teams": [],
-                "error": True, "message": f"Unknown season: {season_id}"}
+        return {
+            "season_id": season_id,
+            "teams": [],
+            "error": True,
+            "message": f"Unknown season: {season_id}",
+        }
     # FPL path (PL only)
     if league.get("fpl"):
         bootstrap = _get_fpl_bootstrap()
         if bootstrap:
             return _build_missing_players_from_fpl(bootstrap, season_id)
     return {
-        "season_id": season_id, "teams": [],
+        "season_id": season_id,
+        "teams": [],
         "message": "Missing player data only available for Premier League (via FPL)",
     }
 
 
 def get_season_transfers(params):
     """Get season transfers. Transfermarkt ceapi when tm_player_ids provided."""
-    season_id = (
-        params.get("season_id")
-        or params.get("command_attribute", {}).get("season_id", "")
+    season_id = params.get("season_id") or params.get("command_attribute", {}).get(
+        "season_id", ""
     )
-    tm_player_ids = (
-        params.get("tm_player_ids")
-        or params.get("command_attribute", {}).get("tm_player_ids", [])
-    )
+    tm_player_ids = params.get("tm_player_ids") or params.get(
+        "command_attribute", {}
+    ).get("tm_player_ids", [])
     if not tm_player_ids:
         return {
-            "season_id": season_id, "transfers": [],
+            "season_id": season_id,
+            "transfers": [],
             "message": "Transfers require tm_player_ids parameter (list of Transfermarkt player IDs)",
         }
     league, slug, year = _resolve_season(season_id)
@@ -2310,13 +2607,11 @@ def get_season_transfers(params):
 
 def get_player_profile(params):
     """Get player profile. FPL for PL, Transfermarkt enrichment."""
-    player_id = (
-        params.get("player_id")
-        or params.get("command_attribute", {}).get("player_id", "")
+    player_id = params.get("player_id") or params.get("command_attribute", {}).get(
+        "player_id", ""
     )
-    fpl_id = (
-        params.get("fpl_id")
-        or params.get("command_attribute", {}).get("fpl_id", "")
+    fpl_id = params.get("fpl_id") or params.get("command_attribute", {}).get(
+        "fpl_id", ""
     )
     pid = _resolve_player_id(player_id)
     player = {}
@@ -2325,7 +2620,9 @@ def get_player_profile(params):
         bootstrap = _get_fpl_bootstrap()
         if bootstrap:
             for fp in bootstrap.get("elements", []):
-                if str(fp.get("id")) == str(fpl_id) or str(fp.get("code")) == str(fpl_id):
+                if str(fp.get("id")) == str(fpl_id) or str(fp.get("code")) == str(
+                    fpl_id
+                ):
                     if not player:
                         player = _normalize_fpl_player_as_profile(fp)
                     player["fpl_data"] = _normalize_fpl_player_enrichment(fp)
@@ -2358,5 +2655,8 @@ def get_player_profile(params):
                     _normalize_tm_transfer(t, tm_id) for t in th_list
                 ]
     if not player:
-        return {"player": {}, "message": "Player not found. Provide player_id, fpl_id, or tm_player_id."}
+        return {
+            "player": {},
+            "message": "Player not found. Provide player_id, fpl_id, or tm_player_id.",
+        }
     return {"player": player}

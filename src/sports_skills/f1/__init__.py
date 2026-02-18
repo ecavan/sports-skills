@@ -25,7 +25,9 @@ def _req(**kwargs):
     return {"params": {k: v for k, v in kwargs.items() if v is not None}}
 
 
-def get_session_data(*, session_year: int, session_name: str, session_type: str = "Q") -> dict:
+def get_session_data(
+    *, session_year: int, session_name: str, session_type: str = "Q"
+) -> dict:
     """Get detailed session data (qualifying, race, practice).
 
     Args:
@@ -33,7 +35,13 @@ def get_session_data(*, session_year: int, session_name: str, session_type: str 
         session_name: Event name (e.g., "Monza").
         session_type: Session type — "Q" (qualifying), "R" (race), "FP1", etc.
     """
-    return _get_session_data(_req(session_year=session_year, session_name=session_name, session_type=session_type))
+    return _get_session_data(
+        _req(
+            session_year=session_year,
+            session_name=session_name,
+            session_type=session_type,
+        )
+    )
 
 
 def get_driver_info(*, year: int, driver: str | None = None) -> dict:
@@ -61,7 +69,9 @@ def get_race_schedule(*, year: int) -> dict:
     return _get_race_schedule(_req(year=year))
 
 
-def get_lap_data(*, year: int, event: str, session_type: str = "R", driver: str | None = None) -> dict:
+def get_lap_data(
+    *, year: int, event: str, session_type: str = "R", driver: str | None = None
+) -> dict:
     """Get lap-by-lap timing data.
 
     Args:
@@ -70,7 +80,9 @@ def get_lap_data(*, year: int, event: str, session_type: str = "R", driver: str 
         session_type: Session type — "R" (race), "Q", "FP1", etc.
         driver: Driver code (optional — omit for all drivers).
     """
-    return _get_lap_data(_req(year=year, event=event, session_type=session_type, driver=driver))
+    return _get_lap_data(
+        _req(year=year, event=event, session_type=session_type, driver=driver)
+    )
 
 
 def get_race_results(*, year: int, event: str) -> dict:
@@ -83,7 +95,9 @@ def get_race_results(*, year: int, event: str) -> dict:
     return _get_race_results(_req(year=year, event=event))
 
 
-def get_pit_stops(*, year: int, event: str | None = None, driver: str | None = None) -> dict:
+def get_pit_stops(
+    *, year: int, event: str | None = None, driver: str | None = None
+) -> dict:
     """Get pit stop durations (PitIn → PitOut) for a race or full season.
 
     Args:
@@ -94,7 +108,9 @@ def get_pit_stops(*, year: int, event: str | None = None, driver: str | None = N
     return _get_pit_stops(_req(year=year, event=event, driver=driver))
 
 
-def get_speed_data(*, year: int, event: str | None = None, driver: str | None = None) -> dict:
+def get_speed_data(
+    *, year: int, event: str | None = None, driver: str | None = None
+) -> dict:
     """Get speed trap and intermediate speed data for a race or full season.
 
     Args:
@@ -123,7 +139,9 @@ def get_season_stats(*, year: int) -> dict:
     return _get_season_stats(_req(year=year))
 
 
-def get_team_comparison(*, year: int, team1: str, team2: str, event: str | None = None) -> dict:
+def get_team_comparison(
+    *, year: int, team1: str, team2: str, event: str | None = None
+) -> dict:
     """Compare two teams head-to-head: qualifying, race pace, sectors, points.
 
     Args:
@@ -146,7 +164,9 @@ def get_teammate_comparison(*, year: int, team: str, event: str | None = None) -
     return _get_teammate_comparison(_req(year=year, team=team, event=event))
 
 
-def get_tire_analysis(*, year: int, event: str | None = None, driver: str | None = None) -> dict:
+def get_tire_analysis(
+    *, year: int, event: str | None = None, driver: str | None = None
+) -> dict:
     """Tire strategy and degradation analysis: compound usage, stint lengths, deg rates.
 
     Args:

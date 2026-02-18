@@ -58,6 +58,7 @@ def _cache_set(key, value, ttl=300):
 # Rate Limiters (Token Bucket)
 # ============================================================
 
+
 class _RateLimiter:
     def __init__(self, max_tokens=10, refill_rate=10.0):
         self.max_tokens = max_tokens
@@ -156,6 +157,7 @@ def _clob_request(endpoint, params=None, ttl=30):
 # Response Helpers
 # ============================================================
 
+
 def _success(data, message=""):
     return {"status": True, "data": data, "message": message}
 
@@ -176,6 +178,7 @@ def _check_error(response):
 # ============================================================
 # Market Normalization
 # ============================================================
+
 
 def _parse_json_field(value):
     """Parse a field that may be a JSON string or already a list."""
@@ -222,7 +225,11 @@ def _normalize_market(market):
         "question": market.get("question", ""),
         "description": market.get("description", ""),
         "slug": market.get("slug", ""),
-        "status": "active" if market.get("active") and not market.get("closed") else "closed" if market.get("closed") else "inactive",
+        "status": "active"
+        if market.get("active") and not market.get("closed")
+        else "closed"
+        if market.get("closed")
+        else "inactive",
         "outcomes": normalized_outcomes,
         "volume": _safe_float(market.get("volume")),
         "volume_24h": _safe_float(market.get("volume24hr")),
@@ -233,11 +240,16 @@ def _normalize_market(market):
         "end_date": market.get("endDate", ""),
         "created_at": market.get("createdAt", ""),
         "updated_at": market.get("updatedAt", ""),
-        "event_id": market.get("events", [{}])[0].get("id", "") if market.get("events") else "",
+        "event_id": market.get("events", [{}])[0].get("id", "")
+        if market.get("events")
+        else "",
         "sports_market_type": market.get("sportsMarketType", ""),
         "game_id": market.get("gameId", ""),
         "clob_token_ids": clob_token_ids,
-        "tags": [t.get("label", "") if isinstance(t, dict) else t for t in market.get("tags", [])],
+        "tags": [
+            t.get("label", "") if isinstance(t, dict) else t
+            for t in market.get("tags", [])
+        ],
     }
 
 
@@ -250,7 +262,11 @@ def _normalize_event(event):
         "title": event.get("title", ""),
         "description": event.get("description", ""),
         "slug": event.get("slug", ""),
-        "status": "active" if event.get("active") and not event.get("closed") else "closed" if event.get("closed") else "inactive",
+        "status": "active"
+        if event.get("active") and not event.get("closed")
+        else "closed"
+        if event.get("closed")
+        else "inactive",
         "start_date": event.get("startDate", ""),
         "end_date": event.get("endDate", ""),
         "created_at": event.get("createdAt", ""),
@@ -260,7 +276,10 @@ def _normalize_event(event):
         "competitive": event.get("competitive", 0),
         "market_count": len(markets),
         "markets": [_normalize_market(m) for m in markets] if markets else [],
-        "tags": [t.get("label", "") if isinstance(t, dict) else t for t in event.get("tags", [])],
+        "tags": [
+            t.get("label", "") if isinstance(t, dict) else t
+            for t in event.get("tags", [])
+        ],
         "series_id": event.get("seriesId", ""),
     }
 
@@ -278,6 +297,7 @@ def _safe_float(value, default=0.0):
 # ============================================================
 # Commands
 # ============================================================
+
 
 def get_sports_markets(request_data):
     """Get active sports prediction markets with optional filtering.
@@ -317,15 +337,23 @@ def get_sports_markets(request_data):
             return err
 
         # Response is a list of markets
-        markets = response if isinstance(response, list) else response.get("markets", response)
+        markets = (
+            response
+            if isinstance(response, list)
+            else response.get("markets", response)
+        )
         if not isinstance(markets, list):
             markets = []
 
         normalized = [_normalize_market(m) for m in markets]
 
         return _success(
-            {"markets": normalized, "count": len(normalized), "offset": query["offset"]},
-            f"Retrieved {len(normalized)} sports markets"
+            {
+                "markets": normalized,
+                "count": len(normalized),
+                "offset": query["offset"],
+            },
+            f"Retrieved {len(normalized)} sports markets",
         )
 
     except Exception as e:
@@ -365,7 +393,9 @@ def get_sports_events(request_data):
         if err:
             return err
 
-        events = response if isinstance(response, list) else response.get("events", response)
+        events = (
+            response if isinstance(response, list) else response.get("events", response)
+        )
         if not isinstance(events, list):
             events = []
 
@@ -373,7 +403,7 @@ def get_sports_events(request_data):
 
         return _success(
             {"events": normalized, "count": len(normalized), "offset": query["offset"]},
-            f"Retrieved {len(normalized)} sports events"
+            f"Retrieved {len(normalized)} sports events",
         )
 
     except Exception as e:
@@ -400,25 +430,29 @@ def get_series(request_data):
         if err:
             return err
 
-        series_list = response if isinstance(response, list) else response.get("series", response)
+        series_list = (
+            response if isinstance(response, list) else response.get("series", response)
+        )
         if not isinstance(series_list, list):
             series_list = []
 
         normalized = []
         for s in series_list:
-            normalized.append({
-                "id": s.get("id", ""),
-                "title": s.get("title", ""),
-                "slug": s.get("slug", ""),
-                "description": s.get("description", ""),
-                "image": s.get("image", ""),
-                "created_at": s.get("createdAt", ""),
-                "updated_at": s.get("updatedAt", ""),
-            })
+            normalized.append(
+                {
+                    "id": s.get("id", ""),
+                    "title": s.get("title", ""),
+                    "slug": s.get("slug", ""),
+                    "description": s.get("description", ""),
+                    "image": s.get("image", ""),
+                    "created_at": s.get("createdAt", ""),
+                    "updated_at": s.get("updatedAt", ""),
+                }
+            )
 
         return _success(
             {"series": normalized, "count": len(normalized)},
-            f"Retrieved {len(normalized)} series"
+            f"Retrieved {len(normalized)} series",
         )
 
     except Exception as e:
@@ -451,7 +485,9 @@ def get_market_details(request_data):
 
         normalized = _normalize_market(response)
 
-        return _success(normalized, f"Retrieved market: {normalized.get('question', '')}")
+        return _success(
+            normalized, f"Retrieved market: {normalized.get('question', '')}"
+        )
 
     except Exception as e:
         return _error(f"Error fetching market details: {str(e)}")
@@ -511,14 +547,22 @@ def get_market_prices(request_data):
             if err:
                 return err
 
-            buy_price = _clob_request("/price", params={"token_id": token_id, "side": "BUY"})
-            sell_price = _clob_request("/price", params={"token_id": token_id, "side": "SELL"})
+            buy_price = _clob_request(
+                "/price", params={"token_id": token_id, "side": "BUY"}
+            )
+            sell_price = _clob_request(
+                "/price", params={"token_id": token_id, "side": "SELL"}
+            )
 
             price_data = {
                 "token_id": token_id,
                 "midpoint": _safe_float(midpoint.get("mid")),
-                "buy_price": _safe_float(buy_price.get("price")) if not _check_error(buy_price) else None,
-                "sell_price": _safe_float(sell_price.get("price")) if not _check_error(sell_price) else None,
+                "buy_price": _safe_float(buy_price.get("price"))
+                if not _check_error(buy_price)
+                else None,
+                "sell_price": _safe_float(sell_price.get("price"))
+                if not _check_error(sell_price)
+                else None,
             }
 
             return _success(price_data, "Price data retrieved")
@@ -529,14 +573,16 @@ def get_market_prices(request_data):
             for tid in token_ids[:20]:  # Cap at 20 to avoid rate limits
                 midpoint = _clob_request("/midpoint", params={"token_id": tid})
                 if not _check_error(midpoint):
-                    prices.append({
-                        "token_id": tid,
-                        "midpoint": _safe_float(midpoint.get("mid")),
-                    })
+                    prices.append(
+                        {
+                            "token_id": tid,
+                            "midpoint": _safe_float(midpoint.get("mid")),
+                        }
+                    )
 
             return _success(
                 {"prices": prices, "count": len(prices)},
-                f"Retrieved prices for {len(prices)} tokens"
+                f"Retrieved prices for {len(prices)} tokens",
             )
 
     except Exception as e:
@@ -571,8 +617,20 @@ def get_order_book(request_data):
 
         book = {
             "token_id": token_id,
-            "bids": [{"price": _safe_float(b.get("price")), "size": _safe_float(b.get("size"))} for b in bids],
-            "asks": [{"price": _safe_float(a.get("price")), "size": _safe_float(a.get("size"))} for a in asks],
+            "bids": [
+                {
+                    "price": _safe_float(b.get("price")),
+                    "size": _safe_float(b.get("size")),
+                }
+                for b in bids
+            ],
+            "asks": [
+                {
+                    "price": _safe_float(a.get("price")),
+                    "size": _safe_float(a.get("size")),
+                }
+                for a in asks
+            ],
             "best_bid": best_bid,
             "best_ask": best_ask,
             "spread": spread,
@@ -580,7 +638,9 @@ def get_order_book(request_data):
             "ask_depth": len(asks),
         }
 
-        return _success(book, f"Order book retrieved ({len(bids)} bids, {len(asks)} asks)")
+        return _success(
+            book, f"Order book retrieved ({len(bids)} bids, {len(asks)} asks)"
+        )
 
     except Exception as e:
         return _error(f"Error fetching order book: {str(e)}")
@@ -635,14 +695,17 @@ def search_markets(request_data):
         if err:
             return err
 
-        events = response if isinstance(response, list) else response.get("events", response)
+        events = (
+            response if isinstance(response, list) else response.get("events", response)
+        )
         if not isinstance(events, list):
             events = []
 
         # Filter by query keyword if provided
         if query:
             events = [
-                e for e in events
+                e
+                for e in events
                 if query in e.get("title", "").lower()
                 or query in e.get("description", "").lower()
                 or query in e.get("slug", "").lower()
@@ -658,8 +721,12 @@ def search_markets(request_data):
             all_markets.extend([_normalize_market(m) for m in markets])
 
         return _success(
-            {"markets": all_markets[:limit], "count": len(all_markets[:limit]), "query": query or "(all sports)"},
-            f"Found {len(all_markets[:limit])} markets"
+            {
+                "markets": all_markets[:limit],
+                "count": len(all_markets[:limit]),
+                "query": query or "(all sports)",
+            },
+            f"Found {len(all_markets[:limit])} markets",
         )
 
     except Exception as e:
@@ -692,13 +759,15 @@ def get_price_history(request_data):
         if err:
             return err
 
-        history = response.get("history", []) if isinstance(response, dict) else response
+        history = (
+            response.get("history", []) if isinstance(response, dict) else response
+        )
         if not isinstance(history, list):
             history = []
 
         return _success(
             {"history": history, "count": len(history), "token_id": token_id},
-            f"Retrieved {len(history)} price data points"
+            f"Retrieved {len(history)} price data points",
         )
 
     except Exception as e:
@@ -718,7 +787,9 @@ def get_last_trade_price(request_data):
         if not token_id:
             return _error("token_id is required")
 
-        response = _clob_request("/last-trade-price", params={"token_id": token_id}, ttl=15)
+        response = _clob_request(
+            "/last-trade-price", params={"token_id": token_id}, ttl=15
+        )
         err = _check_error(response)
         if err:
             return err
@@ -729,7 +800,7 @@ def get_last_trade_price(request_data):
                 "price": _safe_float(response.get("price")),
                 "side": response.get("side", ""),
             },
-            f"Last trade price: {response.get('price', 'N/A')}"
+            f"Last trade price: {response.get('price', 'N/A')}",
         )
 
     except Exception as e:

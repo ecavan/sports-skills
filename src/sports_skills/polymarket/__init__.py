@@ -35,10 +35,18 @@ def get_sports_markets(
     ascending: bool = False,
 ) -> dict:
     """Get active sports prediction markets with optional filtering."""
-    return _get_sports_markets(_req(
-        limit=limit, offset=offset, sports_market_types=sports_market_types,
-        game_id=game_id, active=active, closed=closed, order=order, ascending=ascending,
-    ))
+    return _get_sports_markets(
+        _req(
+            limit=limit,
+            offset=offset,
+            sports_market_types=sports_market_types,
+            game_id=game_id,
+            active=active,
+            closed=closed,
+            order=order,
+            ascending=ascending,
+        )
+    )
 
 
 def get_sports_events(
@@ -52,10 +60,17 @@ def get_sports_events(
     series_id: str | None = None,
 ) -> dict:
     """Get sports events (each event groups related markets)."""
-    return _get_sports_events(_req(
-        limit=limit, offset=offset, active=active, closed=closed,
-        order=order, ascending=ascending, series_id=series_id,
-    ))
+    return _get_sports_events(
+        _req(
+            limit=limit,
+            offset=offset,
+            active=active,
+            closed=closed,
+            order=order,
+            ascending=ascending,
+            series_id=series_id,
+        )
+    )
 
 
 def get_series(*, limit: int = 100, offset: int = 0) -> dict:
@@ -63,7 +78,9 @@ def get_series(*, limit: int = 100, offset: int = 0) -> dict:
     return _get_series(_req(limit=limit, offset=offset))
 
 
-def get_market_details(*, market_id: str | None = None, slug: str | None = None) -> dict:
+def get_market_details(
+    *, market_id: str | None = None, slug: str | None = None
+) -> dict:
     """Get detailed information for a specific market."""
     return _get_market_details(_req(market_id=market_id, slug=slug))
 
@@ -73,7 +90,9 @@ def get_event_details(*, event_id: str | None = None, slug: str | None = None) -
     return _get_event_details(_req(event_id=event_id, slug=slug))
 
 
-def get_market_prices(*, token_id: str | None = None, token_ids: list[str] | None = None) -> dict:
+def get_market_prices(
+    *, token_id: str | None = None, token_ids: list[str] | None = None
+) -> dict:
     """Get current prices for one or more markets from the CLOB API."""
     return _get_market_prices(_req(token_id=token_id, token_ids=token_ids))
 
@@ -96,12 +115,23 @@ def search_markets(
     limit: int = 20,
 ) -> dict:
     """Find sports markets by keyword and filters."""
-    return _search_markets(_req(query=query, sports_market_types=sports_market_types, tag_id=tag_id, limit=limit))
+    return _search_markets(
+        _req(
+            query=query,
+            sports_market_types=sports_market_types,
+            tag_id=tag_id,
+            limit=limit,
+        )
+    )
 
 
-def get_price_history(*, token_id: str, interval: str = "max", fidelity: int = 120) -> dict:
+def get_price_history(
+    *, token_id: str, interval: str = "max", fidelity: int = 120
+) -> dict:
     """Get historical price data for a market over time."""
-    return _get_price_history(_req(token_id=token_id, interval=interval, fidelity=fidelity))
+    return _get_price_history(
+        _req(token_id=token_id, interval=interval, fidelity=fidelity)
+    )
 
 
 def get_last_trade_price(*, token_id: str) -> dict:

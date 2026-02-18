@@ -53,6 +53,7 @@ def _cache_set(key, value, ttl=300):
 # Rate Limiter (Token Bucket)
 # ============================================================
 
+
 class _RateLimiter:
     def __init__(self, max_tokens=10, refill_rate=10.0):
         self.max_tokens = max_tokens
@@ -118,6 +119,7 @@ def _request(endpoint, params=None, ttl=120):
 # Response Helpers
 # ============================================================
 
+
 def _success(data, message=""):
     return {"status": True, "data": data, "message": message}
 
@@ -137,6 +139,7 @@ def _check_error(response):
 # ============================================================
 # Commands — Public Endpoints
 # ============================================================
+
 
 def get_exchange_status(request_data):
     """Get exchange status (trading active, maintenance windows).
@@ -190,8 +193,7 @@ def get_series_list(request_data):
 
         series = response.get("series") or []
         return _success(
-            {"series": series, "count": len(series)},
-            f"Retrieved {len(series)} series"
+            {"series": series, "count": len(series)}, f"Retrieved {len(series)} series"
         )
     except Exception as e:
         return _error(f"Error fetching series list: {str(e)}")
@@ -250,8 +252,12 @@ def get_events(request_data):
 
         events = response.get("events", [])
         return _success(
-            {"events": events, "count": len(events), "cursor": response.get("cursor", "")},
-            f"Retrieved {len(events)} events"
+            {
+                "events": events,
+                "count": len(events),
+                "cursor": response.get("cursor", ""),
+            },
+            f"Retrieved {len(events)} events",
         )
     except Exception as e:
         return _error(f"Error fetching events: {str(e)}")
@@ -274,14 +280,19 @@ def get_event(request_data):
         if params.get("with_nested_markets"):
             query["with_nested_markets"] = "true"
 
-        response = _request(f"/events/{ticker}", params=query if query else None, ttl=60)
+        response = _request(
+            f"/events/{ticker}", params=query if query else None, ttl=60
+        )
         err = _check_error(response)
         if err:
             return err
 
         return _success(
-            {"event": response.get("event", {}), "markets": response.get("markets", [])},
-            f"Retrieved event: {ticker}"
+            {
+                "event": response.get("event", {}),
+                "markets": response.get("markets", []),
+            },
+            f"Retrieved event: {ticker}",
         )
     except Exception as e:
         return _error(f"Error fetching event: {str(e)}")
@@ -321,8 +332,12 @@ def get_markets(request_data):
 
         markets = response.get("markets", [])
         return _success(
-            {"markets": markets, "count": len(markets), "cursor": response.get("cursor", "")},
-            f"Retrieved {len(markets)} markets"
+            {
+                "markets": markets,
+                "count": len(markets),
+                "cursor": response.get("cursor", ""),
+            },
+            f"Retrieved {len(markets)} markets",
         )
     except Exception as e:
         return _error(f"Error fetching markets: {str(e)}")
@@ -381,8 +396,12 @@ def get_trades(request_data):
 
         trades = response.get("trades", [])
         return _success(
-            {"trades": trades, "count": len(trades), "cursor": response.get("cursor", "")},
-            f"Retrieved {len(trades)} trades"
+            {
+                "trades": trades,
+                "count": len(trades),
+                "cursor": response.get("cursor", ""),
+            },
+            f"Retrieved {len(trades)} trades",
         )
     except Exception as e:
         return _error(f"Error fetching trades: {str(e)}")
@@ -419,7 +438,8 @@ def get_market_candlesticks(request_data):
 
         response = _request(
             f"/series/{series_ticker}/markets/{ticker}/candlesticks",
-            params=query, ttl=60,
+            params=query,
+            ttl=60,
         )
         err = _check_error(response)
         if err:
@@ -427,8 +447,12 @@ def get_market_candlesticks(request_data):
 
         candlesticks = response.get("candlesticks", [])
         return _success(
-            {"ticker": ticker, "candlesticks": candlesticks, "count": len(candlesticks)},
-            f"Retrieved {len(candlesticks)} candlesticks"
+            {
+                "ticker": ticker,
+                "candlesticks": candlesticks,
+                "count": len(candlesticks),
+            },
+            f"Retrieved {len(candlesticks)} candlesticks",
         )
     except Exception as e:
         return _error(f"Error fetching candlesticks: {str(e)}")

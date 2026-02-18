@@ -33,25 +33,57 @@ _REGISTRY = {
         "get_event_lineups": {"required": ["event_id"]},
         "get_event_statistics": {"required": ["event_id"]},
         "get_event_timeline": {"required": ["event_id"]},
-        "get_team_schedule": {"required": ["team_id"], "optional": ["league_slug", "season_year", "competition_id"]},
+        "get_team_schedule": {
+            "required": ["team_id"],
+            "optional": ["league_slug", "season_year", "competition_id"],
+        },
         "get_head_to_head": {"required": ["team_id", "team_id_2"]},
         "get_event_xg": {"required": ["event_id"]},
         "get_event_players_statistics": {"required": ["event_id"]},
         "get_missing_players": {"required": ["season_id"]},
-        "get_season_transfers": {"required": ["season_id"], "optional": ["tm_player_ids"]},
+        "get_season_transfers": {
+            "required": ["season_id"],
+            "optional": ["tm_player_ids"],
+        },
         "get_player_profile": {"optional": ["fpl_id", "tm_player_id"]},
     },
     "polymarket": {
-        "get_sports_markets": {"optional": ["limit", "offset", "sports_market_types", "game_id", "active", "closed", "order", "ascending"]},
-        "get_sports_events": {"optional": ["limit", "offset", "active", "closed", "order", "ascending", "series_id"]},
+        "get_sports_markets": {
+            "optional": [
+                "limit",
+                "offset",
+                "sports_market_types",
+                "game_id",
+                "active",
+                "closed",
+                "order",
+                "ascending",
+            ]
+        },
+        "get_sports_events": {
+            "optional": [
+                "limit",
+                "offset",
+                "active",
+                "closed",
+                "order",
+                "ascending",
+                "series_id",
+            ]
+        },
         "get_series": {"optional": ["limit", "offset"]},
         "get_market_details": {"optional": ["market_id", "slug"]},
         "get_event_details": {"optional": ["event_id", "slug"]},
         "get_market_prices": {"optional": ["token_id", "token_ids"]},
         "get_order_book": {"required": ["token_id"]},
         "get_sports_market_types": {},
-        "search_markets": {"optional": ["query", "sports_market_types", "tag_id", "limit"]},
-        "get_price_history": {"required": ["token_id"], "optional": ["interval", "fidelity"]},
+        "search_markets": {
+            "optional": ["query", "sports_market_types", "tag_id", "limit"]
+        },
+        "get_price_history": {
+            "required": ["token_id"],
+            "optional": ["interval", "fidelity"],
+        },
         "get_last_trade_price": {"required": ["token_id"]},
     },
     "kalshi": {
@@ -59,40 +91,122 @@ _REGISTRY = {
         "get_exchange_schedule": {},
         "get_series_list": {"optional": ["category", "tags"]},
         "get_series": {"required": ["series_ticker"]},
-        "get_events": {"optional": ["limit", "cursor", "status", "series_ticker", "with_nested_markets"]},
-        "get_event": {"required": ["event_ticker"], "optional": ["with_nested_markets"]},
-        "get_markets": {"optional": ["limit", "cursor", "event_ticker", "series_ticker", "status", "tickers"]},
+        "get_events": {
+            "optional": [
+                "limit",
+                "cursor",
+                "status",
+                "series_ticker",
+                "with_nested_markets",
+            ]
+        },
+        "get_event": {
+            "required": ["event_ticker"],
+            "optional": ["with_nested_markets"],
+        },
+        "get_markets": {
+            "optional": [
+                "limit",
+                "cursor",
+                "event_ticker",
+                "series_ticker",
+                "status",
+                "tickers",
+            ]
+        },
         "get_market": {"required": ["ticker"]},
         "get_trades": {"optional": ["limit", "cursor", "ticker", "min_ts", "max_ts"]},
-        "get_market_candlesticks": {"required": ["series_ticker", "ticker", "start_ts", "end_ts", "period_interval"]},
+        "get_market_candlesticks": {
+            "required": [
+                "series_ticker",
+                "ticker",
+                "start_ts",
+                "end_ts",
+                "period_interval",
+            ]
+        },
         "get_sports_filters": {},
     },
     "news": {
-        "fetch_feed": {"optional": ["google_news", "query", "url", "language", "country", "after", "before", "sort_by_date"]},
-        "fetch_items": {"optional": ["google_news", "query", "url", "limit", "language", "country", "after", "before", "sort_by_date"]},
+        "fetch_feed": {
+            "optional": [
+                "google_news",
+                "query",
+                "url",
+                "language",
+                "country",
+                "after",
+                "before",
+                "sort_by_date",
+            ]
+        },
+        "fetch_items": {
+            "optional": [
+                "google_news",
+                "query",
+                "url",
+                "limit",
+                "language",
+                "country",
+                "after",
+                "before",
+                "sort_by_date",
+            ]
+        },
     },
     "f1": {
-        "get_session_data": {"required": ["session_year", "session_name"], "optional": ["session_type"]},
+        "get_session_data": {
+            "required": ["session_year", "session_name"],
+            "optional": ["session_type"],
+        },
         "get_driver_info": {"required": ["year"], "optional": ["driver"]},
         "get_team_info": {"required": ["year"], "optional": ["team"]},
         "get_race_schedule": {"required": ["year"]},
-        "get_lap_data": {"required": ["year", "event"], "optional": ["session_type", "driver"]},
+        "get_lap_data": {
+            "required": ["year", "event"],
+            "optional": ["session_type", "driver"],
+        },
         "get_race_results": {"required": ["year", "event"]},
         "get_pit_stops": {"required": ["year"], "optional": ["event", "driver"]},
         "get_speed_data": {"required": ["year"], "optional": ["event", "driver"]},
         "get_championship_standings": {"required": ["year"]},
         "get_season_stats": {"required": ["year"]},
-        "get_team_comparison": {"required": ["year", "team1", "team2"], "optional": ["event"]},
-        "get_teammate_comparison": {"required": ["year", "team"], "optional": ["event"]},
+        "get_team_comparison": {
+            "required": ["year", "team1", "team2"],
+            "optional": ["event"],
+        },
+        "get_teammate_comparison": {
+            "required": ["year", "team"],
+            "optional": ["event"],
+        },
         "get_tire_analysis": {"required": ["year"], "optional": ["event", "driver"]},
     },
 }
 
 # Params that should be parsed as boolean
-_BOOL_PARAMS = {"google_news", "sort_by_date", "active", "closed", "ascending", "with_nested_markets"}
+_BOOL_PARAMS = {
+    "google_news",
+    "sort_by_date",
+    "active",
+    "closed",
+    "ascending",
+    "with_nested_markets",
+}
 
 # Params that should be parsed as int
-_INT_PARAMS = {"limit", "offset", "year", "session_year", "tag_id", "fidelity", "start_ts", "end_ts", "period_interval", "min_ts", "max_ts"}
+_INT_PARAMS = {
+    "limit",
+    "offset",
+    "year",
+    "session_year",
+    "tag_id",
+    "fidelity",
+    "start_ts",
+    "end_ts",
+    "period_interval",
+    "min_ts",
+    "max_ts",
+}
 
 # Params that should be parsed as list (comma-separated)
 _LIST_PARAMS = {"tm_player_ids", "token_ids"}
@@ -109,24 +223,31 @@ def _load_module(name):
     """Lazy-import a sports_skills module."""
     if name == "football":
         from sports_skills import football
+
         return football
     elif name == "polymarket":
         from sports_skills import polymarket
+
         return polymarket
     elif name == "kalshi":
         from sports_skills import kalshi
+
         return kalshi
     elif name == "news":
         from sports_skills import news
+
         return news
     elif name == "f1":
         try:
             from sports_skills import f1
+
             if f1 is None:
                 raise ImportError
             return f1
         except ImportError:
-            _cli_error("F1 module requires extra dependencies. Install with: pip install sports-skills[f1]")
+            _cli_error(
+                "F1 module requires extra dependencies. Install with: pip install sports-skills[f1]"
+            )
     else:
         _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
@@ -149,8 +270,12 @@ def main():
         prog="sports-skills",
         description="Lightweight CLI for sports data — football, F1, prediction markets, and news.",
     )
-    parser.add_argument("module", nargs="?", help="Module name: football, f1, polymarket, kalshi, news")
-    parser.add_argument("command", nargs="?", help="Command name (e.g., get_season_standings)")
+    parser.add_argument(
+        "module", nargs="?", help="Module name: football, f1, polymarket, kalshi, news"
+    )
+    parser.add_argument(
+        "command", nargs="?", help="Command name (e.g., get_season_standings)"
+    )
     parser.add_argument("--version", action="store_true", help="Show version")
 
     # Parse known args, rest are --key=value params
@@ -158,6 +283,7 @@ def main():
 
     if args.version:
         from sports_skills import __version__
+
         print(f"sports-skills {__version__}")
         return
 
@@ -171,7 +297,9 @@ def main():
     if not args.command:
         # Show commands for this module
         if args.module not in _REGISTRY:
-            _cli_error(f"Unknown module '{args.module}'. Available: {', '.join(_REGISTRY.keys())}")
+            _cli_error(
+                f"Unknown module '{args.module}'. Available: {', '.join(_REGISTRY.keys())}"
+            )
         commands = _REGISTRY[args.module]
         print(f"Commands for '{args.module}':")
         for cmd_name, cmd_info in commands.items():
@@ -186,7 +314,9 @@ def main():
     command_name = args.command
 
     if module_name not in _REGISTRY:
-        _cli_error(f"Unknown module '{module_name}'. Available: {', '.join(_REGISTRY.keys())}")
+        _cli_error(
+            f"Unknown module '{module_name}'. Available: {', '.join(_REGISTRY.keys())}"
+        )
 
     if command_name not in _REGISTRY[module_name]:
         _cli_error(
@@ -226,7 +356,9 @@ def main():
         result = func(**kwargs)
         print(json.dumps(result, indent=2, default=str, ensure_ascii=False))
     except TypeError as e:
-        _cli_error(f"{e}. Hint: check parameter names. Run 'sports-skills {module_name}' to see usage.")
+        _cli_error(
+            f"{e}. Hint: check parameter names. Run 'sports-skills {module_name}' to see usage."
+        )
     except Exception as e:
         print(json.dumps({"status": False, "data": None, "message": str(e)}, indent=2))
         sys.exit(1)

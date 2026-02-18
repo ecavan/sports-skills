@@ -52,15 +52,22 @@ def get_events(
     with_nested_markets: bool = False,
 ) -> dict:
     """Get events with optional filtering."""
-    return _get_events(_req(
-        limit=limit, cursor=cursor, status=status,
-        series_ticker=series_ticker, with_nested_markets=with_nested_markets,
-    ))
+    return _get_events(
+        _req(
+            limit=limit,
+            cursor=cursor,
+            status=status,
+            series_ticker=series_ticker,
+            with_nested_markets=with_nested_markets,
+        )
+    )
 
 
 def get_event(*, event_ticker: str, with_nested_markets: bool = False) -> dict:
     """Get details for a specific event."""
-    return _get_event(_req(event_ticker=event_ticker, with_nested_markets=with_nested_markets))
+    return _get_event(
+        _req(event_ticker=event_ticker, with_nested_markets=with_nested_markets)
+    )
 
 
 def get_markets(
@@ -73,10 +80,16 @@ def get_markets(
     tickers: str | None = None,
 ) -> dict:
     """Get markets with optional filtering."""
-    return _get_markets(_req(
-        limit=limit, cursor=cursor, event_ticker=event_ticker,
-        series_ticker=series_ticker, status=status, tickers=tickers,
-    ))
+    return _get_markets(
+        _req(
+            limit=limit,
+            cursor=cursor,
+            event_ticker=event_ticker,
+            series_ticker=series_ticker,
+            status=status,
+            tickers=tickers,
+        )
+    )
 
 
 def get_market(*, ticker: str) -> dict:
@@ -93,7 +106,9 @@ def get_trades(
     max_ts: int | None = None,
 ) -> dict:
     """Get recent trades with optional filtering."""
-    return _get_trades(_req(limit=limit, cursor=cursor, ticker=ticker, min_ts=min_ts, max_ts=max_ts))
+    return _get_trades(
+        _req(limit=limit, cursor=cursor, ticker=ticker, min_ts=min_ts, max_ts=max_ts)
+    )
 
 
 def get_market_candlesticks(
@@ -109,10 +124,15 @@ def get_market_candlesticks(
     Args:
         period_interval: Candlestick interval in minutes (1, 60, or 1440).
     """
-    return _get_market_candlesticks(_req(
-        series_ticker=series_ticker, ticker=ticker,
-        start_ts=start_ts, end_ts=end_ts, period_interval=period_interval,
-    ))
+    return _get_market_candlesticks(
+        _req(
+            series_ticker=series_ticker,
+            ticker=ticker,
+            start_ts=start_ts,
+            end_ts=end_ts,
+            period_interval=period_interval,
+        )
+    )
 
 
 def get_sports_filters() -> dict:

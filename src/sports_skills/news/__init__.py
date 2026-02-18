@@ -37,11 +37,18 @@ def fetch_feed(
         before: Filter articles before this date (YYYY-MM-DD).
         sort_by_date: Sort entries by publication date (newest first).
     """
-    return _fetch_feed(_req(
-        google_news=google_news, query=query, url=url,
-        language=language, country=country,
-        after=after, before=before, sort_by_date=sort_by_date,
-    ))
+    return _fetch_feed(
+        _req(
+            google_news=google_news,
+            query=query,
+            url=url,
+            language=language,
+            country=country,
+            after=after,
+            before=before,
+            sort_by_date=sort_by_date,
+        )
+    )
 
 
 def fetch_items(
@@ -69,8 +76,16 @@ def fetch_items(
         before: Filter articles before this date (YYYY-MM-DD).
         sort_by_date: Sort entries by publication date (newest first).
     """
-    return _fetch_items(_req(
-        google_news=google_news, query=query, url=url, limit=limit,
-        language=language, country=country,
-        after=after, before=before, sort_by_date=sort_by_date,
-    ))
+    return _fetch_items(
+        _req(
+            google_news=google_news,
+            query=query,
+            url=url,
+            limit=limit,
+            language=language,
+            country=country,
+            after=after,
+            before=before,
+            sort_by_date=sort_by_date,
+        )
+    )

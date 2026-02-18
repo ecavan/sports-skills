@@ -109,9 +109,24 @@ def get_event_timeline(*, event_id: str) -> dict:
     return wrap(_get_event_timeline(_params(event_id=event_id)))
 
 
-def get_team_schedule(*, team_id: str, league_slug: str | None = None, season_year: str | None = None, competition_id: str | None = None) -> dict:
+def get_team_schedule(
+    *,
+    team_id: str,
+    league_slug: str | None = None,
+    season_year: str | None = None,
+    competition_id: str | None = None,
+) -> dict:
     """Get schedule for a specific team."""
-    return wrap(_get_team_schedule(_params(team_id=team_id, league_slug=league_slug, season_year=season_year, competition_id=competition_id)))
+    return wrap(
+        _get_team_schedule(
+            _params(
+                team_id=team_id,
+                league_slug=league_slug,
+                season_year=season_year,
+                competition_id=competition_id,
+            )
+        )
+    )
 
 
 def get_head_to_head(*, team_id: str, team_id_2: str) -> dict:
@@ -134,12 +149,18 @@ def get_missing_players(*, season_id: str) -> dict:
     return wrap(_get_missing_players(_params(season_id=season_id)))
 
 
-def get_season_transfers(*, season_id: str, tm_player_ids: list[str] | None = None) -> dict:
+def get_season_transfers(
+    *, season_id: str, tm_player_ids: list[str] | None = None
+) -> dict:
     """Get season transfers via Transfermarkt."""
-    return wrap(_get_season_transfers(_params(season_id=season_id, tm_player_ids=tm_player_ids)))
+    return wrap(
+        _get_season_transfers(_params(season_id=season_id, tm_player_ids=tm_player_ids))
+    )
 
 
-def get_player_profile(*, fpl_id: str | None = None, tm_player_id: str | None = None) -> dict:
+def get_player_profile(
+    *, fpl_id: str | None = None, tm_player_id: str | None = None
+) -> dict:
     """Get player profile. At least one ID required.
 
     Args:
