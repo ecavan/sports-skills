@@ -194,6 +194,28 @@ _REGISTRY = {
         "get_news": {"optional": ["team_id"]},
         "get_schedule": {"optional": ["season", "week"]},
     },
+    "nba": {
+        "get_scoreboard": {"optional": ["date"]},
+        "get_standings": {"optional": ["season"]},
+        "get_teams": {},
+        "get_team_roster": {"required": ["team_id"]},
+        "get_team_schedule": {"required": ["team_id"], "optional": ["season"]},
+        "get_game_summary": {"required": ["event_id"]},
+        "get_leaders": {"optional": ["season"]},
+        "get_news": {"optional": ["team_id"]},
+        "get_schedule": {"optional": ["date", "season"]},
+    },
+    "wnba": {
+        "get_scoreboard": {"optional": ["date"]},
+        "get_standings": {"optional": ["season"]},
+        "get_teams": {},
+        "get_team_roster": {"required": ["team_id"]},
+        "get_team_schedule": {"required": ["team_id"], "optional": ["season"]},
+        "get_game_summary": {"required": ["event_id"]},
+        "get_leaders": {"optional": ["season"]},
+        "get_news": {"optional": ["team_id"]},
+        "get_schedule": {"optional": ["date", "season"]},
+    },
 }
 
 # Params that should be parsed as boolean
@@ -267,6 +289,14 @@ def _load_module(name):
         from sports_skills import nfl
 
         return nfl
+    elif name == "nba":
+        from sports_skills import nba
+
+        return nba
+    elif name == "wnba":
+        from sports_skills import wnba
+
+        return wnba
     else:
         _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
@@ -287,10 +317,10 @@ def _parse_value(key, value):
 def main():
     parser = argparse.ArgumentParser(
         prog="sports-skills",
-        description="Lightweight CLI for sports data — football, F1, NFL, prediction markets, and news.",
+        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, prediction markets, and news.",
     )
     parser.add_argument(
-        "module", nargs="?", help="Module name: football, f1, nfl, polymarket, kalshi, news"
+        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, polymarket, kalshi, news"
     )
     parser.add_argument(
         "command", nargs="?", help="Command name (e.g., get_season_standings)"

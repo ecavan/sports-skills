@@ -5,14 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "sports-skills"
 version = "0.3.0"
-description = "Lightweight Python SDK for sports data — football, F1, NFL, prediction markets, and news"
+description = "Lightweight Python SDK for sports data — football, F1, NFL, NBA, WNBA, prediction markets, and news"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
     { name = "Machina Sports", email = "hello@machinasports.com" },
 ]
-keywords = ["sports", "football", "f1", "nfl", "polymarket", "kalshi", "prediction-markets", "news"]
+keywords = ["sports", "football", "f1", "nfl", "nba", "wnba", "polymarket", "kalshi", "prediction-markets", "news"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -31,7 +31,9 @@ dependencies = [
 [project.optional-dependencies]
 f1 = ["fastf1>=3.0", "pandas>=2.0"]
 nfl = ["nfl-data-py>=0.3"]
-all = ["fastf1>=3.0", "pandas>=2.0", "feedparser>=6.0", "nfl-data-py>=0.3"]
+nba = ["sportsdataverse>=0.0.30"]
+wnba = ["sportsdataverse>=0.0.30"]
+all = ["fastf1>=3.0", "pandas>=2.0", "feedparser>=6.0", "nfl-data-py>=0.3", "sportsdataverse>=0.0.30"]
 
 [project.scripts]
 sports-skills = "sports_skills.cli:main"
