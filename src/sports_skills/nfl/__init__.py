@@ -1,0 +1,102 @@
+"""NFL data — scores, standings, rosters, schedules, game summaries, and more.
+
+Wraps ESPN public endpoints. No API keys required. Zero config.
+"""
+
+from sports_skills._response import wrap
+from sports_skills.nfl._connector import (
+    get_scoreboard as _get_scoreboard,
+    get_standings as _get_standings,
+    get_teams as _get_teams,
+    get_team_roster as _get_team_roster,
+    get_team_schedule as _get_team_schedule,
+    get_game_summary as _get_game_summary,
+    get_leaders as _get_leaders,
+    get_news as _get_news,
+    get_schedule as _get_schedule,
+)
+
+
+def _params(**kwargs):
+    """Build params dict, filtering out None values."""
+    return {"params": {k: v for k, v in kwargs.items() if v is not None}}
+
+
+def get_scoreboard(*, date: str | None = None, week: int | None = None) -> dict:
+    """Get live/recent NFL scores.
+
+    Args:
+        date: Date in YYYY-MM-DD format. Defaults to today.
+        week: NFL week number (1-18 regular season, 19+ postseason).
+    """
+    return wrap(_get_scoreboard(_params(date=date, week=week)))
+
+
+def get_standings(*, season: int | None = None) -> dict:
+    """Get NFL standings by conference and division.
+
+    Args:
+        season: Season year (e.g. 2025). Defaults to current.
+    """
+    return wrap(_get_standings(_params(season=season)))
+
+
+def get_teams() -> dict:
+    """Get all 32 NFL teams."""
+    return wrap(_get_teams(_params()))
+
+
+def get_team_roster(*, team_id: str) -> dict:
+    """Get full roster for an NFL team.
+
+    Args:
+        team_id: ESPN team ID (e.g. "12" for Kansas City Chiefs).
+    """
+    return wrap(_get_team_roster(_params(team_id=team_id)))
+
+
+def get_team_schedule(*, team_id: str, season: int | None = None) -> dict:
+    """Get schedule for a specific NFL team.
+
+    Args:
+        team_id: ESPN team ID.
+        season: Season year. Defaults to current.
+    """
+    return wrap(_get_team_schedule(_params(team_id=team_id, season=season)))
+
+
+def get_game_summary(*, event_id: str) -> dict:
+    """Get detailed game summary with box score and scoring plays.
+
+    Args:
+        event_id: ESPN event ID.
+    """
+    return wrap(_get_game_summary(_params(event_id=event_id)))
+
+
+def get_leaders(*, season: int | None = None) -> dict:
+    """Get NFL statistical leaders (passing, rushing, receiving, etc.).
+
+    Args:
+        season: Season year. Defaults to current.
+    """
+    return wrap(_get_leaders(_params(season=season)))
+
+
+def get_news(*, team_id: str | None = None) -> dict:
+    """Get NFL news articles.
+
+    Args:
+        team_id: Optional ESPN team ID to filter news by team.
+    """
+    return wrap(_get_news(_params(team_id=team_id)))
+
+
+def get_schedule(*, season: int | None = None, week: int | None = None) -> dict:
+    """Get NFL season schedule.
+
+    Args:
+        season: Season year. Defaults to current.
+        week: NFL week number. Defaults to current week.
+    """
+    return wrap(_get_schedule(_params(season=season, week=week)))
