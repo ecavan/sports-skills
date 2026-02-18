@@ -20,11 +20,15 @@ F1 requires extra dependencies (fastf1 + pandas). Install with:
 ```bash
 which sports-skills || pip install sports-skills[f1]
 ```
+If `pip install` fails (package not found or Python version error), install from GitHub:
+```bash
+pip install "sports-skills[f1] @ git+https://github.com/machina-sports/sports-skills.git"
+```
 If already installed without F1 support, add the extra:
 ```bash
 pip install sports-skills[f1]
 ```
-If `pip install` fails with a Python version error, the package requires Python 3.10+. Find a compatible Python:
+The package requires Python 3.10+. If your default Python is older, use a specific version:
 ```bash
 python3 --version  # check version
 # If < 3.10, try: python3.12 -m pip install sports-skills[f1]
@@ -193,7 +197,7 @@ If you're unsure whether a command exists, check this list. Do not try commands 
 
 ## Troubleshooting
 
-- **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills[f1]`. If pip fails with a Python version error, you need Python 3.10+ — see Setup section.
+- **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills[f1]`. If the package is not found on PyPI, install from GitHub: `pip install "sports-skills[f1] @ git+https://github.com/machina-sports/sports-skills.git"`. Requires Python 3.10+ — see Setup section.
 - **`ModuleNotFoundError: No module named 'sports_skills'`**: Same as above — install the package. Prefer the CLI over Python imports to avoid path issues.
 - **ImportError on `from sports_skills import f1`**: F1 module requires extra dependencies beyond the base package. Run `pip install sports-skills[f1]` to add fastf1 + pandas.
 - **No data for future events**: FastF1 only returns data for completed sessions. Future races appear in the schedule but have no session data.

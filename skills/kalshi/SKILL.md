@@ -19,7 +19,11 @@ Before first use, check if the CLI is available:
 ```bash
 which sports-skills || pip install sports-skills
 ```
-If `pip install` fails with a Python version error, the package requires Python 3.10+. Find a compatible Python:
+If `pip install` fails (package not found or Python version error), install from GitHub:
+```bash
+pip install git+https://github.com/machina-sports/sports-skills.git
+```
+The package requires Python 3.10+. If your default Python is older, use a specific version:
 ```bash
 python3 --version  # check version
 # If < 3.10, try: python3.12 -m pip install sports-skills
@@ -181,7 +185,7 @@ If you're unsure whether a command exists, check this list. Do not try commands 
 
 ## Troubleshooting
 
-- **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills`. If pip fails with a Python version error, you need Python 3.10+ — see Setup section.
+- **`sports-skills` command not found**: Package not installed. Run `pip install sports-skills`. If the package is not found on PyPI, install from GitHub: `pip install git+https://github.com/machina-sports/sports-skills.git`. Requires Python 3.10+ — see Setup section.
 - **`ModuleNotFoundError: No module named 'sports_skills'`**: Same as above — install the package. Prefer the CLI over Python imports to avoid path issues.
 - **Empty market results**: Use `status="open"` to filter for active markets. Default returns all statuses including settled/closed.
 - **Series ticker unknown**: Check the Common Series Tickers table above. Use `get_sports_filters()` to discover categories, but note: "Football" = NFL, "Soccer" = football/soccer. Not all soccer leagues have futures markets.
