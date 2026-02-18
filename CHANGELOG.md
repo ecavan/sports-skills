@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-02-18
+
+### Added
+- **NBA data** — 8 commands via ESPN: scoreboard, standings, teams, roster, schedule, game summary, leaders, news
+- **WNBA data** — 8 commands via ESPN: scoreboard, standings, teams, roster, schedule, game summary, leaders, news
+- **NFL data** — 9 commands via ESPN: scoreboard, standings, teams, roster, schedule, team schedule, game summary, leaders, news
+- Season-aware statistical leaders for NBA and WNBA — auto-derives current season from system date, avoids offseason 404s
+- Postseason support for NFL schedule and scoreboard (Wild Card through Super Bowl as weeks 19-23)
+
+### Fixed
+- NFL `get_teams` connector now accepts optional `request_data` arg — previously caused a positional arg error via CLI
+- NBA `get_schedule` season/date param collision — `date` now takes priority over `season` (were writing to same ESPN param key)
+- WNBA `get_leaders` offseason 404 — switched to season-scoped ESPN core API endpoint with regular season type
+
 ## [0.2.0] - 2026-02-16
 
 ### Added
