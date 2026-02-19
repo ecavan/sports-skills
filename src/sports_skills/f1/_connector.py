@@ -25,6 +25,21 @@ def _format_timedelta(td):
         return f"{seconds:.3f}"
 
 
+def _safe_int(val, default=""):
+    """Cast numpy/pandas numeric to Python int; return default if null/missing."""
+    try:
+        if pd.isna(val):
+            return default
+    except (TypeError, ValueError):
+        pass
+    if val is None or val == "":
+        return default
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return default
+
+
 def _validate_event(year, event_name):
     """Validate that event_name matches an actual event. Returns the exact event name or raises ValueError."""
     schedule = fastf1.get_event_schedule(year)
@@ -254,7 +269,7 @@ def get_race_schedule(request_data):
 
         for _, row in schedule.iterrows():
             event_data = {
-                "round_number": row.get("RoundNumber", ""),
+                "round_number": _safe_int(row.get("RoundNumber")),
                 "country": row.get("Country", ""),
                 "location": row.get("Location", ""),
                 "event_name": row.get("EventName", ""),
@@ -323,16 +338,16 @@ def get_lap_data(request_data):
             lap_data = {
                 "driver": lap.get("Driver", ""),
                 "team": lap.get("Team", ""),
-                "lap_number": lap.get("LapNumber", ""),
+                "lap_number": _safe_int(lap.get("LapNumber")),
                 "lap_time": _format_timedelta(lap_time),
                 "is_accurate": is_accurate,
                 "sector_1_time": _format_timedelta(s1),
                 "sector_2_time": _format_timedelta(s2),
                 "sector_3_time": _format_timedelta(s3),
                 "compound": lap.get("Compound", ""),
-                "tyre_life": lap.get("TyreLife", ""),
+                "tyre_life": _safe_int(lap.get("TyreLife")),
                 "is_personal_best": bool(lap.get("IsPersonalBest", False)),
-                "position": lap.get("Position", ""),
+                "position": _safe_int(lap.get("Position")),
             }
             laps_list.append(lap_data)
 
@@ -1462,14 +1477,14 @@ def get_race_results(request_data):
         for _, result in results.iterrows():
             driver_abbr = result.get("Abbreviation", "")
             result_data = {
-                "position": result.get("Position", ""),
+                "position": _safe_int(result.get("Position")),
                 "driver_number": result.get("DriverNumber", ""),
                 "driver": driver_abbr,
                 "full_name": result.get("FullName", ""),
                 "team": result.get("TeamName", ""),
-                "grid_position": result.get("GridPosition", ""),
+                "grid_position": _safe_int(result.get("GridPosition")),
                 "status": result.get("Status", ""),
-                "points": result.get("Points", ""),
+                "points": _safe_int(result.get("Points")),
                 "time": _format_timedelta(result.get("Time")),
                 "fastest_lap": driver_abbr == fastest_lap_driver,
                 "fastest_lap_time": _format_timedelta(result.get("FastestLapTime")),
