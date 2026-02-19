@@ -1,7 +1,7 @@
-"""WNBA data connector — ESPN public API.
+"""MLB data connector — ESPN public API.
 
 Provides scores, standings, rosters, schedules, game summaries,
-statistical leaders, and news for the WNBA.
+statistical leaders, and news for MLB.
 """
 
 import json
@@ -19,9 +19,9 @@ from sports_skills._espn_base import (
     _resolve_leaders,
 )
 
-logger = logging.getLogger("sports_skills.wnba")
+logger = logging.getLogger("sports_skills.mlb")
 
-SPORT_PATH = "basketball/wnba"
+SPORT_PATH = "baseball/mlb"
 
 
 # ============================================================
@@ -50,7 +50,7 @@ def _normalize_event(espn_event):
             },
             "home_away": c.get("homeAway", ""),
             "score": c.get("score", "0"),
-            "period_scores": [int(p.get("value", 0)) for p in linescores],
+            "inning_scores": [int(p.get("value", 0)) for p in linescores],
             "record": records[0].get("summary", "") if records else "",
             "winner": c.get("winner", False),
         })
@@ -104,30 +104,28 @@ def _normalize_standings_entries(standings_data):
             "losses": stats.get("losses", "0"),
             "win_pct": stats.get("winPercent", stats.get("winPct", "0")),
             "games_back": stats.get("gamesBehind", stats.get("GB", "")),
+            "runs_scored": stats.get("pointsFor", stats.get("runsFor", "")),
+            "runs_allowed": stats.get("pointsAgainst", stats.get("runsAgainst", "")),
+            "run_diff": stats.get("differential", stats.get("diff", "")),
             "streak": stats.get("streak", ""),
             "home_record": stats.get("Home", stats.get("homeRecord", "")),
             "away_record": stats.get("Road", stats.get("awayRecord", "")),
-            "conference_record": stats.get("vsConf", stats.get("conferenceRecord", "")),
-            "division_record": stats.get("vsDiv", stats.get("divisionRecord", "")),
             "last_ten": stats.get("L10", stats.get("last10Record", "")),
-            "points_per_game": stats.get("avgPointsFor", stats.get("pointsFor", "")),
-            "opp_points_per_game": stats.get("avgPointsAgainst", stats.get("pointsAgainst", "")),
-            "diff": stats.get("differential", stats.get("diff", "")),
             "playoff_seed": stats.get("playoffSeed", ""),
         })
     return entries
 
 
 def _normalize_standings(espn_data):
-    """Normalize ESPN standings with conference/division groups.
+    """Normalize ESPN standings with league/division groups.
 
     Handles two ESPN structures:
-    - Conference -> Divisions -> Entries
-    - Conference -> Direct Entries (WNBA default)
+    - League -> Divisions -> Entries (MLB default: AL/NL with East/Central/West)
+    - League -> Direct Entries
     """
     groups = []
     for child in espn_data.get("children", []):
-        conference_name = child.get("name", child.get("abbreviation", ""))
+        league_name = child.get("name", child.get("abbreviation", ""))
 
         # Check for division sub-groups first
         if child.get("children"):
@@ -137,16 +135,16 @@ def _normalize_standings(espn_data):
                 entries = _normalize_standings_entries(standings)
                 if entries:
                     groups.append({
-                        "conference": conference_name,
+                        "league": league_name,
                         "division": division_name,
                         "entries": entries,
                     })
-        # Fall back to direct standings on the conference
+        # Fall back to direct standings on the league
         elif child.get("standings"):
             entries = _normalize_standings_entries(child["standings"])
             if entries:
                 groups.append({
-                    "conference": conference_name,
+                    "league": league_name,
                     "division": "",
                     "entries": entries,
                 })
@@ -172,17 +170,18 @@ def _normalize_team(espn_team):
 def _normalize_roster(espn_data):
     """Normalize ESPN roster response.
 
-    WNBA rosters are flat lists of athletes (not grouped by position like NFL).
+    MLB rosters may come as flat lists or grouped by position.
     """
     athletes = []
     raw_athletes = espn_data.get("athletes", [])
 
     for athlete in raw_athletes:
-        # WNBA returns flat athlete objects; NFL uses {position, items} groups
+        # Grouped format (position -> items)
         if "items" in athlete:
             for item in athlete.get("items", []):
                 athletes.append(_parse_athlete(item, athlete.get("position", "")))
         else:
+            # Flat format
             athletes.append(_parse_athlete(athlete))
 
     return athletes
@@ -204,7 +203,8 @@ def _parse_athlete(athlete, default_position=""):
         "height": athlete.get("displayHeight", ""),
         "weight": athlete.get("displayWeight", ""),
         "experience": athlete.get("experience", {}).get("years", ""),
-        "college": athlete.get("college", {}).get("name", "") if isinstance(athlete.get("college"), dict) else athlete.get("college", ""),
+        "bats_throws": athlete.get("hand", {}).get("displayValue", "") if isinstance(athlete.get("hand"), dict) else "",
+        "birthplace": athlete.get("birthPlace", {}).get("city", "") if isinstance(athlete.get("birthPlace"), dict) else "",
         "status": athlete.get("status", {}).get("type", ""),
     }
 
@@ -218,6 +218,7 @@ def _normalize_game_summary(summary_data):
     competitions = header.get("competitions", [{}])
     comp = competitions[0] if competitions else {}
 
+    # Basic game info
     game_info = {
         "id": header.get("id", ""),
         "status": comp.get("status", {}).get("type", {}).get("name", ""),
@@ -228,6 +229,7 @@ def _normalize_game_summary(summary_data):
         },
     }
 
+    # Competitors from header
     competitors = []
     for c in comp.get("competitors", []):
         team = c.get("team", [{}])
@@ -247,6 +249,7 @@ def _normalize_game_summary(summary_data):
             "linescores": [ls.get("displayValue", "0") for ls in c.get("linescores", [])],
         })
 
+    # Box score
     boxscore = summary_data.get("boxscore", {})
     box_teams = []
     for bt in boxscore.get("teams", []):
@@ -279,6 +282,7 @@ def _normalize_game_summary(summary_data):
             "statistics": stats_list,
         })
 
+    # Scoring plays
     scoring_plays = []
     for sp in summary_data.get("scoringPlays", []):
         team = sp.get("team", {})
@@ -296,6 +300,7 @@ def _normalize_game_summary(summary_data):
             "away_score": sp.get("awayScore", ""),
         })
 
+    # Leaders
     leaders = []
     for leader_group in summary_data.get("leaders", []):
         team = leader_group.get("team", {})
@@ -342,6 +347,7 @@ def _normalize_news(espn_data):
             "link": "",
             "images": [img.get("url", "") for img in article.get("images", [])[:1]],
         })
+        # Extract link
         links = article.get("links", {})
         web = links.get("web", {})
         if web.get("href"):
@@ -357,7 +363,7 @@ def _normalize_news(espn_data):
 
 
 def get_scoreboard(request_data):
-    """Get live/recent WNBA scores."""
+    """Get live/recent MLB scores."""
     params = request_data.get("params", {})
     date = params.get("date")
 
@@ -380,7 +386,7 @@ def get_scoreboard(request_data):
 
 
 def get_standings(request_data):
-    """Get WNBA standings by conference."""
+    """Get MLB standings by league and division."""
     params = request_data.get("params", {})
     season = params.get("season")
 
@@ -400,7 +406,7 @@ def get_standings(request_data):
 
 
 def get_teams(request_data=None):
-    """Get all WNBA teams."""
+    """Get all MLB teams."""
     data = espn_request(SPORT_PATH, "teams")
     if data.get("error"):
         return data
@@ -415,7 +421,7 @@ def get_teams(request_data=None):
 
 
 def get_team_roster(request_data):
-    """Get roster for a WNBA team."""
+    """Get roster for an MLB team."""
     params = request_data.get("params", {})
     team_id = params.get("team_id")
     if not team_id:
@@ -440,7 +446,7 @@ def get_team_roster(request_data):
 
 
 def get_team_schedule(request_data):
-    """Get schedule for a specific WNBA team."""
+    """Get schedule for a specific MLB team."""
     params = request_data.get("params", {})
     team_id = params.get("team_id")
     season = params.get("season")
@@ -486,25 +492,24 @@ def get_game_summary(request_data):
     return _normalize_game_summary(data)
 
 
-def _wnba_current_season():
-    """Detect the most recent completed WNBA season year."""
+def _mlb_current_season():
+    """Detect the most recent active MLB season year (season runs Apr-Oct)."""
     import datetime
-    # WNBA season runs May-October. In offseason, use previous year.
     now = datetime.datetime.utcnow()
-    return now.year if now.month >= 5 else now.year - 1
+    # MLB season starts in late March/April; if Jan-Mar use previous year
+    return now.year if now.month >= 4 else now.year - 1
 
 
 def get_leaders(request_data):
-    """Get WNBA statistical leaders via ESPN core API."""
+    """Get MLB statistical leaders via ESPN core API."""
     params = request_data.get("params", {})
     season = params.get("season")
 
-    # The generic /leaders endpoint returns 404 in offseason.
-    # Always use season-scoped URL with regular season type (2).
-    resolved = season or _wnba_current_season()
-    url = f"https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/{resolved}/types/2/leaders"
+    # Always use season-scoped URL with regular season type (2) for reliability.
+    resolved = season or _mlb_current_season()
+    url = f"https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/seasons/{resolved}/types/2/leaders"
 
-    cache_key = f"wnba_leaders:{season or 'current'}"
+    cache_key = f"mlb_leaders:{resolved}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
@@ -527,7 +532,7 @@ def get_leaders(request_data):
 
 
 def get_news(request_data):
-    """Get WNBA news articles."""
+    """Get MLB news articles."""
     params = request_data.get("params", {})
     team_id = params.get("team_id")
 
@@ -541,7 +546,7 @@ def get_news(request_data):
 
 
 def get_schedule(request_data):
-    """Get WNBA schedule for a date."""
+    """Get MLB schedule for a date."""
     params = request_data.get("params", {})
     date = params.get("date")
     season = params.get("season")
@@ -549,8 +554,8 @@ def get_schedule(request_data):
     espn_params = {}
     if date:
         espn_params["dates"] = date.replace("-", "")
-    if season:
-        espn_params["dates"] = str(season)
+    elif season:
+        espn_params["season"] = str(season)
 
     data = espn_request(SPORT_PATH, "scoreboard", espn_params or None)
     if data.get("error"):

@@ -1,8 +1,8 @@
 """sports-skills: Lightweight Python SDK for sports data."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
-from sports_skills import football, polymarket, kalshi, news, nfl, nba, wnba, nhl
+from sports_skills import football, polymarket, kalshi, news, nfl, nba, wnba, nhl, mlb
 
 # F1 is optional — requires fastf1 + pandas
 try:
@@ -10,4 +10,4 @@ try:
 except ImportError:
     f1 = None
 
-__all__ = ["football", "f1", "polymarket", "kalshi", "news", "nfl", "nba", "wnba", "nhl"]
+__all__ = ["football", "f1", "polymarket", "kalshi", "news", "nfl", "nba", "wnba", "nhl", "mlb"]
