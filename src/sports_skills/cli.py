@@ -238,6 +238,28 @@ _REGISTRY = {
         "get_news": {"optional": ["team_id"]},
         "get_schedule": {"optional": ["date", "season"]},
     },
+    "cfb": {
+        "get_scoreboard": {"optional": ["date", "week", "group", "limit"]},
+        "get_standings": {"optional": ["season", "group"]},
+        "get_teams": {},
+        "get_team_roster": {"required": ["team_id"]},
+        "get_team_schedule": {"required": ["team_id"], "optional": ["season"]},
+        "get_game_summary": {"required": ["event_id"]},
+        "get_rankings": {"optional": ["season", "week"]},
+        "get_news": {"optional": ["team_id"]},
+        "get_schedule": {"optional": ["season", "week", "group"]},
+    },
+    "cbb": {
+        "get_scoreboard": {"optional": ["date", "group", "limit"]},
+        "get_standings": {"optional": ["season", "group"]},
+        "get_teams": {},
+        "get_team_roster": {"required": ["team_id"]},
+        "get_team_schedule": {"required": ["team_id"], "optional": ["season"]},
+        "get_game_summary": {"required": ["event_id"]},
+        "get_rankings": {"optional": ["season", "week"]},
+        "get_news": {"optional": ["team_id"]},
+        "get_schedule": {"optional": ["date", "season", "group"]},
+    },
 }
 
 # Params that should be parsed as boolean
@@ -265,6 +287,7 @@ _INT_PARAMS = {
     "max_ts",
     "season",
     "week",
+    "group",
 }
 
 # Params that should be parsed as list (comma-separated)
@@ -327,6 +350,14 @@ def _load_module(name):
         from sports_skills import mlb
 
         return mlb
+    elif name == "cfb":
+        from sports_skills import cfb
+
+        return cfb
+    elif name == "cbb":
+        from sports_skills import cbb
+
+        return cbb
     else:
         _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
@@ -347,10 +378,10 @@ def _parse_value(key, value):
 def main():
     parser = argparse.ArgumentParser(
         prog="sports-skills",
-        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, prediction markets, and news.",
+        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, CFB, CBB, prediction markets, and news.",
     )
     parser.add_argument(
-        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, polymarket, kalshi, news"
+        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, cfb, cbb, polymarket, kalshi, news"
     )
     parser.add_argument(
         "command", nargs="?", help="Command name (e.g., get_season_standings)"
