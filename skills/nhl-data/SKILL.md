@@ -42,6 +42,7 @@ Derive the current year from the system prompt's date (e.g., `currentDate: 2026-
 
 - **If the user specifies a season**, use it as-is.
 - **If the user says "current", "this season", or doesn't specify**: The NHL season runs October–June. If the current month is October–December, the active season year matches the current year. If January–June, the active season started the previous calendar year (use that year as the season).
+- **Example:** Current date is February 2026 → active season started October 2025 → use season `2025`.
 - **Never hardcode a season.** Always derive it from the system date.
 
 ## Commands
@@ -59,13 +60,13 @@ Get NHL standings by conference and division.
 Returns `groups[]` with Eastern/Western conferences and division standings including W-L-OTL, points, regulation wins, goals for/against, and streak.
 
 ### get_teams
-Get all 32 NHL teams. No parameters.
+Get all NHL teams. No parameters.
 
 Returns `teams[]` with id, name, abbreviation, logo, and location.
 
 ### get_team_roster
 Get full roster for a team.
-- `team_id` (str, required): ESPN team ID (e.g., "10" for Maple Leafs)
+- `team_id` (str, required): ESPN team ID (e.g., "21" for Maple Leafs)
 
 Returns `athletes[]` with name, position, jersey number, height, weight, experience, birthplace, and shoots/catches.
 
@@ -105,23 +106,23 @@ Returns `events[]` for the specified date.
 
 | Team | ID | Team | ID |
 |------|-----|------|-----|
-| Anaheim Ducks | 25 | Nashville Predators | 18 |
-| Arizona Coyotes | 24 | New Jersey Devils | 1 |
-| Boston Bruins | 1 | New York Islanders | 2 |
-| Buffalo Sabres | 7 | New York Rangers | 3 |
-| Calgary Flames | 20 | Ottawa Senators | 9 |
-| Carolina Hurricanes | 7 | Philadelphia Flyers | 4 |
-| Chicago Blackhawks | 16 | Pittsburgh Penguins | 5 |
-| Colorado Avalanche | 17 | San Jose Sharks | 28 |
-| Columbus Blue Jackets | 29 | Seattle Kraken | 36 |
-| Dallas Stars | 25 | St. Louis Blues | 19 |
-| Detroit Red Wings | 11 | Tampa Bay Lightning | 14 |
-| Edmonton Oilers | 22 | Toronto Maple Leafs | 10 |
-| Florida Panthers | 13 | Utah Hockey Club | 37 |
-| Los Angeles Kings | 26 | Vancouver Canucks | 23 |
-| Minnesota Wild | 30 | Vegas Golden Knights | 37 |
-| Montreal Canadiens | 8 | Washington Capitals | 15 |
-| Winnipeg Jets | 52 |
+| Anaheim Ducks | 25 | Nashville Predators | 27 |
+| Boston Bruins | 1 | New Jersey Devils | 11 |
+| Buffalo Sabres | 2 | New York Islanders | 12 |
+| Calgary Flames | 3 | New York Rangers | 13 |
+| Carolina Hurricanes | 7 | Ottawa Senators | 14 |
+| Chicago Blackhawks | 4 | Philadelphia Flyers | 15 |
+| Colorado Avalanche | 17 | Pittsburgh Penguins | 16 |
+| Columbus Blue Jackets | 29 | San Jose Sharks | 18 |
+| Dallas Stars | 9 | Seattle Kraken | 124292 |
+| Detroit Red Wings | 5 | St. Louis Blues | 19 |
+| Edmonton Oilers | 6 | Tampa Bay Lightning | 20 |
+| Florida Panthers | 26 | Toronto Maple Leafs | 21 |
+| Los Angeles Kings | 8 | Utah Mammoth | 129764 |
+| Minnesota Wild | 30 | Vancouver Canucks | 22 |
+| Montreal Canadiens | 10 | Vegas Golden Knights | 37 |
+| | | Washington Capitals | 23 |
+| | | Winnipeg Jets | 28 |
 
 **Tip:** Use `get_teams` to get the full, accurate list of team IDs.
 
@@ -140,7 +141,7 @@ Then filter results for Eastern Conference.
 
 **User: "Who's on the Maple Leafs roster?"**
 ```bash
-sports-skills nhl get_team_roster --team_id=10
+sports-skills nhl get_team_roster --team_id=21
 ```
 
 **User: "Show me the full box score for last night's Bruins game"**

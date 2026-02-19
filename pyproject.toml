@@ -31,10 +31,10 @@ dependencies = [
 [project.optional-dependencies]
 f1 = ["fastf1>=3.0", "pandas>=2.0"]
 nfl = ["nfl-data-py>=0.3"]
-nba = ["sportsdataverse>=0.0.30"]
-wnba = ["sportsdataverse>=0.0.30"]
-nhl = ["sportsdataverse>=0.0.30"]
-all = ["fastf1>=3.0", "pandas>=2.0", "feedparser>=6.0", "nfl-data-py>=0.3", "sportsdataverse>=0.0.30"]
+nba = []
+wnba = []
+nhl = []
+all = ["fastf1>=3.0", "pandas>=2.0", "feedparser>=6.0", "nfl-data-py>=0.3"]
 
 [project.scripts]
 sports-skills = "sports_skills.cli:main"
