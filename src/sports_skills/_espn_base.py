@@ -295,3 +295,85 @@ def espn_summary(sport_path, event_id, max_retries=_MAX_RETRIES):
     except (json.JSONDecodeError, ValueError):
         _cache_set(cache_key, {}, ttl=60)
         return None
+
+
+# ============================================================
+# Athlete $ref resolver (shared across NHL, MLB, WNBA, NBA)
+# ============================================================
+
+def _resolve_athlete_ref(ref_url: str) -> str:
+    """Follow an ESPN athlete $ref URL and return the athlete's displayName.
+
+    ESPN's core leaders API returns athlete data as a $ref link rather than
+    inline. This helper fetches the ref and extracts the name, with caching
+    so repeated calls for the same athlete are free.
+
+    Returns empty string on any failure (safe fallback).
+    """
+    if not ref_url:
+        return ""
+
+    cache_key = f"athlete_ref:{ref_url}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(ref_url, headers=headers, timeout=5)
+    if err:
+        _cache_set(cache_key, "", ttl=60)
+        return ""
+
+    try:
+        data = json.loads(raw.decode())
+        name = data.get("displayName") or data.get("fullName") or ""
+        _cache_set(cache_key, name, ttl=3600)  # athlete names don't change
+        return name
+    except (json.JSONDecodeError, ValueError):
+        _cache_set(cache_key, "", ttl=60)
+        return ""
+
+
+def _resolve_leaders(categories: list) -> list:
+    """Normalize a list of ESPN core API leader categories.
+
+    Handles the $ref athlete pattern and sport-agnostic value extraction.
+    Returns a list of dicts with name, category, displayName, value, rank.
+    """
+    result = []
+    for cat in categories:
+        leaders_list = []
+        for leader in cat.get("leaders", []):
+            athlete = leader.get("athlete", {})
+            if isinstance(athlete, dict):
+                ref_url = athlete.get("$ref", "")
+                name = athlete.get("displayName") or athlete.get("fullName") or ""
+                if not name and ref_url:
+                    name = _resolve_athlete_ref(ref_url)
+            else:
+                name = ""
+
+            # Use numeric value over displayValue — displayValue can be
+            # a full stat line string (e.g. MLB batting: "179-541, 53 HR...")
+            raw_value = leader.get("value")
+            display_value = leader.get("displayValue", "")
+            if raw_value is not None:
+                # Format nicely: integers as int, rates as 3dp
+                try:
+                    fv = float(raw_value)
+                    value = str(int(fv)) if fv == int(fv) else f"{fv:.3f}"
+                except (ValueError, TypeError):
+                    value = display_value
+            else:
+                value = display_value
+
+            leaders_list.append({
+                "rank": leader.get("rank", ""),
+                "name": name,
+                "value": value,
+            })
+        result.append({
+            "name": cat.get("displayName", cat.get("name", "")),
+            "leaders": leaders_list,
+        })
+    return result
