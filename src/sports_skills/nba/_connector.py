@@ -16,6 +16,7 @@ from sports_skills._espn_base import (
     _cache_get,
     _cache_set,
     _USER_AGENT,
+    _resolve_leaders,
 )
 
 logger = logging.getLogger("sports_skills.nba")
@@ -524,27 +525,8 @@ def get_leaders(request_data):
     except (json.JSONDecodeError, ValueError):
         return {"error": True, "message": "ESPN core API returned invalid JSON"}
 
-    categories = []
-    for cat in data.get("categories", []):
-        leaders_list = []
-        for leader in cat.get("leaders", []):
-            athlete = leader.get("athlete", {})
-            if isinstance(athlete, dict) and "$ref" in athlete and "displayName" not in athlete:
-                name = ""
-            else:
-                name = athlete.get("displayName", "")
-            leaders_list.append({
-                "rank": leader.get("rank", ""),
-                "name": name,
-                "value": leader.get("displayValue", str(leader.get("value", ""))),
-            })
-        categories.append({
-            "name": cat.get("displayName", cat.get("name", "")),
-            "leaders": leaders_list,
-        })
-
     result = {
-        "categories": categories,
+        "categories": _resolve_leaders(data.get("categories", [])),
         "season": data.get("season", {}).get("year", season or ""),
     }
     _cache_set(cache_key, result, ttl=300)
