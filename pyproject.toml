@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
-    { name = "Machina Sports", email = "hello@machinasports.com" },
+    { name = "Machina Sports", email = "hello@machina.gg" },
 ]
 keywords = ["sports", "football", "f1", "nfl", "nba", "wnba", "nhl", "polymarket", "kalshi", "prediction-markets", "news"]
 keywords = ["sports", "football", "f1", "nfl", "nba", "wnba", "mlb", "polymarket", "kalshi", "prediction-markets", "news"]

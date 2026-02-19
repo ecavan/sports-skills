@@ -38,10 +38,12 @@ sports-skills mlb get_teams
 
 ## Choosing the Season
 
-Derive the current year from the system prompt's date (e.g., `currentDate: 2026-02-18` → current year is 2026).
+Derive the active season from the system prompt's date — not just the calendar year.
 
 - **If the user specifies a season**, use it as-is.
-- **If the user says "current", "this season", or doesn't specify**: The MLB season runs late March/April through October. If the current month is January–March, use the previous year (last completed season). From April onward, use the current year.
+- **If the user says "current", "this season", or doesn't specify**: The MLB season runs late March/April through October. If the current month is January–March, the last completed season was the prior calendar year. From April onward, use the current calendar year.
+- **Example:** Current date is February 2026 → MLB is in offseason → use season `2025`.
+- **Example:** Current date is June 2026 → MLB season is active → use season `2026`.
 - **Never hardcode a season.** Always derive it from the system date.
 
 ## Commands
