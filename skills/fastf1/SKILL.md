@@ -71,6 +71,8 @@ Get race results (positions, times, points).
 - `year` (int, required): Season year
 - `event` (str, required): Event name (e.g., "Monza", "Silverstone")
 
+Returns `data[]` list. Fields: `position` (int), `driver` (abbreviation), `full_name`, `team`, `grid_position` (int), `points` (int), `status`, `time`, `fastest_lap` (bool), `fastest_lap_time`.
+
 ### get_session_data
 Get detailed session data (qualifying, race, practice).
 - `session_year` (int, required): Year
@@ -82,10 +84,14 @@ Get driver information for a season.
 - `year` (int, required): Season year
 - `driver` (str, optional): Driver code or name. Omit for all drivers.
 
+Returns `data` as a **list** of driver objects (not a dict). Fields: `driver_number`, `driver_code`, `full_name`, `team_name`, `country_code`, `headshot_url`.
+
 ### get_team_info
 Get team information for a season.
 - `year` (int, required): Season year
 - `team` (str, optional): Team name. Omit for all teams.
+
+Returns `data` as a **list** of team objects. Fields: `team_name`, `team_color`, `drivers[]`.
 
 ### get_lap_data
 Get lap-by-lap timing data.
@@ -109,6 +115,8 @@ Get speed trap and intermediate speed data for a race or full season.
 ### get_championship_standings
 Get driver and constructor championship standings aggregated from all race results.
 - `year` (int, required): Season year
+
+Returns `data.driver_standings[]` (position, driver_code, full_name, team, points, wins, podiums) and `data.constructor_standings[]` (position, team, points, wins).
 
 ### get_season_stats
 Get aggregated season stats: fastest laps, top speeds, points, wins, podiums per driver/team.
