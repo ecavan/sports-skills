@@ -2,12 +2,14 @@ import gzip
 import json
 import logging
 import re
-import time
 import threading
-import urllib.request
+import time
 import urllib.error
 import urllib.parse
+import urllib.request
 from datetime import datetime
+
+from sports_skills._espn_base import normalize_odds
 
 logger = logging.getLogger("sports_skills.football")
 
@@ -1470,6 +1472,7 @@ def _normalize_espn_event(espn_event, league_slug=""):
             "home": hs,
             "away": as_,
         },
+        "odds": normalize_odds(comp.get("odds", [])),
         "referees": [],
     }
 

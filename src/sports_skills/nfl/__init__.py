@@ -5,15 +5,31 @@ Wraps ESPN public endpoints. No API keys required. Zero config.
 
 from sports_skills._response import wrap
 from sports_skills.nfl._connector import (
-    get_scoreboard as _get_scoreboard,
-    get_standings as _get_standings,
-    get_teams as _get_teams,
-    get_team_roster as _get_team_roster,
-    get_team_schedule as _get_team_schedule,
     get_game_summary as _get_game_summary,
+)
+from sports_skills.nfl._connector import (
     get_leaders as _get_leaders,
+)
+from sports_skills.nfl._connector import (
     get_news as _get_news,
+)
+from sports_skills.nfl._connector import (
     get_schedule as _get_schedule,
+)
+from sports_skills.nfl._connector import (
+    get_scoreboard as _get_scoreboard,
+)
+from sports_skills.nfl._connector import (
+    get_standings as _get_standings,
+)
+from sports_skills.nfl._connector import (
+    get_team_roster as _get_team_roster,
+)
+from sports_skills.nfl._connector import (
+    get_team_schedule as _get_team_schedule,
+)
+from sports_skills.nfl._connector import (
+    get_teams as _get_teams,
 )
 
 

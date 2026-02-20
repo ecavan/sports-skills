@@ -5,11 +5,19 @@ Wraps ESPN public endpoints. No API keys required. Zero config.
 
 from sports_skills._response import wrap
 from sports_skills.tennis._connector import (
-    get_scoreboard as _get_scoreboard,
     get_calendar as _get_calendar,
-    get_rankings as _get_rankings,
-    get_player_info as _get_player_info,
+)
+from sports_skills.tennis._connector import (
     get_news as _get_news,
+)
+from sports_skills.tennis._connector import (
+    get_player_info as _get_player_info,
+)
+from sports_skills.tennis._connector import (
+    get_rankings as _get_rankings,
+)
+from sports_skills.tennis._connector import (
+    get_scoreboard as _get_scoreboard,
 )
 
 

@@ -4,17 +4,37 @@ Uses Gamma API (public, no auth) and CLOB API (public reads) via stdlib only.
 """
 
 from sports_skills.polymarket._connector import (
-    get_sports_markets as _get_sports_markets,
-    get_sports_events as _get_sports_events,
-    get_series as _get_series,
-    get_market_details as _get_market_details,
     get_event_details as _get_event_details,
-    get_market_prices as _get_market_prices,
-    get_order_book as _get_order_book,
-    get_sports_market_types as _get_sports_market_types,
-    search_markets as _search_markets,
-    get_price_history as _get_price_history,
+)
+from sports_skills.polymarket._connector import (
     get_last_trade_price as _get_last_trade_price,
+)
+from sports_skills.polymarket._connector import (
+    get_market_details as _get_market_details,
+)
+from sports_skills.polymarket._connector import (
+    get_market_prices as _get_market_prices,
+)
+from sports_skills.polymarket._connector import (
+    get_order_book as _get_order_book,
+)
+from sports_skills.polymarket._connector import (
+    get_price_history as _get_price_history,
+)
+from sports_skills.polymarket._connector import (
+    get_series as _get_series,
+)
+from sports_skills.polymarket._connector import (
+    get_sports_events as _get_sports_events,
+)
+from sports_skills.polymarket._connector import (
+    get_sports_market_types as _get_sports_market_types,
+)
+from sports_skills.polymarket._connector import (
+    get_sports_markets as _get_sports_markets,
+)
+from sports_skills.polymarket._connector import (
+    search_markets as _search_markets,
 )
 
 

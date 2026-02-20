@@ -1,12 +1,38 @@
-node_modules/
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+
+# Testing / linting caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# IDE / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Environment
 .env
 .env.local
-.DS_Store
-*.pyc
-__pycache__/
-.cache/
-dist/
+
+# Node (site docs)
+node_modules/
 .next/
+.cache/
+
+# AI agent workspaces
 .agent/
 .agents/
 .claude/

@@ -15,13 +15,13 @@ import json
 import logging
 
 from sports_skills._espn_base import (
-    espn_request,
+    _USER_AGENT,
     ESPN_STATUS_MAP,
-    _http_fetch,
     _cache_get,
     _cache_set,
-    _USER_AGENT,
+    _http_fetch,
     _resolve_athlete_ref,
+    espn_request,
 )
 
 logger = logging.getLogger("sports_skills.tennis")

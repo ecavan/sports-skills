@@ -2,7 +2,7 @@
 
 __version__ = "0.5.3"
 
-from sports_skills import football, polymarket, kalshi, news, nfl, nba, wnba, nhl, mlb, tennis, cfb, cbb, golf
+from sports_skills import cbb, cfb, football, golf, kalshi, mlb, nba, news, nfl, nhl, polymarket, tennis, wnba
 
 # F1 is optional — requires fastf1 + pandas
 try:

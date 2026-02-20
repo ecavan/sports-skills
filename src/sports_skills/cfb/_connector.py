@@ -7,10 +7,11 @@ rankings (AP/Coaches polls), and news for NCAA Division I FBS football.
 import logging
 
 from sports_skills._espn_base import (
-    espn_request,
-    espn_web_request,
-    espn_summary,
     ESPN_STATUS_MAP,
+    espn_request,
+    espn_summary,
+    espn_web_request,
+    normalize_odds,
 )
 
 logger = logging.getLogger("sports_skills.cfb")
@@ -59,13 +60,7 @@ def _normalize_event(espn_event):
             "rank": rank if rank != 99 else None,
         })
 
-    odds = []
-    for o in comp.get("odds", []):
-        odds.append({
-            "provider": o.get("provider", {}).get("name", ""),
-            "details": o.get("details", ""),
-            "over_under": o.get("overUnder", ""),
-        })
+    odds = normalize_odds(comp.get("odds", []))
 
     broadcasts = []
     for b in comp.get("broadcasts", []):

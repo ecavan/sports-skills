@@ -8,15 +8,16 @@ import json
 import logging
 
 from sports_skills._espn_base import (
-    espn_request,
-    espn_web_request,
-    espn_summary,
+    _USER_AGENT,
     ESPN_STATUS_MAP,
-    _http_fetch,
     _cache_get,
     _cache_set,
-    _USER_AGENT,
+    _http_fetch,
     _resolve_leaders,
+    espn_request,
+    espn_summary,
+    espn_web_request,
+    normalize_odds,
 )
 
 logger = logging.getLogger("sports_skills.nfl")
@@ -80,13 +81,7 @@ def _normalize_event(espn_event):
             "winner": c.get("winner", False),
         })
 
-    odds = []
-    for o in comp.get("odds", []):
-        odds.append({
-            "provider": o.get("provider", {}).get("name", ""),
-            "details": o.get("details", ""),
-            "over_under": o.get("overUnder", ""),
-        })
+    odds = normalize_odds(comp.get("odds", []))
 
     broadcasts = []
     for b in comp.get("broadcasts", []):

@@ -5,6 +5,8 @@ Requires feedparser (included in base install).
 
 from sports_skills.news._connector import (
     fetch_feed as _fetch_feed,
+)
+from sports_skills.news._connector import (
     fetch_items as _fetch_items,
 )
 

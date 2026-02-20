@@ -18,7 +18,6 @@ import argparse
 import json
 import sys
 
-
 # Registry of modules → commands → functions (lazy-loaded)
 _REGISTRY = {
     "football": {
