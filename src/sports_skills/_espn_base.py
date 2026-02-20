@@ -341,12 +341,15 @@ def normalize_odds(odds_list):
         "favorite": favorite,
     }
 
-    # Moneyline (closing lines)
+    # Moneyline (closing lines) — includes draw for soccer 3-way markets
     if ml:
         result["moneyline"] = {
             "home": ml.get("home", {}).get("close", {}).get("odds", ""),
             "away": ml.get("away", {}).get("close", {}).get("odds", ""),
         }
+        draw_ml = ml.get("draw", {}).get("close", {}).get("odds", "")
+        if draw_ml:
+            result["moneyline"]["draw"] = draw_ml
 
     # Spread with juice (closing lines)
     if ps:
@@ -377,6 +380,7 @@ def normalize_odds(odds_list):
     # Opening lines (line movement)
     open_ml_home = ml.get("home", {}).get("open", {}).get("odds", "")
     open_ml_away = ml.get("away", {}).get("open", {}).get("odds", "")
+    open_ml_draw = ml.get("draw", {}).get("open", {}).get("odds", "")
     open_spread_home = ps.get("home", {}).get("open", {}).get("line", "")
     open_spread_away = ps.get("away", {}).get("open", {}).get("line", "")
     open_total_over = tot.get("over", {}).get("open", {}).get("line", "")
@@ -384,10 +388,10 @@ def normalize_odds(odds_list):
     if any([open_ml_home, open_ml_away, open_spread_home, open_total_over]):
         result["open"] = {}
         if open_ml_home or open_ml_away:
-            result["open"]["moneyline"] = {
-                "home": open_ml_home,
-                "away": open_ml_away,
-            }
+            open_ml = {"home": open_ml_home, "away": open_ml_away}
+            if open_ml_draw:
+                open_ml["draw"] = open_ml_draw
+            result["open"]["moneyline"] = open_ml
         if open_spread_home or open_spread_away:
             result["open"]["spread"] = {
                 "home": open_spread_home,
