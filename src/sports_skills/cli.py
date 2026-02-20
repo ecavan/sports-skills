@@ -11,6 +11,7 @@ Examples:
     sports-skills f1 get_race_schedule --year=2025
     sports-skills nfl get_scoreboard
     sports-skills nfl get_standings --season=2025
+    sports-skills golf get_leaderboard --tour=pga
 """
 
 import argparse
@@ -238,6 +239,41 @@ _REGISTRY = {
         "get_news": {"optional": ["team_id"]},
         "get_schedule": {"optional": ["date", "season"]},
     },
+    "tennis": {
+        "get_scoreboard": {"required": ["tour"], "optional": ["date"]},
+        "get_calendar": {"required": ["tour"], "optional": ["year"]},
+        "get_rankings": {"required": ["tour"], "optional": ["limit"]},
+        "get_player_info": {"required": ["player_id"]},
+        "get_news": {"required": ["tour"]},
+    },
+    "cfb": {
+        "get_scoreboard": {"optional": ["date", "week", "group", "limit"]},
+        "get_standings": {"optional": ["season", "group"]},
+        "get_teams": {},
+        "get_team_roster": {"required": ["team_id"]},
+        "get_team_schedule": {"required": ["team_id"], "optional": ["season"]},
+        "get_game_summary": {"required": ["event_id"]},
+        "get_rankings": {"optional": ["season", "week"]},
+        "get_news": {"optional": ["team_id"]},
+        "get_schedule": {"optional": ["season", "week", "group"]},
+    },
+    "cbb": {
+        "get_scoreboard": {"optional": ["date", "group", "limit"]},
+        "get_standings": {"optional": ["season", "group"]},
+        "get_teams": {},
+        "get_team_roster": {"required": ["team_id"]},
+        "get_team_schedule": {"required": ["team_id"], "optional": ["season"]},
+        "get_game_summary": {"required": ["event_id"]},
+        "get_rankings": {"optional": ["season", "week"]},
+        "get_news": {"optional": ["team_id"]},
+        "get_schedule": {"optional": ["date", "season", "group"]},
+    },
+    "golf": {
+        "get_leaderboard": {"required": ["tour"]},
+        "get_schedule": {"required": ["tour"], "optional": ["year"]},
+        "get_player_info": {"required": ["player_id"], "optional": ["tour"]},
+        "get_news": {"required": ["tour"]},
+    },
 }
 
 # Params that should be parsed as boolean
@@ -265,6 +301,7 @@ _INT_PARAMS = {
     "max_ts",
     "season",
     "week",
+    "group",
 }
 
 # Params that should be parsed as list (comma-separated)
@@ -327,6 +364,19 @@ def _load_module(name):
         from sports_skills import mlb
 
         return mlb
+    elif name == "tennis":
+        from sports_skills import tennis
+
+        return tennis
+    elif name == "cfb":
+        from sports_skills import cfb
+        return cfb
+    elif name == "cbb":
+        from sports_skills import cbb
+        return cbb
+    elif name == "golf":
+        from sports_skills import golf
+        return golf
     else:
         _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
@@ -347,10 +397,10 @@ def _parse_value(key, value):
 def main():
     parser = argparse.ArgumentParser(
         prog="sports-skills",
-        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, prediction markets, and news.",
+        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, tennis, CFB, CBB, golf, prediction markets, and news.",
     )
     parser.add_argument(
-        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, polymarket, kalshi, news"
+        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, tennis, cfb, cbb, golf, polymarket, kalshi, news"
     )
     parser.add_argument(
         "command", nargs="?", help="Command name (e.g., get_season_standings)"
