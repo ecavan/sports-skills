@@ -2,9 +2,7 @@
 
 __version__ = "0.5.1"
 
-from sports_skills import football, polymarket, kalshi, news, nfl, nba, wnba, nhl, mlb, tennis
-from sports_skills import football, polymarket, kalshi, news, nfl, nba, wnba, nhl, mlb, cfb, cbb
-from sports_skills import football, polymarket, kalshi, news, nfl, nba, wnba, nhl, mlb, golf
+from sports_skills import football, polymarket, kalshi, news, nfl, nba, wnba, nhl, mlb, tennis, cfb, cbb, golf
 
 # F1 is optional — requires fastf1 + pandas
 try:
@@ -12,6 +10,4 @@ try:
 except ImportError:
     f1 = None
 
-__all__ = ["football", "f1", "polymarket", "kalshi", "news", "nfl", "nba", "wnba", "nhl", "mlb", "tennis"]
-__all__ = ["football", "f1", "polymarket", "kalshi", "news", "nfl", "nba", "wnba", "nhl", "mlb", "cfb", "cbb"]
-__all__ = ["football", "f1", "polymarket", "kalshi", "news", "nfl", "nba", "wnba", "nhl", "mlb", "golf"]
+__all__ = ["football", "f1", "polymarket", "kalshi", "news", "nfl", "nba", "wnba", "nhl", "mlb", "tennis", "cfb", "cbb", "golf"]

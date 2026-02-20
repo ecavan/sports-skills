@@ -245,6 +245,7 @@ _REGISTRY = {
         "get_rankings": {"required": ["tour"], "optional": ["limit"]},
         "get_player_info": {"required": ["player_id"]},
         "get_news": {"required": ["tour"]},
+    },
     "cfb": {
         "get_scoreboard": {"optional": ["date", "week", "group", "limit"]},
         "get_standings": {"optional": ["season", "group"]},
@@ -266,10 +267,12 @@ _REGISTRY = {
         "get_rankings": {"optional": ["season", "week"]},
         "get_news": {"optional": ["team_id"]},
         "get_schedule": {"optional": ["date", "season", "group"]},
+    },
     "golf": {
         "get_leaderboard": {"required": ["tour"]},
         "get_schedule": {"required": ["tour"], "optional": ["year"]},
         "get_player_info": {"required": ["player_id"], "optional": ["tour"]},
+        "get_news": {"required": ["tour"]},
     },
 }
 
@@ -394,14 +397,10 @@ def _parse_value(key, value):
 def main():
     parser = argparse.ArgumentParser(
         prog="sports-skills",
-        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, tennis, prediction markets, and news.",
+        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, tennis, CFB, CBB, golf, prediction markets, and news.",
     )
     parser.add_argument(
-        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, tennis, polymarket, kalshi, news"
-        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, CFB, CBB, prediction markets, and news.",
-        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, cfb, cbb, polymarket, kalshi, news"
-        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, golf, prediction markets, and news.",
-        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, golf, polymarket, kalshi, news"
+        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, tennis, cfb, cbb, golf, polymarket, kalshi, news"
     )
     parser.add_argument(
         "command", nargs="?", help="Command name (e.g., get_season_standings)"
