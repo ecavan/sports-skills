@@ -43,5 +43,28 @@ all = ["fastf1>=3.0", "pandas>=2.0", "feedparser>=6.0", "nfl-data-py>=0.3"]
 [project.scripts]
 sports-skills = "sports_skills.cli:main"
 
+[project.optional-dependencies.dev]
+dev = ["ruff>=0.9", "pytest>=8.0"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",     # line too long — handled by formatter
+    "SIM108",   # ternary operator — readability preference
+    "UP007",    # X | Y union syntax — already used, but don't force it
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["sports_skills"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/sports_skills"]
