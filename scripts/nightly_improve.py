@@ -10,12 +10,12 @@ Tasks:
   3. Schema Baseline — detect API drift, update baseline
 """
 
+import gzip
 import json
 import subprocess
 import sys
 import urllib.error
 import urllib.request
-import gzip
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -212,7 +212,6 @@ def refresh_skill_examples() -> dict:
         lines = skill_path.read_text(encoding="utf-8").splitlines()
         new_lines = lines[:]
         skill_changed = False
-        offset = 0  # track line shifts from replacements
 
         for cmd in cmds:
             # Derive the function name from the command (last segment before any --)

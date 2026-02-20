@@ -1,5 +1,4 @@
 import fastf1
-
 import pandas as pd
 
 fastf1.set_log_level("WARNING")

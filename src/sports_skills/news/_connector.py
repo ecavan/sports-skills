@@ -1,8 +1,9 @@
-import feedparser
 import time
 import urllib.parse
 from datetime import datetime
 from email.utils import parsedate_to_datetime
+
+import feedparser
 
 
 def fetch_feed(request_data):

@@ -2,11 +2,11 @@ import gzip
 import json
 import logging
 import re
-import time
 import threading
-import urllib.request
+import time
 import urllib.error
 import urllib.parse
+import urllib.request
 from datetime import datetime
 
 logger = logging.getLogger("sports_skills.football")

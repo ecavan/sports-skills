@@ -4,18 +4,42 @@ Requires optional dependencies: pip install sports-skills[f1]
 """
 
 from sports_skills.f1._connector import (
-    get_session_data as _get_session_data,
-    get_driver_info as _get_driver_info,
-    get_team_info as _get_team_info,
-    get_race_schedule as _get_race_schedule,
-    get_lap_data as _get_lap_data,
-    get_race_results as _get_race_results,
-    get_pit_stops as _get_pit_stops,
-    get_speed_data as _get_speed_data,
     get_championship_standings as _get_championship_standings,
+)
+from sports_skills.f1._connector import (
+    get_driver_info as _get_driver_info,
+)
+from sports_skills.f1._connector import (
+    get_lap_data as _get_lap_data,
+)
+from sports_skills.f1._connector import (
+    get_pit_stops as _get_pit_stops,
+)
+from sports_skills.f1._connector import (
+    get_race_results as _get_race_results,
+)
+from sports_skills.f1._connector import (
+    get_race_schedule as _get_race_schedule,
+)
+from sports_skills.f1._connector import (
     get_season_stats as _get_season_stats,
+)
+from sports_skills.f1._connector import (
+    get_session_data as _get_session_data,
+)
+from sports_skills.f1._connector import (
+    get_speed_data as _get_speed_data,
+)
+from sports_skills.f1._connector import (
     get_team_comparison as _get_team_comparison,
+)
+from sports_skills.f1._connector import (
+    get_team_info as _get_team_info,
+)
+from sports_skills.f1._connector import (
     get_teammate_comparison as _get_teammate_comparison,
+)
+from sports_skills.f1._connector import (
     get_tire_analysis as _get_tire_analysis,
 )
 

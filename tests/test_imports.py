@@ -6,6 +6,7 @@ import sys
 
 import pytest
 
+_HAS_FASTF1 = importlib.util.find_spec("fastf1") is not None
 
 # Every public module that should be importable
 MODULES = [
@@ -28,6 +29,9 @@ MODULES = [
     "sports_skills.cli",
 ]
 
+if _HAS_FASTF1:
+    MODULES.insert(1, "sports_skills.f1")
+
 
 @pytest.mark.parametrize("module", MODULES)
 def test_module_imports(module):
@@ -48,27 +52,23 @@ def test_cli_entrypoint():
     assert "sports-skills" in result.stdout
 
 
-# Modules that require optional dependencies not installed in CI
-_OPTIONAL_MODULES = {"f1"}
-
-
 def test_cli_registry_modules_loadable():
-    """Every non-optional module in the CLI registry should be loadable."""
+    """Every module in the CLI registry should be loadable."""
     from sports_skills.cli import _REGISTRY, _load_module
 
     for module_name in _REGISTRY:
-        if module_name in _OPTIONAL_MODULES:
+        if module_name == "f1" and not _HAS_FASTF1:
             continue
         mod = _load_module(module_name)
         assert mod is not None, f"Failed to load module: {module_name}"
 
 
 def test_cli_registry_commands_callable():
-    """Every command in non-optional registry modules should resolve to a callable."""
+    """Every command in registry modules should resolve to a callable."""
     from sports_skills.cli import _REGISTRY, _load_module
 
     for module_name, commands in _REGISTRY.items():
-        if module_name in _OPTIONAL_MODULES:
+        if module_name == "f1" and not _HAS_FASTF1:
             continue
         mod = _load_module(module_name)
         for command_name in commands:
