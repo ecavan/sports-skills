@@ -238,6 +238,13 @@ _REGISTRY = {
         "get_news": {"optional": ["team_id"]},
         "get_schedule": {"optional": ["date", "season"]},
     },
+    "tennis": {
+        "get_scoreboard": {"required": ["tour"], "optional": ["date"]},
+        "get_calendar": {"required": ["tour"], "optional": ["year"]},
+        "get_rankings": {"required": ["tour"], "optional": ["limit"]},
+        "get_player_info": {"required": ["player_id"]},
+        "get_news": {"required": ["tour"]},
+    },
 }
 
 # Params that should be parsed as boolean
@@ -327,6 +334,10 @@ def _load_module(name):
         from sports_skills import mlb
 
         return mlb
+    elif name == "tennis":
+        from sports_skills import tennis
+
+        return tennis
     else:
         _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
@@ -347,10 +358,10 @@ def _parse_value(key, value):
 def main():
     parser = argparse.ArgumentParser(
         prog="sports-skills",
-        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, prediction markets, and news.",
+        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, tennis, prediction markets, and news.",
     )
     parser.add_argument(
-        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, polymarket, kalshi, news"
+        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, tennis, polymarket, kalshi, news"
     )
     parser.add_argument(
         "command", nargs="?", help="Command name (e.g., get_season_standings)"

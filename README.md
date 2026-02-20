@@ -26,6 +26,7 @@ A collection of agent skills that wrap **publicly available** sports data source
 - **WNBA**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
 - **NHL**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
 - **MLB**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
+- **Tennis**: ESPN — ATP and WTA tournament scores, rankings, calendars, player profiles, news
 - **Formula 1**: FastF1 open-source library — sessions, lap data, race results
 - **Prediction Markets**: Kalshi and Polymarket public APIs — markets, prices, order books
 - **Sports News**: RSS feeds and Google News — any public feed
@@ -48,6 +49,7 @@ Each skill is a SKILL.md file that any compatible AI agent can load and use imme
 | `wnba-data` | WNBA | 9 | ESPN |
 | `nhl-data` | NHL | 9 | ESPN |
 | `mlb-data` | MLB | 9 | ESPN |
+| `tennis-data` | Tennis (ATP + WTA) | 5 | ESPN |
 | `fastf1` | Formula 1 | 6 | FastF1 (free library) |
 | `sports-news` | Multi-sport | 2 | Any RSS feed, Google News |
 
@@ -106,6 +108,9 @@ Once installed, your agent can call commands directly:
 > "What are today's NHL scores?"
 **Get MLB scores:**
 > "What are today's MLB scores?"
+
+**Get ATP rankings:**
+> "Show me the current ATP tennis rankings"
 
 **Check prediction market odds:**
 > "What are the Polymarket odds for the Champions League final?"
@@ -225,6 +230,18 @@ MLB data via ESPN public endpoints. Scores, standings, rosters, schedules, game 
 | `get_news` | MLB news articles |
 | `get_schedule` | Schedule for a date |
 
+### tennis-data
+
+ATP and WTA tennis data via ESPN public endpoints. Tournament scores, rankings, calendars, player profiles, and news.
+
+| Command | Description |
+|---------|-------------|
+| `get_scoreboard` | Active tournaments with current matches |
+| `get_calendar` | Full season tournament schedule |
+| `get_rankings` | Current ATP or WTA rankings |
+| `get_player_info` | Individual player profile |
+| `get_news` | Tennis news articles |
+
 ### fastf1
 
 Formula 1 data via the [FastF1](https://github.com/theOehrly/Fast-F1) open-source library.
@@ -298,6 +315,7 @@ sports-skills.sh
 │   ├── wnba-data/SKILL.md            # WNBA scores, standings, rosters
 │   ├── nhl-data/SKILL.md             # NHL scores, standings, rosters
 │   ├── mlb-data/SKILL.md             # MLB scores, standings, rosters
+│   ├── tennis-data/SKILL.md          # ATP + WTA tennis
 │   ├── fastf1/SKILL.md               # F1 sessions, laps, results
 │   ├── kalshi/SKILL.md               # Prediction markets (CFTC)
 │   ├── polymarket/SKILL.md           # Prediction markets (crypto)
@@ -414,8 +432,7 @@ This project does not own, license, or redistribute any sports data. Each skill 
 
 This project is built on top of great open-source work and public APIs:
 
-- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues. Also powers the NFL, NBA, WNBA, and NHL skills.
-- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues. Also powers the NFL, NBA, WNBA, and MLB skills.
+- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues. Also powers the NFL, NBA, WNBA, NHL, MLB, and Tennis skills.
 - **[Fantasy Premier League](https://fantasy.premierleague.com)** — for their community API powering injury news, player stats, ownership data, and ICT index for Premier League players.
 - **[Transfermarkt](https://www.transfermarkt.com)** — for player market values, transfer history, and the richest player data in football.
 - **[Understat](https://understat.com)** — for xG data across the top 5 European leagues.
