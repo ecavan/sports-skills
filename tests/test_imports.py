@@ -94,3 +94,17 @@ def test_response_error_envelope():
     result = wrap({"error": True, "message": "something broke"})
     assert result["status"] is False
     assert "something broke" in result["message"]
+
+
+def test_version_consistency():
+    """Package __version__ should match pyproject.toml."""
+    import re
+    from pathlib import Path
+
+    import sports_skills
+
+    pyproject = Path(__file__).parent.parent / "pyproject.toml"
+    text = pyproject.read_text()
+    match = re.search(r'^version\s*=\s*"([^"]+)"', text, re.MULTILINE)
+    assert match, "Could not find version in pyproject.toml"
+    assert sports_skills.__version__ == match.group(1)
