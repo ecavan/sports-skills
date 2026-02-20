@@ -58,6 +58,8 @@ ESPN_US_SPORTS = {
     "mlb": "baseball/mlb",
     "atp": "tennis/atp",
     "wta": "tennis/wta",
+    "cfb": "football/college-football",
+    "cbb": "basketball/mens-college-basketball",
 }
 FPL_BASE = "https://fantasy.premierleague.com/api"
 UNDERSTAT_BASE = "https://understat.com"
