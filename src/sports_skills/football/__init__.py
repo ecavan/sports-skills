@@ -6,27 +6,67 @@ No API keys required. Zero config.
 
 from sports_skills._response import wrap
 from sports_skills.football._connector import (
-    get_current_season as _get_current_season,
-    get_competitions as _get_competitions,
     get_competition_seasons as _get_competition_seasons,
-    get_season_schedule as _get_season_schedule,
-    get_season_standings as _get_season_standings,
-    get_season_leaders as _get_season_leaders,
-    get_season_teams as _get_season_teams,
-    search_team as _search_team,
-    get_team_profile as _get_team_profile,
+)
+from sports_skills.football._connector import (
+    get_competitions as _get_competitions,
+)
+from sports_skills.football._connector import (
+    get_current_season as _get_current_season,
+)
+from sports_skills.football._connector import (
     get_daily_schedule as _get_daily_schedule,
-    get_event_summary as _get_event_summary,
+)
+from sports_skills.football._connector import (
     get_event_lineups as _get_event_lineups,
-    get_event_statistics as _get_event_statistics,
-    get_event_timeline as _get_event_timeline,
-    get_team_schedule as _get_team_schedule,
-    get_head_to_head as _get_head_to_head,
-    get_event_xg as _get_event_xg,
+)
+from sports_skills.football._connector import (
     get_event_players_statistics as _get_event_players_statistics,
+)
+from sports_skills.football._connector import (
+    get_event_statistics as _get_event_statistics,
+)
+from sports_skills.football._connector import (
+    get_event_summary as _get_event_summary,
+)
+from sports_skills.football._connector import (
+    get_event_timeline as _get_event_timeline,
+)
+from sports_skills.football._connector import (
+    get_event_xg as _get_event_xg,
+)
+from sports_skills.football._connector import (
+    get_head_to_head as _get_head_to_head,
+)
+from sports_skills.football._connector import (
     get_missing_players as _get_missing_players,
-    get_season_transfers as _get_season_transfers,
+)
+from sports_skills.football._connector import (
     get_player_profile as _get_player_profile,
+)
+from sports_skills.football._connector import (
+    get_season_leaders as _get_season_leaders,
+)
+from sports_skills.football._connector import (
+    get_season_schedule as _get_season_schedule,
+)
+from sports_skills.football._connector import (
+    get_season_standings as _get_season_standings,
+)
+from sports_skills.football._connector import (
+    get_season_teams as _get_season_teams,
+)
+from sports_skills.football._connector import (
+    get_season_transfers as _get_season_transfers,
+)
+from sports_skills.football._connector import (
+    get_team_profile as _get_team_profile,
+)
+from sports_skills.football._connector import (
+    get_team_schedule as _get_team_schedule,
+)
+from sports_skills.football._connector import (
+    search_team as _search_team,
 )
 
 

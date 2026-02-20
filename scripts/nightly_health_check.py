@@ -14,10 +14,8 @@ Exit codes:
 
 import gzip
 import json
-import os
 import sys
 import time
-import traceback
 import urllib.error
 import urllib.parse
 import urllib.request

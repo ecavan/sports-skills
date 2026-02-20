@@ -7,9 +7,15 @@ No API keys required. Zero config.
 from sports_skills._response import wrap
 from sports_skills.golf._connector import (
     get_leaderboard as _get_leaderboard,
-    get_schedule as _get_schedule,
-    get_player_info as _get_player_info,
+)
+from sports_skills.golf._connector import (
     get_news as _get_news,
+)
+from sports_skills.golf._connector import (
+    get_player_info as _get_player_info,
+)
+from sports_skills.golf._connector import (
+    get_schedule as _get_schedule,
 )
 
 

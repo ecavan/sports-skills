@@ -6,12 +6,11 @@ Uses stdlib only (urllib, json, threading).
 """
 
 import json
-import time
 import threading
-import urllib.request
+import time
 import urllib.error
 import urllib.parse
-
+import urllib.request
 
 # ============================================================
 # Configuration

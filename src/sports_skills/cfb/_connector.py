@@ -7,10 +7,10 @@ rankings (AP/Coaches polls), and news for NCAA Division I FBS football.
 import logging
 
 from sports_skills._espn_base import (
-    espn_request,
-    espn_web_request,
-    espn_summary,
     ESPN_STATUS_MAP,
+    espn_request,
+    espn_summary,
+    espn_web_request,
     normalize_odds,
 )
 

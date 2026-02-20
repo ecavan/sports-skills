@@ -7,11 +7,11 @@ ESPN API request functions. Used by nfl, nba, nhl, mlb, wnba modules.
 import gzip
 import json
 import logging
-import time
 import threading
-import urllib.request
+import time
 import urllib.error
 import urllib.parse
+import urllib.request
 
 logger = logging.getLogger("sports_skills._espn_base")
 

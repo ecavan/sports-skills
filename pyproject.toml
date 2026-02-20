@@ -40,8 +40,37 @@ cfb = []
 cbb = []
 golf = []
 all = ["fastf1>=3.0", "pandas>=2.0", "feedparser>=6.0", "nfl-data-py>=0.3"]
+dev = ["ruff>=0.9", "pytest>=8.0", "fastf1>=3.0", "pandas>=2.0"]
+
 [project.scripts]
 sports-skills = "sports_skills.cli:main"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",     # line too long — handled by formatter
+    "E741",     # ambiguous variable name — false positives on comprehension vars
+    "SIM102",   # nested if → combined if — often less readable
+    "SIM103",   # return condition directly — readability preference
+    "SIM105",   # contextlib.suppress — try/except/pass is clearer
+    "SIM108",   # ternary operator — readability preference
+    "UP007",    # X | Y union syntax — already used, but don't force it
+    "B007",     # unused loop variable — we use _ convention already
+    "B023",     # function doesn't bind loop var — false positives with closures
+    "B905",     # zip() without strict= — ESPN data lengths aren't guaranteed
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["sports_skills"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sports_skills"]
