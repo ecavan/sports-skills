@@ -1,6 +1,6 @@
 """sports-skills: Lightweight Python SDK for sports data."""
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 
 from sports_skills import football, polymarket, kalshi, news, nfl, nba, wnba, nhl, mlb, tennis, cfb, cbb, golf
 
