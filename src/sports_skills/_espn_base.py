@@ -301,6 +301,104 @@ def espn_summary(sport_path, event_id, max_retries=_MAX_RETRIES):
 # Athlete $ref resolver (shared across NHL, MLB, WNBA, NBA)
 # ============================================================
 
+def normalize_odds(odds_list):
+    """Normalize ESPN odds data from a competition into a structured format.
+
+    ESPN scoreboard endpoints return DraftKings odds with moneyline, spread,
+    and total (over/under) including opening and closing lines. This function
+    extracts all available data instead of just the summary string.
+
+    Args:
+        odds_list: The ``comp.get("odds", [])`` array from an ESPN competition.
+
+    Returns:
+        A dict with structured odds if data is present, or ``None`` if the
+        odds list is empty or contains no usable data.
+    """
+    if not odds_list:
+        return None
+
+    o = odds_list[0]  # ESPN provides one provider (DraftKings)
+
+    ml = o.get("moneyline", {})
+    ps = o.get("pointSpread", {})
+    tot = o.get("total", {})
+    home_odds = o.get("homeTeamOdds", {})
+    away_odds = o.get("awayTeamOdds", {})
+
+    # Determine favorite
+    favorite = None
+    if home_odds.get("favorite"):
+        favorite = "home"
+    elif away_odds.get("favorite"):
+        favorite = "away"
+
+    result = {
+        "provider": o.get("provider", {}).get("name", ""),
+        "details": o.get("details", ""),
+        "spread": o.get("spread", ""),
+        "over_under": o.get("overUnder", ""),
+        "favorite": favorite,
+    }
+
+    # Moneyline (closing lines)
+    if ml:
+        result["moneyline"] = {
+            "home": ml.get("home", {}).get("close", {}).get("odds", ""),
+            "away": ml.get("away", {}).get("close", {}).get("odds", ""),
+        }
+
+    # Spread with juice (closing lines)
+    if ps:
+        result["spread_line"] = {
+            "home": {
+                "line": ps.get("home", {}).get("close", {}).get("line", ""),
+                "odds": ps.get("home", {}).get("close", {}).get("odds", ""),
+            },
+            "away": {
+                "line": ps.get("away", {}).get("close", {}).get("line", ""),
+                "odds": ps.get("away", {}).get("close", {}).get("odds", ""),
+            },
+        }
+
+    # Total (over/under with juice, closing lines)
+    if tot:
+        result["total"] = {
+            "over": {
+                "line": tot.get("over", {}).get("close", {}).get("line", ""),
+                "odds": tot.get("over", {}).get("close", {}).get("odds", ""),
+            },
+            "under": {
+                "line": tot.get("under", {}).get("close", {}).get("line", ""),
+                "odds": tot.get("under", {}).get("close", {}).get("odds", ""),
+            },
+        }
+
+    # Opening lines (line movement)
+    open_ml_home = ml.get("home", {}).get("open", {}).get("odds", "")
+    open_ml_away = ml.get("away", {}).get("open", {}).get("odds", "")
+    open_spread_home = ps.get("home", {}).get("open", {}).get("line", "")
+    open_spread_away = ps.get("away", {}).get("open", {}).get("line", "")
+    open_total_over = tot.get("over", {}).get("open", {}).get("line", "")
+
+    if any([open_ml_home, open_ml_away, open_spread_home, open_total_over]):
+        result["open"] = {}
+        if open_ml_home or open_ml_away:
+            result["open"]["moneyline"] = {
+                "home": open_ml_home,
+                "away": open_ml_away,
+            }
+        if open_spread_home or open_spread_away:
+            result["open"]["spread"] = {
+                "home": open_spread_home,
+                "away": open_spread_away,
+            }
+        if open_total_over:
+            result["open"]["total"] = open_total_over
+
+    return result
+
+
 def _resolve_athlete_ref(ref_url: str) -> str:
     """Follow an ESPN athlete $ref URL and return the athlete's displayName.
 
