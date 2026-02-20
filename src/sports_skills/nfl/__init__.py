@@ -14,6 +14,9 @@ from sports_skills.nfl._connector import (
     get_news as _get_news,
 )
 from sports_skills.nfl._connector import (
+    get_play_by_play as _get_play_by_play,
+)
+from sports_skills.nfl._connector import (
     get_schedule as _get_schedule,
 )
 from sports_skills.nfl._connector import (
@@ -30,6 +33,9 @@ from sports_skills.nfl._connector import (
 )
 from sports_skills.nfl._connector import (
     get_teams as _get_teams,
+)
+from sports_skills.nfl._connector import (
+    get_win_probability as _get_win_probability,
 )
 
 
@@ -116,3 +122,21 @@ def get_schedule(*, season: int | None = None, week: int | None = None) -> dict:
         week: NFL week number. Defaults to current week.
     """
     return wrap(_get_schedule(_params(season=season, week=week)))
+
+
+def get_play_by_play(*, event_id: str) -> dict:
+    """Get drive-by-drive play-by-play data for an NFL game.
+
+    Args:
+        event_id: ESPN event ID.
+    """
+    return wrap(_get_play_by_play(_params(event_id=event_id)))
+
+
+def get_win_probability(*, event_id: str) -> dict:
+    """Get win probability timeline for an NFL game.
+
+    Args:
+        event_id: ESPN event ID.
+    """
+    return wrap(_get_win_probability(_params(event_id=event_id)))

@@ -618,3 +618,106 @@ def get_schedule(request_data):
         },
         "count": len(events),
     }
+
+
+# ============================================================
+# Play-by-Play & Win Probability
+# ============================================================
+
+
+def _normalize_drives(summary_data):
+    """Normalize NFL drive-by-play data from ESPN summary."""
+    drives_raw = summary_data.get("drives", {})
+    previous = drives_raw.get("previous", [])
+
+    drives = []
+    for d in previous:
+        plays = []
+        for p in d.get("plays", []):
+            play_type = p.get("type", {})
+            plays.append({
+                "id": str(p.get("id", "")),
+                "text": p.get("text", ""),
+                "type": play_type.get("text", ""),
+                "period": p.get("period", {}).get("number", ""),
+                "clock": p.get("clock", {}).get("displayValue", ""),
+                "home_score": p.get("homeScore", ""),
+                "away_score": p.get("awayScore", ""),
+                "scoring_play": p.get("scoringPlay", False),
+                "yards": p.get("statYardage", 0),
+                "is_turnover": p.get("isTurnover", False),
+            })
+        team = d.get("team", {})
+        drives.append({
+            "id": str(d.get("id", "")),
+            "description": d.get("description", ""),
+            "team": {
+                "id": str(team.get("id", "")),
+                "name": team.get("displayName", team.get("name", "")),
+                "abbreviation": team.get("abbreviation", ""),
+            },
+            "result": d.get("displayResult", d.get("result", "")),
+            "is_score": d.get("isScore", False),
+            "yards": d.get("yards", 0),
+            "plays_count": d.get("offensivePlays", len(plays)),
+            "time_elapsed": d.get("timeElapsed", {}).get("displayValue", ""),
+            "start": {
+                "period": d.get("start", {}).get("period", {}).get("number", ""),
+                "clock": d.get("start", {}).get("clock", {}).get("displayValue", ""),
+                "yard_line": d.get("start", {}).get("yardLine", ""),
+                "text": d.get("start", {}).get("text", ""),
+            },
+            "end": {
+                "period": d.get("end", {}).get("period", {}).get("number", ""),
+                "clock": d.get("end", {}).get("clock", {}).get("displayValue", ""),
+                "yard_line": d.get("end", {}).get("yardLine", ""),
+            },
+            "plays": plays,
+        })
+
+    return {"drives": drives, "count": len(drives)}
+
+
+def _normalize_win_probability(summary_data):
+    """Normalize win probability timeline from ESPN summary."""
+    wp_raw = summary_data.get("winprobability", [])
+    if not wp_raw:
+        return {"error": True, "message": "No win probability data available for this game"}
+
+    timeline = []
+    for entry in wp_raw:
+        timeline.append({
+            "play_id": str(entry.get("playId", "")),
+            "home_win_pct": round(entry.get("homeWinPercentage", 0) * 100, 1),
+            "tie_pct": round(entry.get("tiePercentage", 0) * 100, 1),
+        })
+
+    return {"timeline": timeline, "count": len(timeline)}
+
+
+def get_play_by_play(request_data):
+    """Get drive-by-drive play-by-play data for an NFL game."""
+    params = request_data.get("params", {})
+    event_id = params.get("event_id")
+    if not event_id:
+        return {"error": True, "message": "event_id is required"}
+
+    data = espn_summary(SPORT_PATH, event_id)
+    if not data:
+        return {"error": True, "message": f"No data found for event {event_id}"}
+
+    return _normalize_drives(data)
+
+
+def get_win_probability(request_data):
+    """Get win probability timeline for an NFL game."""
+    params = request_data.get("params", {})
+    event_id = params.get("event_id")
+    if not event_id:
+        return {"error": True, "message": "event_id is required"}
+
+    data = espn_summary(SPORT_PATH, event_id)
+    if not data:
+        return {"error": True, "message": f"No data found for event {event_id}"}
+
+    return _normalize_win_probability(data)

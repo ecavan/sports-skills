@@ -294,3 +294,378 @@ class TestParseValue:
         from sports_skills.cli import _parse_value
 
         assert _parse_value("team_id", "BOS") == "BOS"
+
+
+# ── Play-by-Play Normalizers ─────────────────────────────────
+
+
+class TestNormalizeDrives:
+    """Tests for NFL/CFB drive-based play-by-play normalizer."""
+
+    def test_empty_drives(self):
+        from sports_skills.nfl._connector import _normalize_drives
+
+        result = _normalize_drives({"drives": {"previous": []}})
+        assert result["drives"] == []
+        assert result["count"] == 0
+
+    def test_missing_drives_key(self):
+        from sports_skills.nfl._connector import _normalize_drives
+
+        result = _normalize_drives({})
+        assert result["drives"] == []
+        assert result["count"] == 0
+
+    def test_single_drive_with_plays(self):
+        from sports_skills.nfl._connector import _normalize_drives
+
+        data = {
+            "drives": {
+                "previous": [
+                    {
+                        "id": "1",
+                        "description": "3 plays, 75 yards, 1:30",
+                        "team": {"id": "1", "displayName": "Test Team", "abbreviation": "TT"},
+                        "displayResult": "Touchdown",
+                        "isScore": True,
+                        "yards": 75,
+                        "offensivePlays": 3,
+                        "timeElapsed": {"displayValue": "1:30"},
+                        "start": {
+                            "period": {"number": 1},
+                            "clock": {"displayValue": "15:00"},
+                            "yardLine": 25,
+                            "text": "TT 25",
+                        },
+                        "end": {
+                            "period": {"number": 1},
+                            "clock": {"displayValue": "13:30"},
+                            "yardLine": 0,
+                        },
+                        "plays": [
+                            {
+                                "id": "101",
+                                "text": "Rush for 10 yards",
+                                "type": {"text": "Rush"},
+                                "period": {"number": 1},
+                                "clock": {"displayValue": "14:50"},
+                                "homeScore": 0,
+                                "awayScore": 0,
+                                "scoringPlay": False,
+                                "statYardage": 10,
+                                "isTurnover": False,
+                            },
+                            {
+                                "id": "102",
+                                "text": "Pass for 65 yards, TOUCHDOWN",
+                                "type": {"text": "Pass Reception"},
+                                "period": {"number": 1},
+                                "clock": {"displayValue": "13:30"},
+                                "homeScore": 7,
+                                "awayScore": 0,
+                                "scoringPlay": True,
+                                "statYardage": 65,
+                                "isTurnover": False,
+                            },
+                        ],
+                    }
+                ]
+            }
+        }
+        result = _normalize_drives(data)
+        assert result["count"] == 1
+
+        drive = result["drives"][0]
+        assert drive["result"] == "Touchdown"
+        assert drive["is_score"] is True
+        assert drive["yards"] == 75
+        assert drive["team"]["abbreviation"] == "TT"
+        assert drive["start"]["text"] == "TT 25"
+        assert len(drive["plays"]) == 2
+        assert drive["plays"][1]["scoring_play"] is True
+        assert drive["plays"][0]["yards"] == 10
+
+
+class TestNormalizePlays:
+    """Tests for NBA/NHL/CBB flat play-by-play normalizer."""
+
+    def test_empty_plays(self):
+        from sports_skills.nba._connector import _normalize_plays
+
+        result = _normalize_plays({"plays": []})
+        assert result.get("error") is True
+
+    def test_missing_plays_key(self):
+        from sports_skills.nba._connector import _normalize_plays
+
+        result = _normalize_plays({})
+        assert result.get("error") is True
+
+    def test_basic_plays(self):
+        from sports_skills.nba._connector import _normalize_plays
+
+        data = {
+            "plays": [
+                {
+                    "id": "1",
+                    "text": "Jumpball: Player A vs Player B",
+                    "type": {"text": "Jumpball"},
+                    "period": {"number": 1},
+                    "clock": {"displayValue": "12:00"},
+                    "homeScore": 0,
+                    "awayScore": 0,
+                    "scoringPlay": False,
+                    "scoreValue": 0,
+                    "team": {"id": "5"},
+                    "shootingPlay": False,
+                },
+                {
+                    "id": "2",
+                    "text": "Player C makes 3-pointer",
+                    "type": {"text": "Three Point Jumper"},
+                    "period": {"number": 1},
+                    "clock": {"displayValue": "11:35"},
+                    "homeScore": 3,
+                    "awayScore": 0,
+                    "scoringPlay": True,
+                    "scoreValue": 3,
+                    "team": {"id": "5"},
+                    "shootingPlay": True,
+                    "coordinate": {"x": 25, "y": 40},
+                },
+            ]
+        }
+        result = _normalize_plays(data)
+        assert result["count"] == 2
+        assert result["plays"][0]["scoring_play"] is False
+        assert result["plays"][1]["scoring_play"] is True
+        assert result["plays"][1]["score_value"] == 3
+        assert result["plays"][1]["shooting_play"] is True
+        assert result["plays"][1]["coordinate"] == {"x": 25, "y": 40}
+
+    def test_play_without_coordinate(self):
+        from sports_skills.nba._connector import _normalize_plays
+
+        data = {
+            "plays": [
+                {
+                    "id": "1",
+                    "text": "Timeout",
+                    "type": {"text": "Timeout"},
+                    "period": {"number": 1},
+                    "clock": {"displayValue": "5:00"},
+                    "homeScore": 10,
+                    "awayScore": 8,
+                    "scoringPlay": False,
+                    "scoreValue": 0,
+                    "team": {},
+                    "shootingPlay": False,
+                },
+            ]
+        }
+        result = _normalize_plays(data)
+        assert "coordinate" not in result["plays"][0]
+
+
+class TestNormalizeMLBPlays:
+    """Tests for MLB play-by-play normalizer with baseball-specific fields."""
+
+    def test_mlb_play_has_outs_and_inning(self):
+        from sports_skills.mlb._connector import _normalize_plays
+
+        data = {
+            "plays": [
+                {
+                    "id": "1",
+                    "text": "Player grounds out to shortstop",
+                    "type": {"text": "At Bat"},
+                    "period": {"number": 3, "type": "Top"},
+                    "homeScore": 1,
+                    "awayScore": 2,
+                    "scoringPlay": False,
+                    "scoreValue": 0,
+                    "outs": 2,
+                    "atBatId": "abc123",
+                    "team": {"id": "9"},
+                },
+            ]
+        }
+        result = _normalize_plays(data)
+        assert result["count"] == 1
+        play = result["plays"][0]
+        assert play["inning"] == 3
+        assert play["inning_half"] == "Top"
+        assert play["outs"] == 2
+        assert play["at_bat_id"] == "abc123"
+
+
+class TestNormalizeWinProbability:
+    """Tests for win probability normalizer."""
+
+    def test_empty_returns_error(self):
+        from sports_skills.nfl._connector import _normalize_win_probability
+
+        result = _normalize_win_probability({})
+        assert result.get("error") is True
+
+    def test_percentages_converted(self):
+        from sports_skills.nfl._connector import _normalize_win_probability
+
+        data = {
+            "winprobability": [
+                {"playId": "100", "homeWinPercentage": 0.4227, "tiePercentage": 0.0},
+                {"playId": "101", "homeWinPercentage": 0.65, "tiePercentage": 0.0},
+            ]
+        }
+        result = _normalize_win_probability(data)
+        assert result["count"] == 2
+        assert result["timeline"][0]["home_win_pct"] == 42.3
+        assert result["timeline"][0]["play_id"] == "100"
+        assert result["timeline"][1]["home_win_pct"] == 65.0
+
+
+# ── Golf: _normalize_player_overview ─────────────────────────
+
+
+class TestNormalizePlayerOverview:
+    """Tests for golf player overview normalizer."""
+
+    def test_empty_data(self):
+        from sports_skills.golf._connector import _normalize_player_overview
+
+        result = _normalize_player_overview({})
+        assert result["season_stats"]["splits"] == []
+        assert result["rankings"] == []
+        assert result["recent_tournaments"] == []
+
+    def test_season_stats_parsed(self):
+        from sports_skills.golf._connector import _normalize_player_overview
+
+        data = {
+            "statistics": {
+                "displayName": "2026 Season Overview",
+                "labels": ["EVENTS", "CUTS", "TOP10", "WINS", "AVG", "EARNINGS"],
+                "names": ["Tournaments Played", "Cuts Made", "Top Ten", "Wins", "Scoring Average", "Earnings"],
+                "splits": [
+                    {
+                        "displayName": "PGA TOUR",
+                        "stats": ["3", "4", "0", "0", "68.1", "$475,327"],
+                    }
+                ],
+            }
+        }
+        result = _normalize_player_overview(data)
+        assert result["season_stats"]["display_name"] == "2026 Season Overview"
+        assert len(result["season_stats"]["splits"]) == 1
+        split = result["season_stats"]["splits"][0]
+        assert split["name"] == "PGA TOUR"
+        assert split["Tournaments Played"] == "3"
+        assert split["Earnings"] == "$475,327"
+
+    def test_rankings_parsed(self):
+        from sports_skills.golf._connector import _normalize_player_overview
+
+        data = {
+            "seasonRankings": {
+                "categories": [
+                    {
+                        "displayName": "Earnings",
+                        "abbreviation": "amount",
+                        "displayValue": "$475,327",
+                        "rank": 36,
+                        "rankDisplayValue": "36th",
+                    },
+                    {
+                        "displayName": "Driving Distance",
+                        "name": "yardsPerDrive",
+                        "abbreviation": "yardsPerDrive",
+                        "value": 312.7,
+                        "displayValue": "312.7",
+                        "rank": 41,
+                    },
+                ]
+            }
+        }
+        result = _normalize_player_overview(data)
+        assert len(result["rankings"]) == 2
+        assert result["rankings"][0]["name"] == "Earnings"
+        assert result["rankings"][0]["rank"] == 36
+        assert result["rankings"][1]["abbreviation"] == "yardsPerDrive"
+
+
+# ── Golf: _normalize_scorecard ───────────────────────────────
+
+
+class TestNormalizeScorecard:
+    """Tests for golf scorecard normalizer."""
+
+    def test_empty_linescores(self):
+        from sports_skills.golf._connector import _normalize_scorecard
+
+        result = _normalize_scorecard({"athlete": {}, "linescores": []})
+        assert result["rounds"] == []
+
+    def test_hole_by_hole_parsed(self):
+        from sports_skills.golf._connector import _normalize_scorecard
+
+        competitor = {
+            "id": "4686",
+            "athlete": {"displayName": "Scottie Scheffler", "flag": {"alt": "USA"}},
+            "score": "-6",
+            "linescores": [
+                {
+                    "period": 1,
+                    "value": 65.0,
+                    "displayValue": "-6",
+                    "linescores": [
+                        {"period": 1, "value": 3.0, "scoreType": {"displayValue": "-2"}},
+                        {"period": 2, "value": 4.0, "scoreType": {"displayValue": "E"}},
+                        {"period": 3, "value": 5.0, "scoreType": {"displayValue": "+1"}},
+                    ],
+                }
+            ],
+        }
+        result = _normalize_scorecard(competitor, "The Genesis Invitational")
+        assert result["player"]["name"] == "Scottie Scheffler"
+        assert result["player"]["country"] == "USA"
+        assert result["tournament"] == "The Genesis Invitational"
+        assert result["overall_score"] == "-6"
+        assert len(result["rounds"]) == 1
+        r1 = result["rounds"][0]
+        assert r1["round"] == 1
+        assert r1["total_strokes"] == 65
+        assert r1["total_score"] == "-6"
+        assert len(r1["holes"]) == 3
+        assert r1["holes"][0] == {"hole": 1, "strokes": 3, "score": "-2"}
+        assert r1["holes"][1] == {"hole": 2, "strokes": 4, "score": "E"}
+        assert r1["holes"][2] == {"hole": 3, "strokes": 5, "score": "+1"}
+
+    def test_skips_invalid_periods(self):
+        from sports_skills.golf._connector import _normalize_scorecard
+
+        competitor = {
+            "athlete": {},
+            "linescores": [
+                {"period": 0, "value": 0, "linescores": []},
+                {"period": 5, "value": 0, "linescores": []},
+            ],
+        }
+        result = _normalize_scorecard(competitor)
+        assert result["rounds"] == []
+
+
+# ── Football: get_player_season_stats normalizer ─────────────
+
+
+class TestFootballPlayerSeasonStats:
+    """Tests for football player season stats overview parsing."""
+
+    def test_empty_gamelog(self):
+        """Simulate overview response with no game log stats."""
+        from sports_skills.football._connector import get_player_season_stats
+
+        # Patch would be needed for real HTTP, but we test the shape check
+        # by verifying the function signature exists and handles empty params
+        result = get_player_season_stats({})
+        assert result.get("error") is True
+        assert "player_id" in result.get("message", "")

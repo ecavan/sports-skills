@@ -613,3 +613,84 @@ def get_schedule(request_data):
         },
         "count": len(events),
     }
+
+
+# ============================================================
+# Play-by-Play & Win Probability
+# ============================================================
+
+
+def _normalize_plays(summary_data):
+    """Normalize play-by-play data from ESPN summary."""
+    plays_raw = summary_data.get("plays", [])
+    if not plays_raw:
+        return {"error": True, "message": "No play-by-play data available"}
+
+    plays = []
+    for p in plays_raw:
+        play_type = p.get("type", {})
+        team = p.get("team", {})
+        play = {
+            "id": str(p.get("id", "")),
+            "text": p.get("text", ""),
+            "type": play_type.get("text", ""),
+            "period": p.get("period", {}).get("number", ""),
+            "clock": p.get("clock", {}).get("displayValue", ""),
+            "home_score": p.get("homeScore", ""),
+            "away_score": p.get("awayScore", ""),
+            "scoring_play": p.get("scoringPlay", False),
+            "score_value": p.get("scoreValue", 0),
+            "team_id": str(team.get("id", "")) if team else "",
+            "shooting_play": p.get("shootingPlay", False),
+        }
+        coord = p.get("coordinate", {})
+        if coord and coord.get("x") is not None:
+            play["coordinate"] = {"x": coord.get("x"), "y": coord.get("y")}
+        plays.append(play)
+
+    return {"plays": plays, "count": len(plays)}
+
+
+def _normalize_win_probability(summary_data):
+    """Normalize win probability timeline from ESPN summary."""
+    wp_raw = summary_data.get("winprobability", [])
+    if not wp_raw:
+        return {"error": True, "message": "No win probability data available for this game"}
+
+    timeline = []
+    for entry in wp_raw:
+        timeline.append({
+            "play_id": str(entry.get("playId", "")),
+            "home_win_pct": round(entry.get("homeWinPercentage", 0) * 100, 1),
+            "tie_pct": round(entry.get("tiePercentage", 0) * 100, 1),
+        })
+
+    return {"timeline": timeline, "count": len(timeline)}
+
+
+def get_play_by_play(request_data):
+    """Get full play-by-play log for a college basketball game."""
+    params = request_data.get("params", {})
+    event_id = params.get("event_id")
+    if not event_id:
+        return {"error": True, "message": "event_id is required"}
+
+    data = espn_summary(SPORT_PATH, event_id)
+    if not data:
+        return {"error": True, "message": f"No data found for event {event_id}"}
+
+    return _normalize_plays(data)
+
+
+def get_win_probability(request_data):
+    """Get win probability timeline for a college basketball game."""
+    params = request_data.get("params", {})
+    event_id = params.get("event_id")
+    if not event_id:
+        return {"error": True, "message": "event_id is required"}
+
+    data = espn_summary(SPORT_PATH, event_id)
+    if not data:
+        return {"error": True, "message": f"No data found for event {event_id}"}
+
+    return _normalize_win_probability(data)
