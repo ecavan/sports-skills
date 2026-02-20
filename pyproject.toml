@@ -7,6 +7,7 @@ name = "sports-skills"
 version = "0.5.1"
 description = "Lightweight Python SDK for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, tennis, prediction markets, and news"
 description = "Lightweight Python SDK for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, CFB, CBB, prediction markets, and news"
+description = "Lightweight Python SDK for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, golf, prediction markets, and news"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -15,6 +16,7 @@ authors = [
 ]
 keywords = ["sports", "football", "f1", "nfl", "nba", "wnba", "nhl", "mlb", "tennis", "atp", "wta", "polymarket", "kalshi", "prediction-markets", "news"]
 keywords = ["sports", "football", "f1", "nfl", "nba", "wnba", "nhl", "mlb", "cfb", "cbb", "college-football", "college-basketball", "ncaa", "polymarket", "kalshi", "prediction-markets", "news"]
+keywords = ["sports", "football", "f1", "nfl", "nba", "wnba", "nhl", "mlb", "golf", "pga", "lpga", "polymarket", "kalshi", "prediction-markets", "news"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -40,6 +42,7 @@ mlb = []
 tennis = []
 cfb = []
 cbb = []
+golf = []
 all = ["fastf1>=3.0", "pandas>=2.0", "feedparser>=6.0", "nfl-data-py>=0.3"]
 [project.scripts]
 sports-skills = "sports_skills.cli:main"

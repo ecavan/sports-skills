@@ -11,6 +11,7 @@ Examples:
     sports-skills f1 get_race_schedule --year=2025
     sports-skills nfl get_scoreboard
     sports-skills nfl get_standings --season=2025
+    sports-skills golf get_leaderboard --tour=pga
 """
 
 import argparse
@@ -265,6 +266,10 @@ _REGISTRY = {
         "get_rankings": {"optional": ["season", "week"]},
         "get_news": {"optional": ["team_id"]},
         "get_schedule": {"optional": ["date", "season", "group"]},
+    "golf": {
+        "get_leaderboard": {"required": ["tour"]},
+        "get_schedule": {"required": ["tour"], "optional": ["year"]},
+        "get_player_info": {"required": ["player_id"], "optional": ["tour"]},
     },
 }
 
@@ -366,6 +371,9 @@ def _load_module(name):
     elif name == "cbb":
         from sports_skills import cbb
         return cbb
+    elif name == "golf":
+        from sports_skills import golf
+        return golf
     else:
         _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
@@ -392,6 +400,8 @@ def main():
         "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, tennis, polymarket, kalshi, news"
         description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, CFB, CBB, prediction markets, and news.",
         "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, cfb, cbb, polymarket, kalshi, news"
+        description="Lightweight CLI for sports data — football, F1, NFL, NBA, WNBA, NHL, MLB, golf, prediction markets, and news.",
+        "module", nargs="?", help="Module name: football, f1, nfl, nba, wnba, nhl, mlb, golf, polymarket, kalshi, news"
     )
     parser.add_argument(
         "command", nargs="?", help="Command name (e.g., get_season_standings)"

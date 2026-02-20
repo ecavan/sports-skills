@@ -29,6 +29,7 @@ A collection of agent skills that wrap **publicly available** sports data source
 - **Tennis**: ESPN — ATP and WTA tournament scores, rankings, calendars, player profiles, news
 - **College Football (CFB)**: ESPN — scores, standings, rosters, schedules, AP/Coaches rankings, news
 - **College Basketball (CBB)**: ESPN — scores, standings, rosters, schedules, AP/Coaches rankings, news
+- **Golf**: ESPN — PGA Tour, LPGA, DP World Tour leaderboards, schedules, player profiles, news
 - **Formula 1**: FastF1 open-source library — sessions, lap data, race results
 - **Prediction Markets**: Kalshi and Polymarket public APIs — markets, prices, order books
 - **Sports News**: RSS feeds and Google News — any public feed
@@ -54,6 +55,7 @@ Each skill is a SKILL.md file that any compatible AI agent can load and use imme
 | `tennis-data` | Tennis (ATP + WTA) | 5 | ESPN |
 | `cfb-data` | College Football (CFB) | 9 | ESPN |
 | `cbb-data` | College Basketball (CBB) | 9 | ESPN |
+| `golf-data` | Golf (PGA/LPGA/DP World) | 4 | ESPN |
 | `fastf1` | Formula 1 | 6 | FastF1 (free library) |
 | `sports-news` | Multi-sport | 2 | Any RSS feed, Google News |
 
@@ -119,6 +121,8 @@ Once installed, your agent can call commands directly:
 > "Show me the AP Top 25 college football rankings"
 **Get college basketball scores:**
 > "What are today's college basketball scores?"
+**Get PGA leaderboard:**
+> "What's the PGA Tour leaderboard right now?"
 
 **Check prediction market odds:**
 > "What are the Polymarket odds for the Champions League final?"
@@ -271,6 +275,12 @@ College Basketball (CBB) data via ESPN public endpoints. 360+ D1 teams with AP/C
 | `get_rankings` | AP Top 25, Coaches Poll |
 | `get_news` | College basketball news articles |
 | `get_schedule` | Schedule by date and conference |
+### golf-data
+PGA Tour, LPGA, and DP World Tour golf data via ESPN public endpoints. Tournament leaderboards, season schedules, golfer profiles, and news.
+| `get_leaderboard` | Current tournament leaderboard with all golfer scores |
+| `get_schedule` | Full season tournament schedule |
+| `get_player_info` | Individual golfer profile |
+| `get_news` | Golf news articles |
 
 ### fastf1
 
@@ -348,6 +358,7 @@ sports-skills.sh
 │   ├── tennis-data/SKILL.md          # ATP + WTA tennis
 │   ├── cfb-data/SKILL.md             # College football scores, rankings
 │   ├── cbb-data/SKILL.md             # College basketball scores, rankings
+│   ├── golf-data/SKILL.md            # Golf leaderboards, schedules, profiles
 │   ├── fastf1/SKILL.md               # F1 sessions, laps, results
 │   ├── kalshi/SKILL.md               # Prediction markets (CFTC)
 │   ├── polymarket/SKILL.md           # Prediction markets (crypto)
@@ -466,6 +477,7 @@ This project is built on top of great open-source work and public APIs:
 
 - **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues. Also powers the NFL, NBA, WNBA, NHL, MLB, and Tennis skills.
 - **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues. Also powers the NFL, NBA, WNBA, NHL, MLB, CFB, and CBB skills.
+- **[ESPN](https://www.espn.com)** — for keeping their web endpoints accessible. The backbone of football scores, standings, schedules, lineups, match stats, and timelines across all 13 leagues. Also powers the NFL, NBA, WNBA, NHL, MLB, and Golf skills.
 - **[Fantasy Premier League](https://fantasy.premierleague.com)** — for their community API powering injury news, player stats, ownership data, and ICT index for Premier League players.
 - **[Transfermarkt](https://www.transfermarkt.com)** — for player market values, transfer history, and the richest player data in football.
 - **[Understat](https://understat.com)** — for xG data across the top 5 European leagues.
