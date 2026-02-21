@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-02-21
+
+### Added
+- **Cross-Sport ESPN Commands:** Added 34 new command functions across 7 US team sports (NFL, NBA, WNBA, NHL, MLB, CFB, CBB) via shared normalizers.
+  - New endpoints include `get_injuries`, `get_transactions`, `get_futures`, `get_depth_chart`, `get_team_stats`, and `get_player_stats`.
+- **Expanded Football Coverage:** Added 17 new leagues to the `football-data` skill, bringing the total to 30 competitions.
+  - New coverage includes Men's (Liga MX, Liga Argentina, Scottish Premiership, Belgian Pro League, Turkish Super Lig, J.League, A-League Men), Women's (NWSL, WSL, Liga F, Premiere Ligue, A-League Women, UEFA Women's Champions League, FIFA Women's World Cup), and European competitions (Europa League, Conference League, Copa Libertadores).
+
+### Changed
+- **Anthropic Level-3 Skill Architecture:** Major refactor to align with Anthropic's Level-3 architecture.
+  - Extracted large payloads (team IDs, season schemas) into a new `references/` directory for on-demand loading.
+  - Added deterministic bash/python param validators in the `scripts/` directory to prevent hallucinated API requests.
+  - Migrated `SKILL.md` files from command lists to workflow recipes to improve agent reasoning.
+
 ## [0.6.0] - 2026-02-20
 
 ### ⚠️ Breaking Changes
