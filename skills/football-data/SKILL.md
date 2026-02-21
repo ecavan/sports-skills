@@ -297,6 +297,13 @@ Returns `data.transfers[]`:
 }
 ```
 
+### get_player_season_stats
+Get player season stats via ESPN overview endpoint. Works for any league with ESPN athlete IDs.
+- `player_id` (str, required): ESPN athlete ID
+- `league_slug` (str, optional): League slug hint (e.g., "eng.1", "esp.1"). Defaults to auto-detect.
+
+Returns season stats (goals, assists, appearances, etc.) and game log when available.
+
 ### get_player_profile
 Get player profile. Works for any player if you have their Transfermarkt or FPL ID. At least one ID required.
 - `fpl_id` (str, optional): FPL player ID (PL players only)
@@ -402,6 +409,7 @@ This is especially important when the agent is responding through messaging plat
 - `get_missing_players`
 - `get_season_transfers`
 - `get_player_profile`
+- `get_player_season_stats`
 
 **Commands that DO NOT exist** (commonly hallucinated):
 - ~~`get_standings`~~ — the correct command is `get_season_standings` (requires `season_id`).

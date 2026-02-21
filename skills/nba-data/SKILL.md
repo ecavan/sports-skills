@@ -1,10 +1,10 @@
 ---
 name: nba-data
 description: |
-  NBA data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, statistical leaders, and news. Zero config, no API keys.
+  NBA data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, play-by-play, win probability, injuries, transactions, futures, depth charts, team/player stats, leaders, and news. Zero config, no API keys.
 
-  Use when: user asks about NBA scores, standings, team rosters, schedules, game stats, box scores, or NBA news.
-  Don't use when: user asks about WNBA (use wnba-data), basketball in other leagues, college basketball, or other sports. Don't use for live play-by-play — data updates post-play.
+  Use when: user asks about NBA scores, standings, team rosters, schedules, game stats, box scores, play-by-play, injuries, transactions, betting futures, depth charts, team/player statistics, or NBA news.
+  Don't use when: user asks about WNBA (use wnba-data), college basketball (use cbb-data), or other sports.
 license: MIT
 metadata:
   author: machina-sports
@@ -94,12 +94,64 @@ Get NBA news articles.
 
 Returns `articles[]` with headline, description, published date, and link.
 
+### get_play_by_play
+Get full play-by-play data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns play-by-play detail including period, clock, team, play description, and scoring plays.
+
+### get_win_probability
+Get win probability chart data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns timestamped home/away win probability percentages throughout the game.
+
 ### get_schedule
 Get NBA schedule for a specific date or season.
 - `date` (str, optional): Date in YYYY-MM-DD format
 - `season` (int, optional): Season year (used only if no date provided)
 
 Returns `events[]` for the specified date.
+
+### get_injuries
+Get current NBA injury reports across all teams. No parameters.
+
+Returns `teams[]` with per-team injury lists including player name, position, status (Out/Doubtful/Questionable/Day-To-Day), injury type, and detail.
+
+### get_transactions
+Get recent NBA transactions (trades, signings, waivers).
+- `limit` (int, optional): Max transactions to return. Defaults to 50.
+
+Returns `transactions[]` with date, team, and description.
+
+### get_futures
+Get NBA futures/odds markets (Championship winner, MVP, etc.).
+- `limit` (int, optional): Max entries per market. Defaults to 25.
+- `season_year` (int, optional): Season year. Defaults to current.
+
+Returns `futures[]` with market name and entries (team/player name + odds value).
+
+### get_depth_chart
+Get depth chart for a specific team.
+- `team_id` (str, required): ESPN team ID
+
+Returns `charts[]` with positional depth and player depth order.
+
+### get_team_stats
+Get full team statistical profile for a season.
+- `team_id` (str, required): ESPN team ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 1=preseason, 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
+
+### get_player_stats
+Get full player statistical profile for a season.
+- `player_id` (str, required): ESPN athlete ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 1=preseason, 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
 
 ## Team IDs (Common)
 
@@ -142,6 +194,27 @@ sports-skills nba get_team_roster --team_id=13
 **User: "Show me the full box score for last night's Celtics game"**
 1. Find the event_id from `get_scoreboard --date=YYYY-MM-DD`
 2. Call `get_game_summary --event_id=<id>` for full box score
+
+**User: "Who's injured on the Lakers?"**
+```bash
+sports-skills nba get_injuries
+```
+Then filter results for Los Angeles Lakers (team_id=13).
+
+**User: "What are the NBA championship odds?"**
+```bash
+sports-skills nba get_futures --limit=10
+```
+
+**User: "Show me LeBron's stats this season"**
+```bash
+sports-skills nba get_player_stats --player_id=1966
+```
+
+**User: "How do the Celtics rank in team stats?"**
+```bash
+sports-skills nba get_team_stats --team_id=2
+```
 
 ## Error Handling
 

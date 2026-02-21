@@ -1,10 +1,10 @@
 ---
 name: mlb-data
 description: |
-  MLB data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, statistical leaders, and news. Zero config, no API keys.
+  MLB data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, play-by-play, win probability, injuries, transactions, depth charts, team/player stats, leaders, and news. Zero config, no API keys.
 
-  Use when: user asks about MLB scores, standings, team rosters, schedules, game stats, box scores, or MLB news.
-  Don't use when: user asks about minor league baseball, college baseball, international baseball, or other sports. Don't use for live play-by-play — data updates post-play.
+  Use when: user asks about MLB scores, standings, team rosters, schedules, game stats, box scores, play-by-play, injuries, transactions, depth charts, team/player statistics, or MLB news.
+  Don't use when: user asks about minor league baseball, college baseball, international baseball, or other sports.
 license: MIT
 metadata:
   author: machina-sports
@@ -96,12 +96,57 @@ Get MLB news articles.
 
 Returns `articles[]` with headline, description, published date, and link.
 
+### get_play_by_play
+Get full play-by-play data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns play-by-play detail including inning, outs, batter, pitcher, play description, and scoring plays.
+
+### get_win_probability
+Get win probability chart data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns timestamped home/away win probability percentages throughout the game.
+
 ### get_schedule
 Get MLB schedule for a specific date or season.
 - `date` (str, optional): Date in YYYY-MM-DD format
 - `season` (int, optional): Season year (used only if no date provided)
 
 Returns `events[]` for the specified date.
+
+### get_injuries
+Get current MLB injury reports across all teams. No parameters.
+
+Returns `teams[]` with per-team injury lists including player name, position, status (10-Day IL/15-Day IL/60-Day IL/Day-To-Day), injury type, and detail.
+
+### get_transactions
+Get recent MLB transactions (trades, signings, DFA, IL moves).
+- `limit` (int, optional): Max transactions to return. Defaults to 50.
+
+Returns `transactions[]` with date, team, and description.
+
+### get_depth_chart
+Get depth chart for a specific team.
+- `team_id` (str, required): ESPN team ID
+
+Returns `charts[]` with positional depth (lineup, rotation, bullpen) and player depth order.
+
+### get_team_stats
+Get full team statistical profile for a season.
+- `team_id` (str, required): ESPN team ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 2=regular (default), 3=postseason.
+
+Returns `categories[]` (Batting, Pitching, Fielding) with detailed stats including value, rank, and per-game averages.
+
+### get_player_stats
+Get full player statistical profile for a season.
+- `player_id` (str, required): ESPN athlete ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
 
 ## Team IDs (Common)
 
@@ -146,6 +191,22 @@ sports-skills mlb get_team_roster --team_id=10
 **User: "Show me the full box score for last night's Dodgers game"**
 1. Find the event_id from `get_scoreboard --date=YYYY-MM-DD`
 2. Call `get_game_summary --event_id=<id>` for full box score
+
+**User: "Who's on the IL for the Yankees?"**
+```bash
+sports-skills mlb get_injuries
+```
+Then filter results for New York Yankees (team_id=10).
+
+**User: "Show me recent MLB trades"**
+```bash
+sports-skills mlb get_transactions --limit=20
+```
+
+**User: "Show me Shohei Ohtani's stats"**
+```bash
+sports-skills mlb get_player_stats --player_id=39832
+```
 
 ## Error Handling
 

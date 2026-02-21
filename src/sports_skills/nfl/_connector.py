@@ -12,12 +12,19 @@ from sports_skills._espn_base import (
     ESPN_STATUS_MAP,
     _cache_get,
     _cache_set,
+    _current_year,
     _http_fetch,
     _resolve_leaders,
+    espn_core_request,
     espn_request,
     espn_summary,
     espn_web_request,
+    normalize_core_stats,
+    normalize_depth_chart,
+    normalize_futures,
+    normalize_injuries,
     normalize_odds,
+    normalize_transactions,
 )
 
 logger = logging.getLogger("sports_skills.nfl")
@@ -721,3 +728,93 @@ def get_win_probability(request_data):
         return {"error": True, "message": f"No data found for event {event_id}"}
 
     return _normalize_win_probability(data)
+
+
+# ============================================================
+# Injuries, Transactions, Futures, Depth Charts, Stats
+# ============================================================
+
+
+def get_injuries(request_data=None):
+    """Get current NFL injury report."""
+    data = espn_request(SPORT_PATH, "injuries")
+    if data.get("error"):
+        return data
+    return normalize_injuries(data)
+
+
+def get_transactions(request_data=None):
+    """Get recent NFL transactions."""
+    params = (request_data or {}).get("params", {})
+    limit = params.get("limit", 50)
+    data = espn_request(SPORT_PATH, "transactions", {"limit": limit})
+    if data.get("error"):
+        return data
+    return normalize_transactions(data)
+
+
+def get_futures(request_data=None):
+    """Get NFL futures odds (e.g. Super Bowl winner, MVP)."""
+    params = (request_data or {}).get("params", {})
+    limit = params.get("limit", 10)
+    season_year = params.get("season_year") or _current_year()
+    data = espn_core_request(SPORT_PATH, f"seasons/{season_year}/futures")
+    if data.get("error"):
+        return data
+    result = normalize_futures(data, limit=limit)
+    result["season_year"] = season_year
+    return result
+
+
+def get_depth_chart(request_data):
+    """Get NFL depth chart for a team."""
+    params = request_data.get("params", {})
+    team_id = params.get("team_id")
+    if not team_id:
+        return {"error": True, "message": "team_id is required"}
+    data = espn_request(SPORT_PATH, f"teams/{team_id}/depthcharts")
+    if data.get("error"):
+        return data
+    return normalize_depth_chart(data)
+
+
+def get_team_stats(request_data):
+    """Get NFL team season statistics."""
+    params = request_data.get("params", {})
+    team_id = params.get("team_id")
+    if not team_id:
+        return {"error": True, "message": "team_id is required"}
+    season_year = params.get("season_year") or _current_year()
+    season_type = params.get("season_type", 2)
+    data = espn_core_request(
+        SPORT_PATH,
+        f"seasons/{season_year}/types/{season_type}/teams/{team_id}/statistics",
+    )
+    if data.get("error"):
+        return data
+    result = normalize_core_stats(data)
+    result["team_id"] = str(team_id)
+    result["season_year"] = season_year
+    result["season_type"] = season_type
+    return result
+
+
+def get_player_stats(request_data):
+    """Get NFL player season statistics."""
+    params = request_data.get("params", {})
+    player_id = params.get("player_id")
+    if not player_id:
+        return {"error": True, "message": "player_id is required"}
+    season_year = params.get("season_year") or _current_year()
+    season_type = params.get("season_type", 2)
+    data = espn_core_request(
+        SPORT_PATH,
+        f"seasons/{season_year}/types/{season_type}/athletes/{player_id}/statistics",
+    )
+    if data.get("error"):
+        return data
+    result = normalize_core_stats(data)
+    result["player_id"] = str(player_id)
+    result["season_year"] = season_year
+    result["season_type"] = season_type
+    return result

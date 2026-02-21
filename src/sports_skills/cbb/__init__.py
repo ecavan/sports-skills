@@ -5,6 +5,9 @@ Wraps ESPN public endpoints for NCAA Division I men's basketball. No API keys re
 
 from sports_skills._response import wrap
 from sports_skills.cbb._connector import (
+    get_futures as _get_futures,
+)
+from sports_skills.cbb._connector import (
     get_game_summary as _get_game_summary,
 )
 from sports_skills.cbb._connector import (
@@ -12,6 +15,9 @@ from sports_skills.cbb._connector import (
 )
 from sports_skills.cbb._connector import (
     get_play_by_play as _get_play_by_play,
+)
+from sports_skills.cbb._connector import (
+    get_player_stats as _get_player_stats,
 )
 from sports_skills.cbb._connector import (
     get_rankings as _get_rankings,
@@ -30,6 +36,9 @@ from sports_skills.cbb._connector import (
 )
 from sports_skills.cbb._connector import (
     get_team_schedule as _get_team_schedule,
+)
+from sports_skills.cbb._connector import (
+    get_team_stats as _get_team_stats,
 )
 from sports_skills.cbb._connector import (
     get_teams as _get_teams,
@@ -144,3 +153,49 @@ def get_win_probability(*, event_id: str) -> dict:
         event_id: ESPN event ID.
     """
     return wrap(_get_win_probability(_params(event_id=event_id)))
+
+
+def get_futures(*, limit: int | None = None, season_year: int | None = None) -> dict:
+    """Get college basketball futures odds (national championship, etc.).
+
+    Args:
+        limit: Max entries per futures market. Defaults to 10.
+        season_year: Season year. Defaults to current.
+    """
+    return wrap(_get_futures(_params(limit=limit, season_year=season_year)))
+
+
+def get_team_stats(
+    *, team_id: str, season_year: int | None = None, season_type: int | None = None
+) -> dict:
+    """Get college basketball team season statistics.
+
+    Args:
+        team_id: ESPN team ID.
+        season_year: Season year. Defaults to current.
+        season_type: 2 = regular season (default), 3 = postseason.
+    """
+    return wrap(
+        _get_team_stats(
+            _params(team_id=team_id, season_year=season_year, season_type=season_type)
+        )
+    )
+
+
+def get_player_stats(
+    *, player_id: str, season_year: int | None = None, season_type: int | None = None
+) -> dict:
+    """Get college basketball player season statistics.
+
+    Args:
+        player_id: ESPN athlete ID.
+        season_year: Season year. Defaults to current.
+        season_type: 2 = regular season (default), 3 = postseason.
+    """
+    return wrap(
+        _get_player_stats(
+            _params(
+                player_id=player_id, season_year=season_year, season_type=season_type
+            )
+        )
+    )
