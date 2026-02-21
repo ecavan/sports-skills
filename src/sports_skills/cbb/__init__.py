@@ -11,6 +11,9 @@ from sports_skills.cbb._connector import (
     get_news as _get_news,
 )
 from sports_skills.cbb._connector import (
+    get_play_by_play as _get_play_by_play,
+)
+from sports_skills.cbb._connector import (
     get_rankings as _get_rankings,
 )
 from sports_skills.cbb._connector import (
@@ -30,6 +33,9 @@ from sports_skills.cbb._connector import (
 )
 from sports_skills.cbb._connector import (
     get_teams as _get_teams,
+)
+from sports_skills.cbb._connector import (
+    get_win_probability as _get_win_probability,
 )
 
 
@@ -120,3 +126,21 @@ def get_schedule(*, date: str | None = None, season: int | None = None, group: i
         group: Conference group ID to filter by.
     """
     return wrap(_get_schedule(_params(date=date, season=season, group=group)))
+
+
+def get_play_by_play(*, event_id: str) -> dict:
+    """Get full play-by-play log for a college basketball game.
+
+    Args:
+        event_id: ESPN event ID.
+    """
+    return wrap(_get_play_by_play(_params(event_id=event_id)))
+
+
+def get_win_probability(*, event_id: str) -> dict:
+    """Get win probability timeline for a college basketball game.
+
+    Args:
+        event_id: ESPN event ID.
+    """
+    return wrap(_get_win_probability(_params(event_id=event_id)))

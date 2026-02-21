@@ -66,6 +66,18 @@ def _current_week():
 # ============================================================
 
 
+def _build_set_scores(linescores):
+    """Build set scores list, including tiebreak points when present."""
+    sets = []
+    for s in linescores:
+        entry = {"games": int(s.get("value", 0))}
+        tb = s.get("tiebreak")
+        if tb is not None:
+            entry["tiebreak"] = int(tb)
+        sets.append(entry)
+    return sets
+
+
 def _normalize_competitor(comp):
     """Normalize a match competitor (singles or doubles)."""
     comp_type = comp.get("type", "athlete")  # "athlete" or "team"
@@ -87,7 +99,7 @@ def _normalize_competitor(comp):
             "country": country,
             "seed": seed,
             "winner": comp.get("winner", False),
-            "set_scores": [int(s.get("value", 0)) for s in linescores],
+            "set_scores": _build_set_scores(linescores),
             "serving": comp.get("possession", False),
             "athletes": [
                 {
@@ -106,7 +118,7 @@ def _normalize_competitor(comp):
             "country": athlete.get("flag", {}).get("alt", ""),
             "seed": seed,
             "winner": comp.get("winner", False),
-            "set_scores": [int(s.get("value", 0)) for s in linescores],
+            "set_scores": _build_set_scores(linescores),
             "serving": comp.get("possession", False),
         }
 

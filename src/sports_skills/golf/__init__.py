@@ -15,7 +15,13 @@ from sports_skills.golf._connector import (
     get_player_info as _get_player_info,
 )
 from sports_skills.golf._connector import (
+    get_player_overview as _get_player_overview,
+)
+from sports_skills.golf._connector import (
     get_schedule as _get_schedule,
+)
+from sports_skills.golf._connector import (
+    get_scorecard as _get_scorecard,
 )
 
 
@@ -60,3 +66,23 @@ def get_news(*, tour: str) -> dict:
         tour: Tour name — "pga", "lpga", or "eur".
     """
     return wrap(_get_news(_params(tour=tour)))
+
+
+def get_player_overview(*, player_id: str, tour: str | None = None) -> dict:
+    """Get golfer season overview with stats, rankings, and recent results.
+
+    Args:
+        player_id: ESPN athlete ID.
+        tour: Tour for lookup — "pga", "lpga", or "eur". Defaults to "pga".
+    """
+    return wrap(_get_player_overview(_params(player_id=player_id, tour=tour)))
+
+
+def get_scorecard(*, tour: str, player_id: str) -> dict:
+    """Get hole-by-hole scorecard for a golfer in the active tournament.
+
+    Args:
+        tour: Tour name — "pga", "lpga", or "eur".
+        player_id: ESPN athlete ID.
+    """
+    return wrap(_get_scorecard(_params(tour=tour, player_id=player_id)))

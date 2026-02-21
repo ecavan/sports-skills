@@ -2663,3 +2663,94 @@ def get_player_profile(params):
             "message": "Player not found. Provide player_id, fpl_id, or tm_player_id.",
         }
     return {"player": player}
+
+
+def get_player_season_stats(params):
+    """Get player season gamelog with per-match stats via ESPN overview endpoint.
+
+    Returns appearances, goals, assists, shots, shots on target, fouls,
+    offsides, and cards for each match in the current season.
+    """
+    player_id = params.get("player_id") or params.get("command_attribute", {}).get(
+        "player_id", ""
+    )
+    league_slug = params.get("league_slug") or params.get("command_attribute", {}).get(
+        "league_slug", "eng.1"
+    )
+
+    if not player_id:
+        return {"error": True, "message": "player_id is required (ESPN athlete ID)"}
+
+    cache_key = f"football_player_season:{player_id}:{league_slug}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    url = (
+        f"https://site.web.api.espn.com/apis/common/v3/sports/soccer"
+        f"/{league_slug}/athletes/{player_id}/overview"
+    )
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_espn_rate_limiter)
+    if err:
+        return err
+
+    try:
+        data = json.loads(raw.decode())
+    except (json.JSONDecodeError, ValueError):
+        return {"error": True, "message": "ESPN returned invalid JSON"}
+
+    # Parse gameLog from overview
+    game_log = data.get("gameLog", {})
+    stats_blocks = game_log.get("statistics", [])
+    if not stats_blocks:
+        return {
+            "player_id": str(player_id),
+            "league": league_slug,
+            "matches": [],
+            "message": "No season statistics available for this player.",
+        }
+
+    stat_block = stats_blocks[0]
+    labels = stat_block.get("labels", [])
+    names = stat_block.get("names", [])
+    display_names = stat_block.get("displayNames", [])
+
+    # Build per-match entries
+    matches = []
+    events_data = stat_block.get("events", [])
+    events_meta = game_log.get("events", {})
+
+    for ev in events_data:
+        event_id = str(ev.get("eventId", ""))
+        stats_raw = ev.get("stats", [])
+
+        # Map stats to named keys
+        stats = {}
+        for i, val in enumerate(stats_raw):
+            key = names[i] if i < len(names) else (labels[i] if i < len(labels) else f"stat_{i}")
+            stats[key] = val
+
+        match_entry = {"event_id": event_id, "stats": stats}
+
+        # Add event metadata (links) if available
+        meta = events_meta.get(event_id, {})
+        if meta:
+            for link in meta.get("links", []):
+                if "summary" in link.get("rel", []):
+                    match_entry["link"] = link.get("href", "")
+                    break
+
+        matches.append(match_entry)
+
+    result = {
+        "player_id": str(player_id),
+        "league": league_slug,
+        "stat_columns": labels,
+        "stat_names": names,
+        "stat_display_names": display_names,
+        "matches": matches,
+        "count": len(matches),
+    }
+    _cache_set(cache_key, result, ttl=600)
+    return result

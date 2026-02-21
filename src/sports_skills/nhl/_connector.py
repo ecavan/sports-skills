@@ -566,3 +566,49 @@ def get_schedule(request_data):
         "day": day_info.get("date", ""),
         "count": len(events),
     }
+
+
+# ============================================================
+# Play-by-Play
+# ============================================================
+
+
+def _normalize_plays(summary_data):
+    """Normalize play-by-play data from ESPN summary."""
+    plays_raw = summary_data.get("plays", [])
+    if not plays_raw:
+        return {"error": True, "message": "No play-by-play data available"}
+
+    plays = []
+    for p in plays_raw:
+        play_type = p.get("type", {})
+        team = p.get("team", {})
+        plays.append({
+            "id": str(p.get("id", "")),
+            "text": p.get("text", ""),
+            "type": play_type.get("text", ""),
+            "period": p.get("period", {}).get("number", ""),
+            "clock": p.get("clock", {}).get("displayValue", ""),
+            "home_score": p.get("homeScore", ""),
+            "away_score": p.get("awayScore", ""),
+            "scoring_play": p.get("scoringPlay", False),
+            "score_value": p.get("scoreValue", 0),
+            "team_id": str(team.get("id", "")) if team else "",
+            "shooting_play": p.get("shootingPlay", False),
+        })
+
+    return {"plays": plays, "count": len(plays)}
+
+
+def get_play_by_play(request_data):
+    """Get full play-by-play log for an NHL game."""
+    params = request_data.get("params", {})
+    event_id = params.get("event_id")
+    if not event_id:
+        return {"error": True, "message": "event_id is required"}
+
+    data = espn_summary(SPORT_PATH, event_id)
+    if not data:
+        return {"error": True, "message": f"No data found for event {event_id}"}
+
+    return _normalize_plays(data)

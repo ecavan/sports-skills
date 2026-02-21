@@ -564,3 +564,82 @@ def get_schedule(request_data):
         "day": day_info.get("date", ""),
         "count": len(events),
     }
+
+
+# ============================================================
+# Play-by-Play & Win Probability
+# ============================================================
+
+
+def _normalize_plays(summary_data):
+    """Normalize MLB play-by-play data from ESPN summary."""
+    plays_raw = summary_data.get("plays", [])
+    if not plays_raw:
+        return {"error": True, "message": "No play-by-play data available"}
+
+    plays = []
+    for p in plays_raw:
+        play_type = p.get("type", {})
+        team = p.get("team", {})
+        period = p.get("period", {})
+        plays.append({
+            "id": str(p.get("id", "")),
+            "text": p.get("text", ""),
+            "type": play_type.get("text", ""),
+            "inning": period.get("number", ""),
+            "inning_half": period.get("type", ""),
+            "home_score": p.get("homeScore", ""),
+            "away_score": p.get("awayScore", ""),
+            "scoring_play": p.get("scoringPlay", False),
+            "score_value": p.get("scoreValue", 0),
+            "outs": p.get("outs", ""),
+            "at_bat_id": str(p.get("atBatId", "")) if p.get("atBatId") else None,
+            "team_id": str(team.get("id", "")) if team else "",
+        })
+
+    return {"plays": plays, "count": len(plays)}
+
+
+def _normalize_win_probability(summary_data):
+    """Normalize win probability timeline from ESPN summary."""
+    wp_raw = summary_data.get("winprobability", [])
+    if not wp_raw:
+        return {"error": True, "message": "No win probability data available for this game"}
+
+    timeline = []
+    for entry in wp_raw:
+        timeline.append({
+            "play_id": str(entry.get("playId", "")),
+            "home_win_pct": round(entry.get("homeWinPercentage", 0) * 100, 1),
+            "tie_pct": round(entry.get("tiePercentage", 0) * 100, 1),
+        })
+
+    return {"timeline": timeline, "count": len(timeline)}
+
+
+def get_play_by_play(request_data):
+    """Get play-by-play log for an MLB game."""
+    params = request_data.get("params", {})
+    event_id = params.get("event_id")
+    if not event_id:
+        return {"error": True, "message": "event_id is required"}
+
+    data = espn_summary(SPORT_PATH, event_id)
+    if not data:
+        return {"error": True, "message": f"No data found for event {event_id}"}
+
+    return _normalize_plays(data)
+
+
+def get_win_probability(request_data):
+    """Get win probability timeline for an MLB game."""
+    params = request_data.get("params", {})
+    event_id = params.get("event_id")
+    if not event_id:
+        return {"error": True, "message": "event_id is required"}
+
+    data = espn_summary(SPORT_PATH, event_id)
+    if not data:
+        return {"error": True, "message": f"No data found for event {event_id}"}
+
+    return _normalize_win_probability(data)

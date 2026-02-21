@@ -45,6 +45,9 @@ from sports_skills.football._connector import (
     get_player_profile as _get_player_profile,
 )
 from sports_skills.football._connector import (
+    get_player_season_stats as _get_player_season_stats,
+)
+from sports_skills.football._connector import (
     get_season_leaders as _get_season_leaders,
 )
 from sports_skills.football._connector import (
@@ -208,3 +211,17 @@ def get_player_profile(
         tm_player_id: Transfermarkt player ID (any league).
     """
     return wrap(_get_player_profile(_params(fpl_id=fpl_id, tm_player_id=tm_player_id)))
+
+
+def get_player_season_stats(*, player_id: str, league_slug: str | None = None) -> dict:
+    """Get player season gamelog with per-match stats.
+
+    Returns appearances, goals, assists, shots, shots on target, fouls,
+    offsides, and cards for each match in the current season.
+
+    Args:
+        player_id: ESPN athlete ID.
+        league_slug: ESPN league slug (e.g. "eng.1" for Premier League,
+            "esp.1" for La Liga). Defaults to "eng.1".
+    """
+    return wrap(_get_player_season_stats(_params(player_id=player_id, league_slug=league_slug)))

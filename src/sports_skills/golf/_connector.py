@@ -147,6 +147,106 @@ def _normalize_calendar_event(cal_event):
     }
 
 
+def _normalize_player_overview(data):
+    """Normalize player overview from ESPN common/v3 overview endpoint."""
+    # Season stats from statistics.splits
+    stats_raw = data.get("statistics", {})
+    splits = []
+    stat_labels = stats_raw.get("labels", [])
+    stat_names = stats_raw.get("names", [])
+    for split in stats_raw.get("splits", []):
+        split_stats = split.get("stats", [])
+        if not split_stats:
+            continue
+        entry = {"name": split.get("displayName", "")}
+        for i, val in enumerate(split_stats):
+            if i < len(stat_names):
+                entry[stat_names[i]] = val
+            elif i < len(stat_labels):
+                entry[stat_labels[i]] = val
+        splits.append(entry)
+
+    season_stats = {
+        "display_name": stats_raw.get("displayName", ""),
+        "splits": splits,
+    }
+
+    # Season rankings from seasonRankings.categories
+    rankings_raw = data.get("seasonRankings", {})
+    rankings = []
+    for cat in rankings_raw.get("categories", []):
+        rankings.append({
+            "name": cat.get("displayName", cat.get("name", "")),
+            "abbreviation": cat.get("abbreviation", cat.get("name", "")),
+            "value": cat.get("displayValue", str(cat.get("value", ""))),
+            "rank": cat.get("rank", ""),
+            "rank_display": cat.get("rankDisplayValue", ""),
+        })
+
+    # Recent tournaments
+    recent = []
+    for tourney in data.get("recentTournaments", []):
+        events_stats = tourney.get("eventsStats", [])
+        for ev in events_stats:
+            comp = (ev.get("competitions", [{}]) or [{}])[0]
+            competitors = comp.get("competitors", [{}])
+            score_obj = competitors[0].get("score", {}) if competitors else {}
+            recent.append({
+                "name": ev.get("name", ev.get("shortName", "")),
+                "date": ev.get("date", ""),
+                "score": score_obj.get("displayValue", str(score_obj.get("value", ""))),
+            })
+
+    return {
+        "season_stats": season_stats,
+        "rankings": rankings,
+        "recent_tournaments": recent,
+    }
+
+
+def _normalize_scorecard(competitor, tournament_name=""):
+    """Normalize hole-by-hole scorecard from scoreboard competitor data."""
+    athlete = competitor.get("athlete", {})
+    flag = athlete.get("flag", {})
+
+    rounds = []
+    for ls in competitor.get("linescores", []):
+        period = ls.get("period", 0)
+        if period < 1 or period > 4:
+            continue
+
+        # Nested linescores contain hole-by-hole data
+        holes = []
+        for hole_ls in ls.get("linescores", []):
+            hole_num = hole_ls.get("period", 0)
+            if hole_num < 1 or hole_num > 18:
+                continue
+            score_type = hole_ls.get("scoreType", {})
+            holes.append({
+                "hole": hole_num,
+                "strokes": int(hole_ls.get("value", 0)) if hole_ls.get("value") is not None else None,
+                "score": score_type.get("displayValue", ""),
+            })
+
+        rounds.append({
+            "round": period,
+            "total_strokes": int(ls.get("value", 0)) if ls.get("value") is not None else None,
+            "total_score": ls.get("displayValue", ""),
+            "holes": holes,
+        })
+
+    return {
+        "player": {
+            "id": str(competitor.get("id", "")),
+            "name": athlete.get("displayName", athlete.get("fullName", "")),
+            "country": flag.get("alt", ""),
+        },
+        "tournament": tournament_name,
+        "overall_score": competitor.get("score", ""),
+        "rounds": rounds,
+    }
+
+
 def _normalize_news(espn_data):
     """Normalize ESPN news response."""
     articles = []
@@ -328,4 +428,101 @@ def get_news(request_data):
         "tour": _TOUR_NAMES[tour],
         "articles": articles,
         "count": len(articles),
+    }
+
+
+def _fetch_player_overview(player_id, tour):
+    """Fetch player overview from ESPN common/v3 overview endpoint."""
+    url = (
+        f"https://site.web.api.espn.com/apis/common/v3/sports/golf/{tour}"
+        f"/athletes/{player_id}/overview"
+    )
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(url, headers=headers)
+    if err:
+        return None, err
+    try:
+        data = json.loads(raw.decode())
+    except (json.JSONDecodeError, ValueError):
+        return None, {"error": True, "message": "ESPN returned invalid JSON"}
+    return data, None
+
+
+def get_player_overview(request_data):
+    """Get golfer season overview: stats, rankings, and recent tournaments."""
+    params = request_data.get("params", {})
+    player_id = params.get("player_id")
+    tour = params.get("tour", "pga")
+    if not player_id:
+        return {"error": True, "message": "player_id is required"}
+
+    tour = tour.lower().strip()
+    if tour not in _VALID_TOURS:
+        tour = "pga"
+
+    cache_key = f"golf_overview:{player_id}:{tour}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    # Try specified tour first, then fall back
+    tours_to_try = [tour] + [t for t in ("pga", "eur") if t != tour]
+    data = None
+    last_err = None
+    for t in tours_to_try:
+        data, last_err = _fetch_player_overview(player_id, t)
+        if data is not None:
+            break
+
+    if data is None:
+        return last_err or {"error": True, "message": f"Player {player_id} overview not found"}
+
+    overview = _normalize_player_overview(data)
+    overview["id"] = str(player_id)
+
+    _cache_set(cache_key, overview, ttl=600)
+    return overview
+
+
+def get_scorecard(request_data):
+    """Get hole-by-hole scorecard for a golfer in the active tournament."""
+    params = request_data.get("params", {})
+    tour, err = _validate_tour(params.get("tour"))
+    if err:
+        return err
+    player_id = params.get("player_id")
+    if not player_id:
+        return {"error": True, "message": "player_id is required"}
+
+    sport_path = _TOUR_PATHS[tour]
+    data = espn_request(sport_path, "scoreboard")
+    if data.get("error"):
+        return data
+
+    events = data.get("events", [])
+    if not events:
+        return {
+            "tour": _TOUR_NAMES[tour],
+            "error": True,
+            "message": "No active tournament right now.",
+        }
+
+    # Search for the golfer in the current tournament
+    event = events[0]
+    tournament_name = event.get("name", "")
+    comp = event.get("competitions", [{}])[0]
+    competitors = comp.get("competitors", [])
+
+    player_id_str = str(player_id)
+    for competitor in competitors:
+        if str(competitor.get("id", "")) == player_id_str:
+            scorecard = _normalize_scorecard(competitor, tournament_name)
+            scorecard["tour"] = _TOUR_NAMES[tour]
+            return scorecard
+
+    return {
+        "tour": _TOUR_NAMES[tour],
+        "tournament": tournament_name,
+        "error": True,
+        "message": f"Player {player_id} not found in the current tournament field.",
     }

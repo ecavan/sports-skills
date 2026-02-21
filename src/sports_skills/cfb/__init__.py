@@ -11,6 +11,9 @@ from sports_skills.cfb._connector import (
     get_news as _get_news,
 )
 from sports_skills.cfb._connector import (
+    get_play_by_play as _get_play_by_play,
+)
+from sports_skills.cfb._connector import (
     get_rankings as _get_rankings,
 )
 from sports_skills.cfb._connector import (
@@ -121,3 +124,12 @@ def get_schedule(*, season: int | None = None, week: int | None = None, group: i
         group: Conference group ID to filter by.
     """
     return wrap(_get_schedule(_params(season=season, week=week, group=group)))
+
+
+def get_play_by_play(*, event_id: str) -> dict:
+    """Get drive-by-drive play-by-play data for a college football game.
+
+    Args:
+        event_id: ESPN event ID.
+    """
+    return wrap(_get_play_by_play(_params(event_id=event_id)))

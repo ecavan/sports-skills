@@ -603,3 +603,75 @@ def get_schedule(request_data):
         },
         "count": len(events),
     }
+
+
+# ============================================================
+# Play-by-Play
+# ============================================================
+
+
+def _normalize_drives(summary_data):
+    """Normalize college football drive-by-play data from ESPN summary."""
+    drives_raw = summary_data.get("drives", {})
+    previous = drives_raw.get("previous", [])
+
+    drives = []
+    for d in previous:
+        plays = []
+        for p in d.get("plays", []):
+            play_type = p.get("type", {})
+            plays.append({
+                "id": str(p.get("id", "")),
+                "text": p.get("text", ""),
+                "type": play_type.get("text", ""),
+                "period": p.get("period", {}).get("number", ""),
+                "clock": p.get("clock", {}).get("displayValue", ""),
+                "home_score": p.get("homeScore", ""),
+                "away_score": p.get("awayScore", ""),
+                "scoring_play": p.get("scoringPlay", False),
+                "yards": p.get("statYardage", 0),
+                "is_turnover": p.get("isTurnover", False),
+            })
+        team = d.get("team", {})
+        drives.append({
+            "id": str(d.get("id", "")),
+            "description": d.get("description", ""),
+            "team": {
+                "id": str(team.get("id", "")),
+                "name": team.get("displayName", team.get("name", "")),
+                "abbreviation": team.get("abbreviation", ""),
+            },
+            "result": d.get("displayResult", d.get("result", "")),
+            "is_score": d.get("isScore", False),
+            "yards": d.get("yards", 0),
+            "plays_count": d.get("offensivePlays", len(plays)),
+            "time_elapsed": d.get("timeElapsed", {}).get("displayValue", ""),
+            "start": {
+                "period": d.get("start", {}).get("period", {}).get("number", ""),
+                "clock": d.get("start", {}).get("clock", {}).get("displayValue", ""),
+                "yard_line": d.get("start", {}).get("yardLine", ""),
+                "text": d.get("start", {}).get("text", ""),
+            },
+            "end": {
+                "period": d.get("end", {}).get("period", {}).get("number", ""),
+                "clock": d.get("end", {}).get("clock", {}).get("displayValue", ""),
+                "yard_line": d.get("end", {}).get("yardLine", ""),
+            },
+            "plays": plays,
+        })
+
+    return {"drives": drives, "count": len(drives)}
+
+
+def get_play_by_play(request_data):
+    """Get drive-by-drive play-by-play data for a college football game."""
+    params = request_data.get("params", {})
+    event_id = params.get("event_id")
+    if not event_id:
+        return {"error": True, "message": "event_id is required"}
+
+    data = espn_summary(SPORT_PATH, event_id)
+    if not data:
+        return {"error": True, "message": f"No data found for event {event_id}"}
+
+    return _normalize_drives(data)
