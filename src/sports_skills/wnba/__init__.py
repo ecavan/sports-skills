@@ -5,7 +5,13 @@ Wraps ESPN public endpoints. No API keys required. Zero config.
 
 from sports_skills._response import wrap
 from sports_skills.wnba._connector import (
+    get_futures as _get_futures,
+)
+from sports_skills.wnba._connector import (
     get_game_summary as _get_game_summary,
+)
+from sports_skills.wnba._connector import (
+    get_injuries as _get_injuries,
 )
 from sports_skills.wnba._connector import (
     get_leaders as _get_leaders,
@@ -15,6 +21,9 @@ from sports_skills.wnba._connector import (
 )
 from sports_skills.wnba._connector import (
     get_play_by_play as _get_play_by_play,
+)
+from sports_skills.wnba._connector import (
+    get_player_stats as _get_player_stats,
 )
 from sports_skills.wnba._connector import (
     get_schedule as _get_schedule,
@@ -32,7 +41,13 @@ from sports_skills.wnba._connector import (
     get_team_schedule as _get_team_schedule,
 )
 from sports_skills.wnba._connector import (
+    get_team_stats as _get_team_stats,
+)
+from sports_skills.wnba._connector import (
     get_teams as _get_teams,
+)
+from sports_skills.wnba._connector import (
+    get_transactions as _get_transactions,
 )
 from sports_skills.wnba._connector import (
     get_win_probability as _get_win_probability,
@@ -139,3 +154,63 @@ def get_win_probability(*, event_id: str) -> dict:
         event_id: ESPN event ID.
     """
     return wrap(_get_win_probability(_params(event_id=event_id)))
+
+
+def get_injuries() -> dict:
+    """Get current WNBA injury report for all teams."""
+    return wrap(_get_injuries(_params()))
+
+
+def get_transactions(*, limit: int | None = None) -> dict:
+    """Get recent WNBA transactions (trades, signings, releases).
+
+    Args:
+        limit: Max number of transactions. Defaults to 50.
+    """
+    return wrap(_get_transactions(_params(limit=limit)))
+
+
+def get_futures(*, limit: int | None = None, season_year: int | None = None) -> dict:
+    """Get WNBA futures odds (championship winner, MVP, etc.).
+
+    Args:
+        limit: Max entries per futures market. Defaults to 10.
+        season_year: Season year. Defaults to current.
+    """
+    return wrap(_get_futures(_params(limit=limit, season_year=season_year)))
+
+
+def get_team_stats(
+    *, team_id: str, season_year: int | None = None, season_type: int | None = None
+) -> dict:
+    """Get WNBA team season statistics.
+
+    Args:
+        team_id: ESPN team ID.
+        season_year: Season year. Defaults to current.
+        season_type: 2 = regular season (default), 3 = postseason.
+    """
+    return wrap(
+        _get_team_stats(
+            _params(team_id=team_id, season_year=season_year, season_type=season_type)
+        )
+    )
+
+
+def get_player_stats(
+    *, player_id: str, season_year: int | None = None, season_type: int | None = None
+) -> dict:
+    """Get WNBA player season statistics.
+
+    Args:
+        player_id: ESPN athlete ID.
+        season_year: Season year. Defaults to current.
+        season_type: 2 = regular season (default), 3 = postseason.
+    """
+    return wrap(
+        _get_player_stats(
+            _params(
+                player_id=player_id, season_year=season_year, season_type=season_type
+            )
+        )
+    )

@@ -1,10 +1,10 @@
 ---
 name: golf-data
 description: |
-  PGA Tour, LPGA, and DP World Tour golf data via ESPN public endpoints — tournament leaderboards, season schedules, golfer profiles, and news. Zero config, no API keys.
+  PGA Tour, LPGA, and DP World Tour golf data via ESPN public endpoints — tournament leaderboards, scorecards, season schedules, golfer profiles/overviews, and news. Zero config, no API keys.
 
-  Use when: user asks about golf scores, tournament leaderboards, PGA Tour schedule, golfer profiles, LPGA results, or golf news.
-  Don't use when: user asks about other sports. Don't use for live hole-by-hole updates — leaderboards update after each round.
+  Use when: user asks about golf scores, tournament leaderboards, scorecards, PGA Tour schedule, golfer profiles, golfer season stats, LPGA results, or golf news.
+  Don't use when: user asks about other sports.
 license: MIT
 metadata:
   author: machina-sports
@@ -91,6 +91,20 @@ Returns golfer details: name, age, nationality, birthplace, height/weight, turne
 
 **Note:** Player profiles work for PGA Tour and DP World Tour golfers. LPGA player profiles are not available through ESPN's API — the command will automatically try PGA and EUR tours as fallback.
 
+### get_player_overview
+Get detailed golfer overview with season stats, rankings, and recent results.
+- `player_id` (str, required): ESPN athlete ID
+- `tour` (str, optional): "pga", "lpga", or "eur". Defaults to "pga".
+
+Returns season statistics (scoring average, earnings, wins, top-10s), world/tour rankings, and recent tournament results.
+
+### get_scorecard
+Get hole-by-hole scorecard for a golfer in the current/most recent tournament.
+- `tour` (str, required): "pga", "lpga", or "eur"
+- `player_id` (str, required): ESPN athlete ID
+
+Returns `rounds[]` with hole-by-hole scores (strokes, score relative to par) for each completed round.
+
 ### get_news
 Get golf news articles.
 - `tour` (str, required): "pga", "lpga", or "eur"
@@ -167,6 +181,16 @@ sports-skills golf get_player_info --player_id=9478
 sports-skills golf get_schedule --tour=pga --year=2026
 ```
 Then search the results for "Masters Tournament".
+
+**User: "Show me Scottie Scheffler's scorecard"**
+```bash
+sports-skills golf get_scorecard --tour=pga --player_id=9478
+```
+
+**User: "How has Rory McIlroy been playing this season?"**
+```bash
+sports-skills golf get_player_overview --player_id=3470
+```
 
 **User: "Latest golf news"**
 ```bash

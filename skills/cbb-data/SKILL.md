@@ -1,9 +1,9 @@
 ---
 name: cbb-data
 description: |
-  College Basketball (CBB) data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, AP/Coaches rankings, and news for NCAA Division I men's basketball. Zero config, no API keys.
+  College Basketball (CBB) data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, play-by-play, win probability, rankings, futures, team/player stats, and news for NCAA Division I men's basketball. Zero config, no API keys.
 
-  Use when: user asks about college basketball scores, March Madness, NCAA tournament, standings, rankings, team rosters, schedules, or CBB news.
+  Use when: user asks about college basketball scores, March Madness, NCAA tournament, standings, rankings, team rosters, schedules, play-by-play, betting futures, team/player statistics, or CBB news.
   Don't use when: user asks about NBA/WNBA (use nba-data/wnba-data), college football (use cfb-data), or non-sports topics.
 license: MIT
 metadata:
@@ -101,11 +101,46 @@ Returns `polls[]` with poll name and `teams[]` containing rank, previous rank, r
 Get college basketball news articles.
 - `team_id` (str, optional): ESPN team ID to filter news by team.
 
+### get_play_by_play
+Get full play-by-play data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns play-by-play detail including period, clock, team, play description, and scoring plays.
+
+### get_win_probability
+Get win probability chart data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns timestamped home/away win probability percentages throughout the game.
+
 ### get_schedule
 Get college basketball schedule.
 - `date` (str, optional): Date in YYYY-MM-DD format.
 - `season` (int, optional): Season year. Defaults to current.
 - `group` (int, optional): Conference group ID to filter.
+
+### get_futures
+Get college basketball futures/odds markets (National Championship, Player of the Year, etc.).
+- `limit` (int, optional): Max entries per market. Defaults to 25.
+- `season_year` (int, optional): Season year. Defaults to current.
+
+Returns `futures[]` with market name and entries (team/player name + odds value).
+
+### get_team_stats
+Get full team statistical profile for a season.
+- `team_id` (str, required): ESPN team ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
+
+### get_player_stats
+Get full player statistical profile for a season.
+- `player_id` (str, required): ESPN athlete ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
 
 ## Common Team IDs
 
@@ -152,6 +187,16 @@ sports-skills cbb get_game_summary --event_id=401638574
 **User: "What's Kansas's schedule this season?"**
 ```bash
 sports-skills cbb get_team_schedule --team_id=2305
+```
+
+**User: "Who's favored to win March Madness?"**
+```bash
+sports-skills cbb get_futures --limit=10
+```
+
+**User: "Show me Duke's team stats"**
+```bash
+sports-skills cbb get_team_stats --team_id=150
 ```
 
 ## Error Handling

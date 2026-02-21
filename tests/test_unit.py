@@ -669,3 +669,336 @@ class TestFootballPlayerSeasonStats:
         result = get_player_season_stats({})
         assert result.get("error") is True
         assert "player_id" in result.get("message", "")
+
+
+# ── Cross-sport normalizers (injuries, transactions, stats, futures, depth charts) ──
+
+
+class TestNormalizeInjuries:
+    """Tests for normalize_injuries shared normalizer."""
+
+    def test_basic(self):
+        from sports_skills._espn_base import normalize_injuries
+
+        data = {
+            "injuries": [
+                {
+                    "displayName": "Kansas City Chiefs",
+                    "id": 12,
+                    "injuries": [
+                        {
+                            "athlete": {
+                                "displayName": "Patrick Mahomes",
+                                "position": {"abbreviation": "QB"},
+                            },
+                            "status": "Questionable",
+                            "type": {"description": "Ankle"},
+                            "details": {
+                                "detail": "Right ankle sprain",
+                                "side": "Right",
+                                "returnDate": "2026-01-15",
+                            },
+                        },
+                        {
+                            "athlete": {
+                                "displayName": "Travis Kelce",
+                                "position": {"abbreviation": "TE"},
+                            },
+                            "status": "Out",
+                            "type": {"name": "Knee"},
+                            "details": {"detail": "Knee surgery"},
+                        },
+                    ],
+                },
+            ]
+        }
+        result = normalize_injuries(data)
+        assert result["count"] == 1
+        team = result["teams"][0]
+        assert team["team"] == "Kansas City Chiefs"
+        assert team["team_id"] == "12"
+        assert team["count"] == 2
+        assert team["injuries"][0]["name"] == "Patrick Mahomes"
+        assert team["injuries"][0]["position"] == "QB"
+        assert team["injuries"][0]["status"] == "Questionable"
+        assert team["injuries"][0]["type"] == "Ankle"
+        assert team["injuries"][0]["detail"] == "Right ankle sprain"
+        assert team["injuries"][0]["side"] == "Right"
+        assert team["injuries"][0]["return_date"] == "2026-01-15"
+        assert team["injuries"][1]["name"] == "Travis Kelce"
+        assert team["injuries"][1]["type"] == "Knee"
+        assert team["injuries"][1]["side"] == ""
+
+    def test_empty(self):
+        from sports_skills._espn_base import normalize_injuries
+
+        result = normalize_injuries({})
+        assert result == {"teams": [], "count": 0}
+
+    def test_team_with_no_injuries(self):
+        from sports_skills._espn_base import normalize_injuries
+
+        data = {"injuries": [{"displayName": "Empty Team", "id": 99, "injuries": []}]}
+        result = normalize_injuries(data)
+        assert result["teams"][0]["count"] == 0
+        assert result["teams"][0]["injuries"] == []
+
+
+class TestNormalizeTransactions:
+    """Tests for normalize_transactions shared normalizer."""
+
+    def test_basic(self):
+        from sports_skills._espn_base import normalize_transactions
+
+        data = {
+            "transactions": [
+                {
+                    "date": "2026-02-18T12:00Z",
+                    "team": {
+                        "displayName": "Los Angeles Lakers",
+                        "abbreviation": "LAL",
+                    },
+                    "description": "Signed G John Doe to a 10-day contract.",
+                },
+                {
+                    "date": "2026-02-17T08:00Z",
+                    "team": {
+                        "displayName": "Boston Celtics",
+                        "abbreviation": "BOS",
+                    },
+                    "description": "Waived F Jane Smith.",
+                },
+            ]
+        }
+        result = normalize_transactions(data)
+        assert result["count"] == 2
+        assert result["transactions"][0]["date"] == "2026-02-18T12:00Z"
+        assert result["transactions"][0]["team"] == "Los Angeles Lakers"
+        assert result["transactions"][0]["team_abbreviation"] == "LAL"
+        assert "John Doe" in result["transactions"][0]["description"]
+        assert result["transactions"][1]["team_abbreviation"] == "BOS"
+
+    def test_empty(self):
+        from sports_skills._espn_base import normalize_transactions
+
+        result = normalize_transactions({})
+        assert result == {"transactions": [], "count": 0}
+
+
+class TestNormalizeCoreStats:
+    """Tests for normalize_core_stats shared normalizer."""
+
+    def test_basic(self):
+        from sports_skills._espn_base import normalize_core_stats
+
+        data = {
+            "splits": {
+                "categories": [
+                    {
+                        "displayName": "Passing",
+                        "stats": [
+                            {
+                                "name": "completions",
+                                "displayName": "Completions",
+                                "abbreviation": "CMP",
+                                "value": 401,
+                                "displayValue": "401",
+                                "rank": 3,
+                                "rankDisplayValue": "3rd",
+                                "perGameValue": 25.1,
+                                "perGameDisplayValue": "25.1",
+                            },
+                            {
+                                "name": "passingYards",
+                                "displayName": "Passing Yards",
+                                "abbreviation": "YDS",
+                                "value": 4839,
+                                "displayValue": "4,839",
+                            },
+                        ],
+                    },
+                    {
+                        "displayName": "Rushing",
+                        "stats": [
+                            {
+                                "name": "rushingAttempts",
+                                "displayName": "Rushing Attempts",
+                                "abbreviation": "ATT",
+                                "value": 66,
+                                "displayValue": "66",
+                            },
+                        ],
+                    },
+                ]
+            }
+        }
+        result = normalize_core_stats(data)
+        assert result["count"] == 2
+        passing = result["categories"][0]
+        assert passing["name"] == "Passing"
+        assert len(passing["stats"]) == 2
+        cmp_stat = passing["stats"][0]
+        assert cmp_stat["name"] == "completions"
+        assert cmp_stat["display_name"] == "Completions"
+        assert cmp_stat["abbreviation"] == "CMP"
+        assert cmp_stat["value"] == 401
+        assert cmp_stat["rank"] == 3
+        assert cmp_stat["rank_display"] == "3rd"
+        assert cmp_stat["per_game"] == 25.1
+        assert cmp_stat["per_game_display"] == "25.1"
+        yds_stat = passing["stats"][1]
+        assert "rank" not in yds_stat
+        assert "per_game" not in yds_stat
+
+    def test_empty_splits(self):
+        from sports_skills._espn_base import normalize_core_stats
+
+        result = normalize_core_stats({})
+        assert result == {"categories": [], "count": 0}
+
+    def test_category_fallback_name(self):
+        from sports_skills._espn_base import normalize_core_stats
+
+        data = {"splits": {"categories": [{"name": "general", "stats": []}]}}
+        result = normalize_core_stats(data)
+        assert result["categories"][0]["name"] == "general"
+
+
+class TestNormalizeFutures:
+    """Tests for normalize_futures shared normalizer."""
+
+    def test_basic_inline_names(self):
+        """Test futures with pre-resolved names (no $ref resolution needed)."""
+        from sports_skills._espn_base import normalize_futures
+
+        data = {
+            "items": [
+                {
+                    "id": "101",
+                    "displayName": "Super Bowl Winner",
+                    "futures": [
+                        {
+                            "books": [
+                                {"athlete": {}, "team": {}, "value": "+450"},
+                                {"athlete": {}, "team": {}, "value": "+600"},
+                            ]
+                        }
+                    ],
+                },
+            ]
+        }
+        result = normalize_futures(data, limit=10)
+        assert result["count"] == 1
+        sb = result["futures"][0]
+        assert sb["id"] == "101"
+        assert sb["name"] == "Super Bowl Winner"
+        assert sb["count"] == 2
+        assert sb["entries"][0]["value"] == "+450"
+        assert sb["entries"][0]["name"] == ""  # no $ref to resolve
+        assert sb["entries"][1]["value"] == "+600"
+
+    def test_empty(self):
+        from sports_skills._espn_base import normalize_futures
+
+        result = normalize_futures({})
+        assert result == {"futures": [], "count": 0}
+
+    def test_limit(self):
+        from sports_skills._espn_base import normalize_futures
+
+        books = [{"athlete": {}, "team": {}, "value": f"+{i}"} for i in range(20)]
+        data = {"items": [{"id": "1", "name": "MVP", "futures": [{"books": books}]}]}
+        result = normalize_futures(data, limit=5)
+        assert result["futures"][0]["count"] == 5
+
+    def test_name_fallback(self):
+        from sports_skills._espn_base import normalize_futures
+
+        data = {
+            "items": [
+                {"id": "2", "name": "Cy Young", "futures": [{"books": []}]},
+            ]
+        }
+        result = normalize_futures(data)
+        assert result["futures"][0]["name"] == "Cy Young"
+
+
+class TestNormalizeDepthChart:
+    """Tests for normalize_depth_chart shared normalizer."""
+
+    def test_basic(self):
+        from sports_skills._espn_base import normalize_depth_chart
+
+        data = {
+            "depthchart": [
+                {
+                    "name": "Offense",
+                    "positions": {
+                        "qb": {
+                            "position": {
+                                "displayName": "Quarterback",
+                                "abbreviation": "QB",
+                            },
+                            "athletes": [
+                                {"id": 4040715, "displayName": "Patrick Mahomes"},
+                                {"id": 3139477, "displayName": "Carson Wentz"},
+                            ],
+                        },
+                        "rb": {
+                            "position": {
+                                "displayName": "Running Back",
+                                "abbreviation": "RB",
+                            },
+                            "athletes": [
+                                {"id": 4241457, "displayName": "Isiah Pacheco"},
+                            ],
+                        },
+                    },
+                },
+            ]
+        }
+        result = normalize_depth_chart(data)
+        assert result["count"] == 1
+        chart = result["charts"][0]
+        assert chart["name"] == "Offense"
+        assert chart["count"] == 2
+        qb = chart["positions"][0]
+        assert qb["key"] == "qb"
+        assert qb["name"] == "Quarterback"
+        assert qb["abbreviation"] == "QB"
+        assert len(qb["athletes"]) == 2
+        assert qb["athletes"][0]["depth"] == 1
+        assert qb["athletes"][0]["name"] == "Patrick Mahomes"
+        assert qb["athletes"][0]["id"] == "4040715"
+        assert qb["athletes"][1]["depth"] == 2
+        assert qb["athletes"][1]["name"] == "Carson Wentz"
+        rb = chart["positions"][1]
+        assert rb["key"] == "rb"
+        assert len(rb["athletes"]) == 1
+
+    def test_empty(self):
+        from sports_skills._espn_base import normalize_depth_chart
+
+        result = normalize_depth_chart({})
+        assert result == {"charts": [], "count": 0}
+
+    def test_position_fallback_name(self):
+        from sports_skills._espn_base import normalize_depth_chart
+
+        data = {
+            "depthchart": [
+                {
+                    "name": "Defense",
+                    "positions": {
+                        "lt": {
+                            "position": {},
+                            "athletes": [],
+                        },
+                    },
+                },
+            ]
+        }
+        result = normalize_depth_chart(data)
+        pos = result["charts"][0]["positions"][0]
+        assert pos["name"] == "lt"
+        assert pos["abbreviation"] == "LT"

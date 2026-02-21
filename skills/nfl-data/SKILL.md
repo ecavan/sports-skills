@@ -1,10 +1,10 @@
 ---
 name: nfl-data
 description: |
-  NFL data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, leaders, and news. Zero config, no API keys.
+  NFL data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, play-by-play, win probability, injuries, transactions, futures, depth charts, team/player stats, leaders, and news. Zero config, no API keys.
 
-  Use when: user asks about NFL scores, standings, team rosters, schedules, game stats, box scores, or NFL news.
-  Don't use when: user asks about football/soccer (use football-data), college football, or other sports. Don't use for live play-by-play — data updates post-play.
+  Use when: user asks about NFL scores, standings, team rosters, schedules, game stats, box scores, play-by-play, injuries, transactions, betting futures, depth charts, team/player statistics, or NFL news.
+  Don't use when: user asks about football/soccer (use football-data), college football (use cfb-data), or other sports.
 license: MIT
 metadata:
   author: machina-sports
@@ -107,12 +107,64 @@ Get NFL news articles.
 
 Returns `articles[]` with headline, description, published date, and link.
 
+### get_play_by_play
+Get full play-by-play data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns `drives[]` with play-by-play detail including down, distance, yard line, play description, and scoring plays.
+
+### get_win_probability
+Get win probability chart data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns timestamped home/away win probability percentages throughout the game.
+
 ### get_schedule
 Get NFL season schedule by week.
 - `season` (int, optional): Season year
 - `week` (int, optional): Week number (1-18 regular season, 19-23 postseason)
 
 Returns `events[]` for the specified week/season.
+
+### get_injuries
+Get current NFL injury reports across all teams. No parameters.
+
+Returns `teams[]` with per-team injury lists including player name, position, status (Out/Doubtful/Questionable/Day-To-Day), injury type, and detail.
+
+### get_transactions
+Get recent NFL transactions (trades, signings, waivers).
+- `limit` (int, optional): Max transactions to return. Defaults to 50.
+
+Returns `transactions[]` with date, team, and description.
+
+### get_futures
+Get NFL futures/odds markets (Super Bowl winner, MVP, etc.).
+- `limit` (int, optional): Max entries per market. Defaults to 25.
+- `season_year` (int, optional): Season year. Defaults to current.
+
+Returns `futures[]` with market name and entries (team/player name + odds value).
+
+### get_depth_chart
+Get depth chart for a specific team.
+- `team_id` (str, required): ESPN team ID
+
+Returns `charts[]` with offense/defense/special teams positions and player depth order.
+
+### get_team_stats
+Get full team statistical profile for a season.
+- `team_id` (str, required): ESPN team ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 1=preseason, 2=regular (default), 3=postseason.
+
+Returns `categories[]` (Passing, Rushing, Receiving, etc.) with detailed stats including value, rank, and per-game averages.
+
+### get_player_stats
+Get full player statistical profile for a season.
+- `player_id` (str, required): ESPN athlete ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 1=preseason, 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
 
 ## Team IDs (Common)
 
@@ -157,6 +209,27 @@ sports-skills nfl get_team_roster --team_id=12
 1. Find the event_id from `get_scoreboard --week=23` (Super Bowl = week 23)
 2. Call `get_game_summary --event_id=<id>` for full box score
 Alternatively, use `get_schedule --week=23` to find the event.
+
+**User: "Who's injured on the Chiefs?"**
+```bash
+sports-skills nfl get_injuries
+```
+Then filter results for Kansas City Chiefs (team_id=12).
+
+**User: "Show me the Chiefs depth chart"**
+```bash
+sports-skills nfl get_depth_chart --team_id=12
+```
+
+**User: "What are the Super Bowl odds?"**
+```bash
+sports-skills nfl get_futures --limit=10
+```
+
+**User: "Show me Patrick Mahomes' stats this season"**
+```bash
+sports-skills nfl get_player_stats --player_id=3139477
+```
 
 ## Error Handling
 

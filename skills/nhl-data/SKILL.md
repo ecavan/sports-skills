@@ -1,10 +1,10 @@
 ---
 name: nhl-data
 description: |
-  NHL data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, statistical leaders, and news. Zero config, no API keys.
+  NHL data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, play-by-play, injuries, transactions, futures, team/player stats, leaders, and news. Zero config, no API keys.
 
-  Use when: user asks about NHL scores, standings, team rosters, schedules, game stats, box scores, or NHL news.
-  Don't use when: user asks about other hockey leagues (AHL, KHL, college hockey), or other sports. Don't use for live play-by-play — data updates post-play.
+  Use when: user asks about NHL scores, standings, team rosters, schedules, game stats, box scores, play-by-play, injuries, transactions, betting futures, team/player statistics, or NHL news.
+  Don't use when: user asks about other hockey leagues (AHL, KHL, college hockey), or other sports.
 license: MIT
 metadata:
   author: machina-sports
@@ -95,12 +95,52 @@ Get NHL news articles.
 
 Returns `articles[]` with headline, description, published date, and link.
 
+### get_play_by_play
+Get full play-by-play data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns play-by-play detail including period, clock, team, play type, and scoring plays.
+
 ### get_schedule
 Get NHL schedule for a specific date or season.
 - `date` (str, optional): Date in YYYY-MM-DD format
 - `season` (int, optional): Season year (used only if no date provided)
 
 Returns `events[]` for the specified date.
+
+### get_injuries
+Get current NHL injury reports across all teams. No parameters.
+
+Returns `teams[]` with per-team injury lists including player name, position, status (Out/Day-To-Day/IR), injury type, and detail.
+
+### get_transactions
+Get recent NHL transactions (trades, signings, waivers).
+- `limit` (int, optional): Max transactions to return. Defaults to 50.
+
+Returns `transactions[]` with date, team, and description.
+
+### get_futures
+Get NHL futures/odds markets (Stanley Cup winner, Hart Trophy, etc.).
+- `limit` (int, optional): Max entries per market. Defaults to 25.
+- `season_year` (int, optional): Season year. Defaults to current.
+
+Returns `futures[]` with market name and entries (team/player name + odds value).
+
+### get_team_stats
+Get full team statistical profile for a season.
+- `team_id` (str, required): ESPN team ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
+
+### get_player_stats
+Get full player statistical profile for a season.
+- `player_id` (str, required): ESPN athlete ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
 
 ## Team IDs (Common)
 
@@ -147,6 +187,22 @@ sports-skills nhl get_team_roster --team_id=21
 **User: "Show me the full box score for last night's Bruins game"**
 1. Find the event_id from `get_scoreboard --date=YYYY-MM-DD`
 2. Call `get_game_summary --event_id=<id>` for full box score
+
+**User: "Who's injured on the Maple Leafs?"**
+```bash
+sports-skills nhl get_injuries
+```
+Then filter results for Toronto Maple Leafs (team_id=21).
+
+**User: "What are the Stanley Cup odds?"**
+```bash
+sports-skills nhl get_futures --limit=10
+```
+
+**User: "Show me Connor McDavid's stats"**
+```bash
+sports-skills nhl get_player_stats --player_id=3895074
+```
 
 ## Error Handling
 

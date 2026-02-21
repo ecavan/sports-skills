@@ -4,6 +4,7 @@ Provides caching, rate limiting, retry logic, and parameterized
 ESPN API request functions. Used by nfl, nba, nhl, mlb, wnba modules.
 """
 
+import datetime
 import gzip
 import json
 import logging
@@ -434,6 +435,239 @@ def _resolve_athlete_ref(ref_url: str) -> str:
     except (json.JSONDecodeError, ValueError):
         _cache_set(cache_key, "", ttl=60)
         return ""
+
+
+# ============================================================
+# Core API support (team/player stats, futures)
+# ============================================================
+
+CORE_LEAGUE_MAP = {
+    "football/nfl": ("football", "nfl"),
+    "basketball/nba": ("basketball", "nba"),
+    "basketball/wnba": ("basketball", "wnba"),
+    "hockey/nhl": ("hockey", "nhl"),
+    "baseball/mlb": ("baseball", "mlb"),
+    "football/college-football": ("football", "college-football"),
+    "basketball/mens-college-basketball": ("basketball", "mens-college-basketball"),
+}
+
+
+def _current_year():
+    """Return the current year (UTC)."""
+    return datetime.datetime.utcnow().year
+
+
+def _resolve_team_ref(ref_url: str) -> str:
+    """Follow an ESPN team $ref URL and return the team's displayName.
+
+    Same pattern as ``_resolve_athlete_ref`` but for team references.
+    Returns empty string on any failure (safe fallback).
+    """
+    if not ref_url:
+        return ""
+
+    cache_key = f"team_ref:{ref_url}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(ref_url, headers=headers, timeout=5)
+    if err:
+        _cache_set(cache_key, "", ttl=60)
+        return ""
+
+    try:
+        data = json.loads(raw.decode())
+        name = data.get("displayName") or data.get("name") or ""
+        _cache_set(cache_key, name, ttl=3600)
+        return name
+    except (json.JSONDecodeError, ValueError):
+        _cache_set(cache_key, "", ttl=60)
+        return ""
+
+
+def espn_core_request(sport_path, resource_path, ttl=300):
+    """ESPN Core API request. Rate-limited and cached.
+
+    Args:
+        sport_path: e.g. "football/nfl", "basketball/nba"
+        resource_path: Path after the league, e.g. "seasons/2025/futures"
+        ttl: Cache TTL in seconds.
+    """
+    mapping = CORE_LEAGUE_MAP.get(sport_path)
+    if not mapping:
+        return {"error": True, "message": f"Unknown sport path for core API: {sport_path}"}
+    sport, league = mapping
+
+    cache_key = f"espn_core:{sport}:{league}:{resource_path}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    url = (
+        f"https://sports.core.api.espn.com/v2/sports/{sport}"
+        f"/leagues/{league}/{resource_path}"
+    )
+    headers = {"User-Agent": _USER_AGENT}
+    raw, err = _http_fetch(url, headers=headers, rate_limiter=_espn_rate_limiter)
+    if err:
+        return err
+    try:
+        data = json.loads(raw.decode())
+        _cache_set(cache_key, data, ttl=ttl)
+        return data
+    except (json.JSONDecodeError, ValueError):
+        return {"error": True, "message": "ESPN core API returned invalid JSON"}
+
+
+# ============================================================
+# Shared Normalizers — Injuries, Transactions, Stats, Futures, Depth Charts
+# ============================================================
+
+
+def normalize_injuries(data):
+    """Normalize ESPN injuries response (shared across all US sports).
+
+    Input: full response from ``espn_request(SPORT_PATH, "injuries")``.
+    """
+    teams = []
+    for team_entry in data.get("injuries", []):
+        injuries = []
+        for inj in team_entry.get("injuries", []):
+            athlete = inj.get("athlete", {})
+            details = inj.get("details", {})
+            inj_type = inj.get("type", {})
+            injuries.append({
+                "name": athlete.get("displayName", ""),
+                "position": athlete.get("position", {}).get("abbreviation", ""),
+                "status": inj.get("status", ""),
+                "type": inj_type.get("description", inj_type.get("name", "")),
+                "detail": details.get("detail", ""),
+                "side": details.get("side", ""),
+                "return_date": details.get("returnDate", ""),
+            })
+        teams.append({
+            "team": team_entry.get("displayName", ""),
+            "team_id": str(team_entry.get("id", "")),
+            "injuries": injuries,
+            "count": len(injuries),
+        })
+    return {"teams": teams, "count": len(teams)}
+
+
+def normalize_transactions(data):
+    """Normalize ESPN transactions response (shared across all US sports).
+
+    Input: full response from ``espn_request(SPORT_PATH, "transactions")``.
+    """
+    transactions = []
+    for txn in data.get("transactions", []):
+        team = txn.get("team", {})
+        transactions.append({
+            "date": txn.get("date", ""),
+            "team": team.get("displayName", ""),
+            "team_abbreviation": team.get("abbreviation", ""),
+            "description": txn.get("description", ""),
+        })
+    return {"transactions": transactions, "count": len(transactions)}
+
+
+def normalize_core_stats(data):
+    """Normalize ESPN core API team/player statistics.
+
+    Input: parsed JSON from the core API statistics endpoint.
+    Works for both team and player stats — same structure.
+    """
+    splits = data.get("splits", {})
+    categories = []
+    for cat in splits.get("categories", []):
+        stats = []
+        for stat in cat.get("stats", []):
+            entry = {
+                "name": stat.get("name", ""),
+                "display_name": stat.get("displayName", ""),
+                "abbreviation": stat.get("abbreviation", ""),
+                "value": stat.get("value"),
+                "display_value": stat.get("displayValue", ""),
+            }
+            if "rank" in stat:
+                entry["rank"] = stat["rank"]
+                entry["rank_display"] = stat.get("rankDisplayValue", "")
+            if "perGameValue" in stat:
+                entry["per_game"] = stat["perGameValue"]
+                entry["per_game_display"] = stat.get("perGameDisplayValue", "")
+            stats.append(entry)
+        categories.append({
+            "name": cat.get("displayName", cat.get("name", "")),
+            "stats": stats,
+        })
+    return {"categories": categories, "count": len(categories)}
+
+
+def normalize_futures(data, limit=25):
+    """Normalize ESPN core API futures response.
+
+    Resolves athlete/team $ref links for each book entry.
+
+    Args:
+        data: Parsed JSON from the core API futures endpoint.
+        limit: Max entries per futures market.
+    """
+    futures = []
+    for item in data.get("items", []):
+        entries = []
+        for future_group in item.get("futures", []):
+            for book in future_group.get("books", [])[:limit]:
+                athlete_ref = book.get("athlete", {})
+                team_ref = book.get("team", {})
+                name = ""
+                if isinstance(athlete_ref, dict) and athlete_ref.get("$ref"):
+                    name = _resolve_athlete_ref(athlete_ref["$ref"])
+                elif isinstance(team_ref, dict) and team_ref.get("$ref"):
+                    name = _resolve_team_ref(team_ref["$ref"])
+                entries.append({
+                    "name": name,
+                    "value": book.get("value", ""),
+                })
+        futures.append({
+            "id": item.get("id", ""),
+            "name": item.get("displayName", item.get("name", "")),
+            "entries": entries,
+            "count": len(entries),
+        })
+    return {"futures": futures, "count": len(futures)}
+
+
+def normalize_depth_chart(data):
+    """Normalize ESPN depth chart response (shared across NFL, NBA, MLB).
+
+    Input: full response from ``espn_request(SPORT_PATH, "teams/{id}/depthcharts")``.
+    """
+    charts = []
+    for chart in data.get("depthchart", []):
+        positions = []
+        for pos_key, pos_data in chart.get("positions", {}).items():
+            pos_info = pos_data.get("position", {})
+            athletes = []
+            for i, ath in enumerate(pos_data.get("athletes", [])):
+                athletes.append({
+                    "depth": i + 1,
+                    "id": str(ath.get("id", "")),
+                    "name": ath.get("displayName", ""),
+                })
+            positions.append({
+                "key": pos_key,
+                "name": pos_info.get("displayName", pos_info.get("name", pos_key)),
+                "abbreviation": pos_info.get("abbreviation", pos_key.upper()),
+                "athletes": athletes,
+            })
+        charts.append({
+            "name": chart.get("name", ""),
+            "positions": positions,
+            "count": len(positions),
+        })
+    return {"charts": charts, "count": len(charts)}
 
 
 def _resolve_leaders(categories: list) -> list:

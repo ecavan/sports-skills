@@ -1,10 +1,10 @@
 ---
 name: cfb-data
 description: |
-  College Football (CFB) data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, AP/Coaches rankings, and news for NCAA Division I FBS. Zero config, no API keys.
+  College Football (CFB) data via ESPN public endpoints — scores, standings, rosters, schedules, game summaries, play-by-play, rankings, injuries, futures, team/player stats, and news for NCAA Division I FBS. Zero config, no API keys.
 
-  Use when: user asks about college football scores, standings, rankings, team rosters, schedules, game results, or CFB news. Includes AP Top 25, Coaches Poll, and CFP rankings.
-  Don't use when: user asks about NFL (use nfl-data), other college sports (use cbb-data for basketball), or non-sports topics.
+  Use when: user asks about college football scores, standings, rankings, team rosters, schedules, game results, play-by-play, injuries, betting futures, team/player statistics, or CFB news.
+  Don't use when: user asks about NFL (use nfl-data), college basketball (use cbb-data), or non-sports topics.
 license: MIT
 metadata:
   author: machina-sports
@@ -100,11 +100,45 @@ Returns `polls[]` with poll name and `teams[]` containing rank, previous rank, r
 Get college football news articles.
 - `team_id` (str, optional): ESPN team ID to filter news by team.
 
+### get_play_by_play
+Get full play-by-play data for a game.
+- `event_id` (str, required): ESPN event ID
+
+Returns `drives[]` with play-by-play detail including down, distance, yard line, play description, and scoring plays.
+
 ### get_schedule
 Get college football schedule by week.
 - `season` (int, optional): Season year. Defaults to current.
 - `week` (int, optional): CFB week number.
 - `group` (int, optional): Conference group ID to filter.
+
+### get_injuries
+Get current college football injury reports across all teams. No parameters.
+
+Returns `teams[]` with per-team injury lists including player name, position, status, injury type, and detail.
+
+### get_futures
+Get college football futures/odds markets (National Championship, Heisman, etc.).
+- `limit` (int, optional): Max entries per market. Defaults to 25.
+- `season_year` (int, optional): Season year. Defaults to current.
+
+Returns `futures[]` with market name and entries (team/player name + odds value).
+
+### get_team_stats
+Get full team statistical profile for a season.
+- `team_id` (str, required): ESPN team ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
+
+### get_player_stats
+Get full player statistical profile for a season.
+- `player_id` (str, required): ESPN athlete ID
+- `season_year` (int, optional): Season year. Defaults to current.
+- `season_type` (int, optional): 2=regular (default), 3=postseason.
+
+Returns `categories[]` with detailed stats including value, rank, and per-game averages.
 
 ## Common Team IDs
 
@@ -146,6 +180,16 @@ sports-skills cfb get_scoreboard
 **User: "Get the box score for game 401635800"**
 ```bash
 sports-skills cfb get_game_summary --event_id=401635800
+```
+
+**User: "Who's the Heisman favorite?"**
+```bash
+sports-skills cfb get_futures --limit=10
+```
+
+**User: "Show me Alabama's team stats"**
+```bash
+sports-skills cfb get_team_stats --team_id=333
 ```
 
 ## Error Handling

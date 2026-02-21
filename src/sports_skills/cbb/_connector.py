@@ -8,9 +8,13 @@ import logging
 
 from sports_skills._espn_base import (
     ESPN_STATUS_MAP,
+    _current_year,
+    espn_core_request,
     espn_request,
     espn_summary,
     espn_web_request,
+    normalize_core_stats,
+    normalize_futures,
     normalize_odds,
 )
 
@@ -694,3 +698,63 @@ def get_win_probability(request_data):
         return {"error": True, "message": f"No data found for event {event_id}"}
 
     return _normalize_win_probability(data)
+
+
+# ============================================================
+# Futures, Stats
+# ============================================================
+
+
+def get_futures(request_data=None):
+    """Get college basketball futures odds (e.g. national championship)."""
+    params = (request_data or {}).get("params", {})
+    limit = params.get("limit", 10)
+    season_year = params.get("season_year") or _current_year()
+    data = espn_core_request(SPORT_PATH, f"seasons/{season_year}/futures")
+    if data.get("error"):
+        return data
+    result = normalize_futures(data, limit=limit)
+    result["season_year"] = season_year
+    return result
+
+
+def get_team_stats(request_data):
+    """Get college basketball team season statistics."""
+    params = request_data.get("params", {})
+    team_id = params.get("team_id")
+    if not team_id:
+        return {"error": True, "message": "team_id is required"}
+    season_year = params.get("season_year") or _current_year()
+    season_type = params.get("season_type", 2)
+    data = espn_core_request(
+        SPORT_PATH,
+        f"seasons/{season_year}/types/{season_type}/teams/{team_id}/statistics",
+    )
+    if data.get("error"):
+        return data
+    result = normalize_core_stats(data)
+    result["team_id"] = str(team_id)
+    result["season_year"] = season_year
+    result["season_type"] = season_type
+    return result
+
+
+def get_player_stats(request_data):
+    """Get college basketball player season statistics."""
+    params = request_data.get("params", {})
+    player_id = params.get("player_id")
+    if not player_id:
+        return {"error": True, "message": "player_id is required"}
+    season_year = params.get("season_year") or _current_year()
+    season_type = params.get("season_type", 2)
+    data = espn_core_request(
+        SPORT_PATH,
+        f"seasons/{season_year}/types/{season_type}/athletes/{player_id}/statistics",
+    )
+    if data.get("error"):
+        return data
+    result = normalize_core_stats(data)
+    result["player_id"] = str(player_id)
+    result["season_year"] = season_year
+    result["season_type"] = season_type
+    return result
