@@ -104,3 +104,13 @@ def available_providers(config: dict) -> list[str]:
     """Return providers that have API keys configured."""
     api_keys = config.get("api_keys", {})
     return [p for p in PROVIDER_ENV_VARS if api_keys.get(p)]
+
+
+def model_display_name(model_id: str) -> str:
+    """Return the human-readable display name for a model ID."""
+    for provider_models in MODELS.values():
+        for mid, display in provider_models:
+            if mid == model_id:
+                return display
+    # Fallback: extract last meaningful part
+    return model_id.split(":")[-1].split("/")[-1]

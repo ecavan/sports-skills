@@ -3,7 +3,7 @@
 Provides a polished terminal chat interface with:
 - Streaming LLM responses (token-by-token)
 - Tool call indicators
-- Ctrl+S to switch sport, Ctrl+B to toggle betting, Ctrl+Q to quit
+- ESC to quit, Ctrl+S to switch sport, Ctrl+M to switch model, Ctrl+B to toggle betting
 """
 
 from __future__ import annotations
@@ -15,7 +15,14 @@ from textual.containers import ScrollableContainer
 from textual.widgets import Footer, Input, Static
 
 from sports_skills.agent._agent import build_agent, stream_response
-from sports_skills.agent._config import SPORT_LABELS, load_config, save_config
+from sports_skills.agent._config import (
+    MODELS,
+    SPORT_LABELS,
+    available_providers,
+    load_config,
+    model_display_name,
+    save_config,
+)
 
 
 class ChatMessage(Static):
@@ -44,6 +51,14 @@ class SportsAgentApp(App):
     Screen {
         layout: vertical;
     }
+    #status-bar {
+        dock: top;
+        height: 1;
+        padding: 0 2;
+        background: $primary;
+        color: $text;
+        text-style: bold;
+    }
     #chat-log {
         height: 1fr;
         overflow-y: auto;
@@ -52,14 +67,6 @@ class SportsAgentApp(App):
     #user-input {
         dock: bottom;
         margin: 0 1;
-    }
-    #status-bar {
-        dock: top;
-        height: 1;
-        padding: 0 2;
-        background: $accent;
-        color: $text;
-        text-style: bold;
     }
     .user-msg {
         padding: 0 2;
@@ -74,12 +81,18 @@ class SportsAgentApp(App):
         padding: 1 2;
         color: $text-muted;
     }
+    .system-msg {
+        padding: 0 2;
+        color: $success;
+        text-style: italic;
+    }
     """
 
     BINDINGS = [
-        Binding("ctrl+s", "switch_sport", "Switch Sport", show=True),
-        Binding("ctrl+b", "toggle_betting", "Toggle Betting", show=True),
-        Binding("ctrl+q", "quit_app", "Quit", show=True),
+        Binding("escape", "quit_app", "Quit", show=True),
+        Binding("ctrl+s", "switch_sport", "Sport", show=True),
+        Binding("ctrl+m", "switch_model", "Model", show=True),
+        Binding("ctrl+b", "toggle_betting", "Betting", show=True),
     ]
 
     def __init__(
@@ -113,11 +126,11 @@ class SportsAgentApp(App):
 
     def _status_text(self) -> str:
         config = load_config()
-        model = config.get("model", "unknown").split(":")[-1]
+        model = model_display_name(config.get("model", "unknown"))
         sport_name = SPORT_LABELS.get(self.sport, self.sport)
-        mode_text = "  Betting" if self.mode == "betting" else ""
+        mode_text = " · Betting" if self.mode == "betting" else ""
         exchange_text = f" ({self.exchange.title()})" if self.exchange else ""
-        return f"  Sports Agent    {sport_name}{mode_text}{exchange_text}    {model}"
+        return f"  Sports Agent  │  {sport_name}{mode_text}{exchange_text}  │  {model}"
 
     def _build_agent(self) -> None:
         config = load_config()
@@ -195,12 +208,14 @@ class SportsAgentApp(App):
         if cmd in ("/help", "/h"):
             help_text = (
                 "[bold]Commands:[/bold]\n"
-                "  /help — show this message\n"
+                "  /help  — show this message\n"
                 "  /clear — clear chat history\n"
-                "  /config — show current config\n"
+                "  /config — show current config\n\n"
+                "[bold]Shortcuts:[/bold]\n"
+                "  ESC    — quit\n"
                 "  Ctrl+S — switch sport\n"
-                "  Ctrl+B — toggle betting mode\n"
-                "  Ctrl+Q — quit"
+                "  Ctrl+M — switch model\n"
+                "  Ctrl+B — toggle betting mode"
             )
             chat_log.mount(ChatMessage(help_text, classes="welcome-msg"))
         elif cmd == "/clear":
@@ -224,6 +239,40 @@ class SportsAgentApp(App):
     def action_switch_sport(self) -> None:
         """Switch sport by relaunching the mode picker."""
         self.exit(result="switch")
+
+    def action_switch_model(self) -> None:
+        """Cycle to the next available model."""
+        config = load_config()
+        providers = available_providers(config)
+
+        # Build flat list of available models
+        all_models = []
+        for provider in providers:
+            for model_id, display in MODELS.get(provider, []):
+                all_models.append((model_id, display))
+
+        if len(all_models) < 2:
+            return
+
+        current = config.get("model", "")
+        current_idx = next(
+            (i for i, (mid, _) in enumerate(all_models) if mid == current),
+            -1,
+        )
+        next_idx = (current_idx + 1) % len(all_models)
+
+        new_model_id, new_display = all_models[next_idx]
+        config["model"] = new_model_id
+        save_config(config)
+
+        self._build_agent()
+        self.query_one("#status-bar", Static).update(self._status_text())
+
+        chat_log = self.query_one("#chat-log")
+        chat_log.mount(
+            ChatMessage(f"Switched to [bold]{new_display}[/bold].", classes="system-msg")
+        )
+        chat_log.scroll_end(animate=False)
 
     def action_toggle_betting(self) -> None:
         """Toggle betting mode on/off."""
