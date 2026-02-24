@@ -4,6 +4,8 @@ Provides scores, standings, rosters, schedules, game summaries,
 rankings (AP/Coaches polls), and news for NCAA Division I men's basketball.
 """
 
+from __future__ import annotations
+
 import logging
 
 from sports_skills._espn_base import (

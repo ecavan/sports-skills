@@ -3,6 +3,8 @@
 Requires optional dependencies: pip install sports-skills[f1]
 """
 
+from __future__ import annotations
+
 from sports_skills.f1._connector import (
     get_championship_standings as _get_championship_standings,
 )

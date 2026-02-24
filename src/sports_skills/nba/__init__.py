@@ -3,6 +3,8 @@
 Wraps ESPN public endpoints. No API keys required. Zero config.
 """
 
+from __future__ import annotations
+
 from sports_skills._response import wrap
 from sports_skills.nba._connector import (
     get_depth_chart as _get_depth_chart,

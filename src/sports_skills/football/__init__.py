@@ -4,6 +4,8 @@ Wraps ESPN, Understat, FPL, Transfermarkt, and openfootball.
 No API keys required. Zero config.
 """
 
+from __future__ import annotations
+
 from sports_skills._response import wrap
 from sports_skills.football._connector import (
     get_competition_seasons as _get_competition_seasons,

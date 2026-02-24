@@ -3,6 +3,8 @@
 Public read-only endpoints. No authentication required. Uses stdlib only.
 """
 
+from __future__ import annotations
+
 from sports_skills.kalshi._connector import (
     get_event as _get_event,
 )

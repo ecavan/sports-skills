@@ -3,6 +3,8 @@
 Requires feedparser (included in base install).
 """
 
+from __future__ import annotations
+
 from sports_skills.news._connector import (
     fetch_feed as _fetch_feed,
 )

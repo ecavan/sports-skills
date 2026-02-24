@@ -4,6 +4,8 @@ Provides caching, rate limiting, retry logic, and parameterized
 ESPN API request functions. Used by nfl, nba, nhl, mlb, wnba modules.
 """
 
+from __future__ import annotations
+
 import datetime
 import gzip
 import json

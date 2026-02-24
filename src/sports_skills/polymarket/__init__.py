@@ -3,6 +3,8 @@
 Uses Gamma API (public, no auth) and CLOB API (public reads) via stdlib only.
 """
 
+from __future__ import annotations
+
 from sports_skills.polymarket._connector import (
     get_event_details as _get_event_details,
 )

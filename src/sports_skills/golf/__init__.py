@@ -4,6 +4,8 @@ Wraps ESPN public endpoints for PGA Tour, LPGA, and DP World Tour.
 No API keys required. Zero config.
 """
 
+from __future__ import annotations
+
 from sports_skills._response import wrap
 from sports_skills.golf._connector import (
     get_leaderboard as _get_leaderboard,

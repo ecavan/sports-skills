@@ -3,6 +3,8 @@
 Wraps ESPN public endpoints for NCAA Division I men's basketball. No API keys required. Zero config.
 """
 
+from __future__ import annotations
+
 from sports_skills._response import wrap
 from sports_skills.cbb._connector import (
     get_futures as _get_futures,

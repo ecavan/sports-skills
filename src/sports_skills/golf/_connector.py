@@ -4,6 +4,8 @@ Provides tournament leaderboards, season schedules, golfer profiles,
 and news for PGA Tour, LPGA, and DP World Tour.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 
