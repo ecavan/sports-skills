@@ -390,10 +390,8 @@ def _load_module(name):
             if f1 is None:
                 raise ImportError
             return f1
-        except ImportError:
-            raise ImportError(
-                "F1 module requires extra dependencies. Install with: pip install sports-skills[f1]"
-            )
+        except ImportError as e:
+            raise ImportError("F1 module requires extra dependencies. Install with: pip install sports-skills[f1]") from e
     elif name == "nfl":
         from sports_skills import nfl
 
