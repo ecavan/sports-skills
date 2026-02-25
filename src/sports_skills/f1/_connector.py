@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import fastf1
 import pandas as pd
 

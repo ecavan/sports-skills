@@ -4,6 +4,8 @@ Wraps ESPN, Understat, FPL, Transfermarkt, and openfootball.
 No API keys required. Zero config.
 """
 
+from __future__ import annotations
+
 from sports_skills._response import wrap
 from sports_skills.football._connector import (
     get_competition_seasons as _get_competition_seasons,
@@ -75,7 +77,7 @@ from sports_skills.football._connector import (
 
 def _params(**kwargs):
     """Build params dict, filtering out None values."""
-    return {k: v for k, v in kwargs.items() if v is not None}
+    return {"params": {k: v for k, v in kwargs.items() if v is not None}}
 
 
 def get_current_season(*, competition_id: str) -> dict:
@@ -202,15 +204,18 @@ def get_season_transfers(
 
 
 def get_player_profile(
-    *, fpl_id: str | None = None, tm_player_id: str | None = None
+    *, player_id: str | None = None, fpl_id: str | None = None, tm_player_id: str | None = None
 ) -> dict:
     """Get player profile. At least one ID required.
 
     Args:
+        player_id: ESPN athlete ID (any league).
         fpl_id: FPL player ID (Premier League players only).
         tm_player_id: Transfermarkt player ID (any league).
     """
-    return wrap(_get_player_profile(_params(fpl_id=fpl_id, tm_player_id=tm_player_id)))
+    return wrap(
+        _get_player_profile(_params(player_id=player_id, fpl_id=fpl_id, tm_player_id=tm_player_id))
+    )
 
 
 def get_player_season_stats(*, player_id: str, league_slug: str | None = None) -> dict:

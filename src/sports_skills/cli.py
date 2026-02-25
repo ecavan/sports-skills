@@ -7,7 +7,7 @@ Examples:
     sports-skills football get_season_standings --season_id=premier-league-2025
     sports-skills polymarket get_sports_markets --limit=20
     sports-skills kalshi get_markets --series_ticker=KXNBA
-    sports-skills news fetch_items --google_news --query="Arsenal" --limit=5
+    sports-skills news fetch_items --query="Arsenal" --limit=5
     sports-skills f1 get_race_schedule --year=2025
     sports-skills nfl get_scoreboard
     sports-skills nfl get_standings --season=2025
@@ -47,7 +47,7 @@ _REGISTRY = {
             "required": ["season_id"],
             "optional": ["tm_player_ids"],
         },
-        "get_player_profile": {"optional": ["fpl_id", "tm_player_id"]},
+        "get_player_profile": {"optional": ["player_id", "fpl_id", "tm_player_id"]},
         "get_player_season_stats": {"required": ["player_id"], "optional": ["league_slug"]},
     },
     "polymarket": {
@@ -403,9 +403,35 @@ _INT_PARAMS = {
 _LIST_PARAMS = {"tm_player_ids", "token_ids"}
 
 
-def _cli_error(message):
+class OptionalDependencyError(ImportError):
+    """Structured error for missing optional dependencies."""
+
+    def __init__(self, message: str, *, dependency: str, extra: str, hint: str):
+        super().__init__(message)
+        self.dependency = dependency
+        self.extra = extra
+        self.hint = hint
+
+
+def _cli_error(
+    message,
+    *,
+    error_code=None,
+    hint=None,
+    dependency=None,
+    extra=None,
+):
     """Print error as JSON to stdout (for agents) and plain text to stderr (for humans), then exit."""
-    print(json.dumps({"status": False, "data": None, "message": message}, indent=2))
+    payload = {"status": False, "data": None, "message": message}
+    if error_code:
+        payload["error_code"] = error_code
+    if hint:
+        payload["hint"] = hint
+    if dependency:
+        payload["dependency"] = dependency
+    if extra:
+        payload["extra"] = extra
+    print(json.dumps(payload, indent=2))
     print(f"Error: {message}", file=sys.stderr)
     sys.exit(1)
 
@@ -429,16 +455,30 @@ def _load_module(name):
 
         return news
     elif name == "f1":
+        err_msg = (
+            "F1 module dependencies are unavailable in this environment."
+        )
+        hint = "python3 -m pip install --upgrade sports-skills"
         try:
             from sports_skills import f1
 
             if f1 is None:
-                raise ImportError
+                raise OptionalDependencyError(
+                    err_msg,
+                    dependency="fastf1",
+                    extra="f1",
+                    hint=hint,
+                )
             return f1
-        except ImportError:
-            _cli_error(
-                "F1 module requires extra dependencies. Install with: pip install sports-skills[f1]"
-            )
+        except OptionalDependencyError:
+            raise
+        except ImportError as e:
+            raise OptionalDependencyError(
+                err_msg,
+                dependency="fastf1",
+                extra="f1",
+                hint=hint,
+            ) from e
     elif name == "nfl":
         from sports_skills import nfl
 
@@ -473,7 +513,7 @@ def _load_module(name):
         from sports_skills import golf
         return golf
     else:
-        _cli_error(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
+        raise ValueError(f"Unknown module '{name}'. Available: {', '.join(_REGISTRY.keys())}")
 
 
 def _parse_value(key, value):
@@ -487,6 +527,122 @@ def _parse_value(key, value):
     if key in _LIST_PARAMS:
         return [v.strip() for v in value.split(",")]
     return value
+
+
+def _parse_docstring_args(docstring):
+    """Parse Google-style docstring Args section into a dict of {param: description}."""
+    if not docstring:
+        return {}
+    lines = docstring.strip().split("\n")
+    args = {}
+    in_args = False
+    current_param = None
+    current_desc = []
+
+    for line in lines:
+        stripped = line.strip()
+        # Detect start of Args section
+        if stripped == "Args:":
+            in_args = True
+            continue
+        if not in_args:
+            continue
+        # End of Args section: a new section header (word followed by colon at base indent)
+        if stripped and not stripped.startswith(" ") and stripped.endswith(":") and stripped != "Args:":
+            break
+        # Empty line inside Args can end the section if we already have params
+        if not stripped:
+            if current_param:
+                args[current_param] = " ".join(current_desc).strip()
+                current_param = None
+                current_desc = []
+            continue
+        # New parameter line: "param_name: description" or "param_name (type): description"
+        if ":" in stripped and not stripped[0].isspace():
+            # Save previous param
+            if current_param:
+                args[current_param] = " ".join(current_desc).strip()
+            param_part, _, desc_part = stripped.partition(":")
+            # Handle "param_name (type)" format
+            param_name = param_part.split("(")[0].strip()
+            current_param = param_name
+            current_desc = [desc_part.strip()] if desc_part.strip() else []
+        elif current_param:
+            # Continuation line for current parameter
+            current_desc.append(stripped)
+
+    # Save last param
+    if current_param:
+        args[current_param] = " ".join(current_desc).strip()
+
+    return args
+
+
+def _param_type(name):
+    """Return JSON Schema type string for a parameter based on known sets."""
+    if name in _BOOL_PARAMS:
+        return "boolean"
+    if name in _INT_PARAMS:
+        return "integer"
+    if name in _LIST_PARAMS:
+        return "array"
+    return "string"
+
+
+def _generate_schema(module_name):
+    """Generate JSON Schema tool definitions for a module (Vercel AI SDK compatible).
+
+    Reads the _REGISTRY for command definitions and attempts to load the
+    module to extract docstrings from the actual functions.
+    """
+    commands = _REGISTRY[module_name]
+
+    # Try loading the module to get function docstrings and param descriptions
+    func_docs = {}
+    param_docs = {}
+    try:
+        module = _load_module(module_name)
+        for cmd_name in commands:
+            func = getattr(module, cmd_name, None)
+            if func and func.__doc__:
+                # Use the first line of the docstring as description
+                func_docs[cmd_name] = func.__doc__.strip().split("\n")[0]
+                # Parse Args section for parameter descriptions
+                param_docs[cmd_name] = _parse_docstring_args(func.__doc__)
+    except ImportError:
+        pass
+
+    tools = []
+    for cmd_name, cmd_info in commands.items():
+        required = cmd_info.get("required", [])
+        optional = cmd_info.get("optional", [])
+        cmd_param_docs = param_docs.get(cmd_name, {})
+
+        properties = {}
+        for param in required + optional:
+            ptype = _param_type(param)
+            prop = {"type": ptype}
+            if ptype == "array":
+                prop["items"] = {"type": "string"}
+            if param in cmd_param_docs:
+                prop["description"] = cmd_param_docs[param]
+            properties[param] = prop
+
+        tool = {
+            "name": f"{module_name}_{cmd_name}",
+            "command": cmd_name,
+            "description": func_docs.get(
+                cmd_name, f"{cmd_name} command for {module_name}"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": properties,
+                "required": required,
+            },
+        }
+        tools.append(tool)
+
+    return {"sport": module_name, "tools": tools}
 
 
 def main():
@@ -534,6 +690,16 @@ def main():
             print(f"  {cmd_name} {' '.join(parts)}")
         return
 
+    # Reserved "schema" command: generate JSON Schema tool definitions
+    if args.command == "schema":
+        if args.module not in _REGISTRY:
+            _cli_error(
+                f"Unknown module '{args.module}'. Available: {', '.join(_REGISTRY.keys())}"
+            )
+        schema = _generate_schema(args.module)
+        print(json.dumps(schema, indent=2))
+        return
+
     module_name = args.module
     command_name = args.command
 
@@ -571,7 +737,18 @@ def main():
         )
 
     # Load module and call function
-    module = _load_module(module_name)
+    try:
+        module = _load_module(module_name)
+    except OptionalDependencyError as e:
+        _cli_error(
+            str(e),
+            error_code="MISSING_OPTIONAL_DEPENDENCY",
+            hint=e.hint,
+            dependency=e.dependency,
+            extra=e.extra,
+        )
+    except (ImportError, ValueError) as e:
+        _cli_error(str(e))
     func = getattr(module, command_name, None)
     if not func:
         _cli_error(f"Function '{command_name}' not found in module '{module_name}'")

@@ -1002,3 +1002,379 @@ class TestNormalizeDepthChart:
         pos = result["charts"][0]["positions"][0]
         assert pos["name"] == "lt"
         assert pos["abbreviation"] == "LT"
+
+
+# ── Schema generation ────────────────────────────────────────────
+
+
+class TestParamType:
+    """Tests for _param_type helper."""
+
+    def test_bool_param(self):
+        from sports_skills.cli import _param_type
+
+        assert _param_type("google_news") == "boolean"
+        assert _param_type("active") == "boolean"
+
+    def test_int_param(self):
+        from sports_skills.cli import _param_type
+
+        assert _param_type("limit") == "integer"
+        assert _param_type("season") == "integer"
+
+    def test_string_param(self):
+        from sports_skills.cli import _param_type
+
+        assert _param_type("team_id") == "string"
+        assert _param_type("query") == "string"
+
+    def test_list_param(self):
+        from sports_skills.cli import _param_type
+
+        assert _param_type("tm_player_ids") == "array"
+        assert _param_type("token_ids") == "array"
+
+
+class TestGenerateSchema:
+    """Tests for _generate_schema Anthropic tool schema generator."""
+
+    def test_schema_top_level_keys(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("nfl")
+        assert schema["sport"] == "nfl"
+        assert "tools" in schema
+        assert isinstance(schema["tools"], list)
+
+    def test_tool_name_format(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("nfl")
+        for tool in schema["tools"]:
+            assert tool["name"].startswith("nfl_")
+
+    def test_tool_has_required_fields(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("nfl")
+        for tool in schema["tools"]:
+            assert "name" in tool
+            assert "command" in tool
+            assert "description" in tool
+            assert "parameters" in tool
+            assert tool["parameters"]["type"] == "object"
+            assert "properties" in tool["parameters"]
+            assert "required" in tool["parameters"]
+
+    def test_required_params_listed(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("nfl")
+        roster_tool = next(t for t in schema["tools"] if t["name"] == "nfl_get_team_roster")
+        assert "team_id" in roster_tool["parameters"]["required"]
+        assert "team_id" in roster_tool["parameters"]["properties"]
+
+    def test_optional_params_not_in_required(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("nfl")
+        scoreboard = next(t for t in schema["tools"] if t["name"] == "nfl_get_scoreboard")
+        assert scoreboard["parameters"]["required"] == []
+        assert "date" in scoreboard["parameters"]["properties"]
+
+    def test_param_types_inferred(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("nfl")
+        standings = next(t for t in schema["tools"] if t["name"] == "nfl_get_standings")
+        assert standings["parameters"]["properties"]["season"]["type"] == "integer"
+
+    def test_bool_param_type(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("polymarket")
+        markets = next(t for t in schema["tools"] if t["name"] == "polymarket_get_sports_markets")
+        assert markets["parameters"]["properties"]["active"]["type"] == "boolean"
+
+    def test_docstrings_used_as_descriptions(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("nfl")
+        teams = next(t for t in schema["tools"] if t["name"] == "nfl_get_teams")
+        assert teams["description"] == "Get all 32 NFL teams."
+
+    def test_all_registry_modules_generate_schema(self):
+        from sports_skills.cli import _REGISTRY, _generate_schema
+
+        for module_name in _REGISTRY:
+            schema = _generate_schema(module_name)
+            assert schema["sport"] == module_name
+            assert len(schema["tools"]) == len(_REGISTRY[module_name])
+
+    def test_no_params_command(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("nfl")
+        injuries = next(t for t in schema["tools"] if t["name"] == "nfl_get_injuries")
+        assert injuries["parameters"]["properties"] == {}
+        assert injuries["parameters"]["required"] == []
+
+    def test_list_param_has_array_type_and_items(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("polymarket")
+        market_prices = next(
+            t for t in schema["tools"] if t["name"] == "polymarket_get_market_prices"
+        )
+        prop = market_prices["parameters"]["properties"]["token_ids"]
+        assert prop["type"] == "array"
+        assert prop["items"] == {"type": "string"}
+
+    def test_param_descriptions_from_docstrings(self):
+        from sports_skills.cli import _generate_schema
+
+        schema = _generate_schema("nfl")
+        roster = next(t for t in schema["tools"] if t["name"] == "nfl_get_team_roster")
+        team_id_prop = roster["parameters"]["properties"]["team_id"]
+        assert "description" in team_id_prop
+        assert len(team_id_prop["description"]) > 0
+
+
+class TestParseDocstringArgs:
+    """Tests for _parse_docstring_args helper."""
+
+    def test_simple_args(self):
+        from sports_skills.cli import _parse_docstring_args
+
+        doc = """Get team roster.
+
+        Args:
+            team_id: ESPN team ID.
+        """
+        result = _parse_docstring_args(doc)
+        assert result["team_id"] == "ESPN team ID."
+
+    def test_multiline_description(self):
+        from sports_skills.cli import _parse_docstring_args
+
+        doc = """Get player stats.
+
+        Args:
+            player_id: ESPN athlete ID.
+            league_slug: ESPN league slug (e.g. "eng.1" for Premier League,
+                "esp.1" for La Liga). Defaults to "eng.1".
+        """
+        result = _parse_docstring_args(doc)
+        assert result["player_id"] == "ESPN athlete ID."
+        assert "eng.1" in result["league_slug"]
+        assert "La Liga" in result["league_slug"]
+
+    def test_no_args_section(self):
+        from sports_skills.cli import _parse_docstring_args
+
+        doc = """Get all teams."""
+        result = _parse_docstring_args(doc)
+        assert result == {}
+
+    def test_empty_docstring(self):
+        from sports_skills.cli import _parse_docstring_args
+
+        assert _parse_docstring_args("") == {}
+        assert _parse_docstring_args(None) == {}
+
+
+class TestLoadModuleRaisesExceptions:
+    """Tests that _load_module raises clean exceptions instead of sys.exit."""
+
+    def test_unknown_module_raises_value_error(self):
+        import pytest
+
+        from sports_skills.cli import _load_module
+
+        with pytest.raises(ValueError, match="Unknown module"):
+            _load_module("nonexistent_sport")
+
+
+class TestCliOptionalDependencyErrors:
+    """Structured errors for missing optional deps should be machine-readable."""
+
+    def test_cli_error_includes_optional_dependency_fields(self, capsys):
+        import json
+
+        import pytest
+
+        from sports_skills.cli import _cli_error
+
+        with pytest.raises(SystemExit) as exc:
+            _cli_error(
+                "F1 module dependencies are unavailable in this environment.",
+                error_code="MISSING_OPTIONAL_DEPENDENCY",
+                hint="python3 -m pip install --upgrade sports-skills",
+                dependency="fastf1",
+                extra="f1",
+            )
+
+        captured = capsys.readouterr()
+        payload = json.loads(captured.out)
+        assert exc.value.code == 1
+        assert payload["status"] is False
+        assert payload["error_code"] == "MISSING_OPTIONAL_DEPENDENCY"
+        assert payload["dependency"] == "fastf1"
+        assert payload["extra"] == "f1"
+        assert "sports-skills" in payload["hint"]
+        assert "Error:" in captured.err
+
+    def test_load_module_f1_raises_structured_optional_dependency(self, monkeypatch):
+        import pytest
+
+        import sports_skills
+        from sports_skills.cli import OptionalDependencyError, _load_module
+
+        monkeypatch.setattr(sports_skills, "f1", None, raising=False)
+
+        with pytest.raises(OptionalDependencyError) as exc:
+            _load_module("f1")
+
+        err = exc.value
+        assert err.dependency == "fastf1"
+        assert err.extra == "f1"
+        assert "sports-skills" in err.hint
+
+
+class TestNewsQueryDefaults:
+    """Query-only news calls should route to Google News automatically."""
+
+    @staticmethod
+    def _fake_feed():
+        class _Feed:
+            status = 200
+            bozo = False
+            feed = {"title": "Demo Feed"}
+            entries = [
+                {
+                    "title": "Test Item",
+                    "link": "https://example.com/item",
+                    "published": "Wed, 25 Feb 2026 12:00:00 GMT",
+                    "summary": "Summary",
+                }
+            ]
+
+        return _Feed()
+
+    def test_fetch_items_query_without_url_uses_google_news(self, monkeypatch):
+        from sports_skills.news import fetch_items
+
+        captured = {}
+
+        def _fake_parse(url):
+            captured["url"] = url
+            return self._fake_feed()
+
+        monkeypatch.setattr("sports_skills.news._connector.feedparser.parse", _fake_parse)
+
+        result = fetch_items(query="Corinthians", limit=1)
+        assert result["status"] is True
+        assert "news.google.com/rss/search" in captured["url"]
+        assert result["data"]["url"] == captured["url"]
+        assert result["data"]["count"] == 1
+
+    def test_fetch_feed_query_without_url_uses_google_news(self, monkeypatch):
+        from sports_skills.news import fetch_feed
+
+        captured = {}
+
+        def _fake_parse(url):
+            captured["url"] = url
+            return self._fake_feed()
+
+        monkeypatch.setattr("sports_skills.news._connector.feedparser.parse", _fake_parse)
+
+        result = fetch_feed(query="NBA")
+        assert result["status"] is True
+        assert "news.google.com/rss/search" in captured["url"]
+        assert result["data"]["title"] == "Demo Feed"
+
+    def test_fetch_items_without_query_or_url_returns_clear_validation(self):
+        from sports_skills.news import fetch_items
+
+        result = fetch_items()
+        assert result["status"] is False
+        assert "Provide url or use a query for Google News" in result["message"]
+
+
+class TestParamsContract:
+    """Verify _params() returns a wrapped dict in all modules.
+
+    All modules use {"params": {...}} so the Machina connector contract
+    is consistent and new modules can copy any pattern safely.
+    """
+
+    def test_nfl_params_is_wrapped(self):
+        from sports_skills.nfl import _params
+
+        result = _params(date="2026-02-24", week=1)
+        assert "params" in result
+        assert result["params"]["date"] == "2026-02-24"
+        assert result["params"]["week"] == 1
+
+    def test_nba_params_is_wrapped(self):
+        from sports_skills.nba import _params
+
+        result = _params(date="2026-02-24")
+        assert "params" in result
+        assert result["params"]["date"] == "2026-02-24"
+
+    def test_nhl_params_is_wrapped(self):
+        from sports_skills.nhl import _params
+
+        result = _params(team_id="1")
+        assert "params" in result
+        assert result["params"]["team_id"] == "1"
+
+    def test_mlb_params_is_wrapped(self):
+        from sports_skills.mlb import _params
+
+        result = _params(season=2025)
+        assert "params" in result
+        assert result["params"]["season"] == 2025
+
+    def test_wnba_params_is_wrapped(self):
+        from sports_skills.wnba import _params
+
+        result = _params(date="2026-02-24")
+        assert "params" in result
+        assert result["params"]["date"] == "2026-02-24"
+
+    def test_cfb_params_is_wrapped(self):
+        from sports_skills.cfb import _params
+
+        result = _params(season=2025, week=8)
+        assert "params" in result
+        assert result["params"]["season"] == 2025
+
+    def test_cbb_params_is_wrapped(self):
+        from sports_skills.cbb import _params
+
+        result = _params(season=2025)
+        assert "params" in result
+        assert result["params"]["season"] == 2025
+
+    def test_none_values_are_filtered(self):
+        """None values should be dropped regardless of module."""
+        from sports_skills.nfl import _params
+
+        result = _params(date="2026-02-24", week=None)
+        assert "week" not in result["params"]
+        assert "date" in result["params"]
+
+    def test_football_and_nfl_params_match_shape(self):
+        """football and nfl must return the same shape — the whole point of this fix."""
+        from sports_skills.football import _params as football_params
+        from sports_skills.nfl import _params as nfl_params
+
+        nfl_result = nfl_params(date="2026-02-24")
+        football_result = football_params(date="2026-02-24")
+        assert "params" in nfl_result
+        assert "params" in football_result
+        assert nfl_result["params"]["date"] == "2026-02-24"
+        assert football_result["params"]["date"] == "2026-02-24"

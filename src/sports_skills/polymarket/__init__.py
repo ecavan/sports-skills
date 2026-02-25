@@ -7,6 +7,10 @@ on-chain operations.
 
 from sports_skills.polymarket._cli import (
     approve_check as _cli_approve_check,
+from __future__ import annotations
+
+from sports_skills.polymarket._connector import (
+    get_event_details as _get_event_details,
 )
 from sports_skills.polymarket._cli import (
     approve_set as _cli_approve_set,
