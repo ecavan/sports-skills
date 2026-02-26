@@ -5,12 +5,10 @@ Extended with Polymarket CLI subprocess wrapper for analytics, trading, and
 on-chain operations.
 """
 
-from sports_skills.polymarket._cli import (
-    approve_check as _cli_approve_check,
 from __future__ import annotations
 
-from sports_skills.polymarket._connector import (
-    get_event_details as _get_event_details,
+from sports_skills.polymarket._cli import (
+    approve_check as _cli_approve_check,
 )
 from sports_skills.polymarket._cli import (
     approve_set as _cli_approve_set,
@@ -114,17 +112,39 @@ from sports_skills.polymarket._cli import (
 from sports_skills.polymarket._cli import (
     market_order as _cli_market_order,
 )
-from sports_skills.polymarket._connector import get_event_details as _get_event_details
-from sports_skills.polymarket._connector import get_last_trade_price as _get_last_trade_price
-from sports_skills.polymarket._connector import get_market_details as _get_market_details
-from sports_skills.polymarket._connector import get_market_prices as _get_market_prices
-from sports_skills.polymarket._connector import get_order_book as _get_order_book
-from sports_skills.polymarket._connector import get_price_history as _get_price_history
-from sports_skills.polymarket._connector import get_series as _get_series
-from sports_skills.polymarket._connector import get_sports_events as _get_sports_events
-from sports_skills.polymarket._connector import get_sports_market_types as _get_sports_market_types
-from sports_skills.polymarket._connector import get_sports_markets as _get_sports_markets
-from sports_skills.polymarket._connector import search_markets as _search_markets
+from sports_skills.polymarket._connector import (
+    get_event_details as _get_event_details,
+)
+from sports_skills.polymarket._connector import (
+    get_last_trade_price as _get_last_trade_price,
+)
+from sports_skills.polymarket._connector import (
+    get_market_details as _get_market_details,
+)
+from sports_skills.polymarket._connector import (
+    get_market_prices as _get_market_prices,
+)
+from sports_skills.polymarket._connector import (
+    get_order_book as _get_order_book,
+)
+from sports_skills.polymarket._connector import (
+    get_price_history as _get_price_history,
+)
+from sports_skills.polymarket._connector import (
+    get_series as _get_series,
+)
+from sports_skills.polymarket._connector import (
+    get_sports_events as _get_sports_events,
+)
+from sports_skills.polymarket._connector import (
+    get_sports_market_types as _get_sports_market_types,
+)
+from sports_skills.polymarket._connector import (
+    get_sports_markets as _get_sports_markets,
+)
+from sports_skills.polymarket._connector import (
+    search_markets as _search_markets,
+)
 
 
 def _req(**kwargs):
