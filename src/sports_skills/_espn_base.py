@@ -323,6 +323,8 @@ def normalize_odds(odds_list):
         return None
 
     o = odds_list[0]  # ESPN provides one provider (DraftKings)
+    if o is None:
+        return None
 
     ml = o.get("moneyline", {})
     ps = o.get("pointSpread", {})

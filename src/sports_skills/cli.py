@@ -178,8 +178,8 @@ _REGISTRY = {
             "required": ["year", "team1", "team2"],
             "optional": ["event"],
         },
-        "get_teammate_comparison": {
-            "required": ["year", "team"],
+        "get_driver_comparison": {
+            "required": ["year", "driver1", "driver2"],
             "optional": ["event"],
         },
         "get_tire_analysis": {"required": ["year"], "optional": ["event", "driver"]},
