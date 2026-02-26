@@ -228,28 +228,61 @@ def _normalize_news(espn_data):
 # ============================================================
 
 
+def _fetch_scoreboard_for_tour(tour, espn_params):
+    """Fetch and normalize scoreboard for a single tour."""
+    data = espn_request(_tour_path(tour), "scoreboard", espn_params or None)
+    if data.get("error"):
+        return None, data
+
+    tournaments = []
+    for e in data.get("events", []):
+        t = _normalize_tournament(e, include_matches=True)
+        t["tour"] = tour.upper()
+        tournaments.append(t)
+
+    return tournaments, None
+
+
 def get_scoreboard(request_data):
-    """Get active tournaments with matches for a tour (ATP or WTA)."""
+    """Get active tournaments with matches for a tour (ATP or WTA).
+
+    If tour is omitted, fetches both ATP and WTA and combines results.
+    """
     params = request_data.get("params", {})
-    tour, err = _validate_tour(params.get("tour"))
-    if err:
-        return err
+    tour_raw = params.get("tour")
 
     espn_params = {}
     date = params.get("date")
     if date:
         espn_params["dates"] = date.replace("-", "")
 
-    data = espn_request(_tour_path(tour), "scoreboard", espn_params or None)
-    if data.get("error"):
-        return data
+    # If tour is specified, fetch just that tour
+    if tour_raw:
+        tour, err = _validate_tour(tour_raw)
+        if err:
+            return err
+        tournaments, err = _fetch_scoreboard_for_tour(tour, espn_params)
+        if err:
+            return err
+        return {
+            "tour": tour.upper(),
+            "tournaments": tournaments,
+            "count": len(tournaments),
+        }
 
-    tournaments = [_normalize_tournament(e, include_matches=True) for e in data.get("events", [])]
+    # No tour specified — fetch both and combine
+    all_tournaments = []
+    for t in sorted(_VALID_TOURS):
+        tournaments, err = _fetch_scoreboard_for_tour(t, espn_params)
+        if err:
+            logger.warning("Failed to fetch %s scoreboard: %s", t.upper(), err.get("message", ""))
+            continue
+        all_tournaments.extend(tournaments)
 
     return {
-        "tour": tour.upper(),
-        "tournaments": tournaments,
-        "count": len(tournaments),
+        "tour": "all",
+        "tournaments": all_tournaments,
+        "count": len(all_tournaments),
     }
 
 

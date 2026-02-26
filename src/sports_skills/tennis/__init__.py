@@ -28,11 +28,11 @@ def _params(**kwargs):
     return {"params": {k: v for k, v in kwargs.items() if v is not None}}
 
 
-def get_scoreboard(*, tour: str, date: str | None = None) -> dict:
+def get_scoreboard(*, tour: str | None = None, date: str | None = None) -> dict:
     """Get active tournaments with matches for a tour.
 
     Args:
-        tour: Tour name — "atp" or "wta".
+        tour: Tour name — "atp" or "wta". Omit to fetch both tours.
         date: Date in YYYY-MM-DD format. Defaults to today.
     """
     return wrap(_get_scoreboard(_params(tour=tour, date=date)))

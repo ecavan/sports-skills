@@ -324,7 +324,7 @@ _REGISTRY = {
         "get_player_stats": {"required": ["player_id"], "optional": ["season_year", "season_type"]},
     },
     "tennis": {
-        "get_scoreboard": {"required": ["tour"], "optional": ["date"]},
+        "get_scoreboard": {"optional": ["tour", "date"]},
         "get_calendar": {"required": ["tour"], "optional": ["year"]},
         "get_rankings": {"required": ["tour"], "optional": ["limit"]},
         "get_player_info": {"required": ["player_id"]},
