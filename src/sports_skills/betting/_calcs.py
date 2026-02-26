@@ -1,6 +1,6 @@
-"""Betting analysis — odds conversion, de-vigging, edge detection, Kelly, Monte Carlo.
+"""Betting analysis — odds conversion, de-vigging, edge detection, Kelly criterion.
 
-Pure-computation module (no network calls). Uses stdlib only (math, random).
+Pure-computation module (no network calls). Uses stdlib only.
 Works with odds from any source: ESPN (American), Polymarket (decimal prob),
 Kalshi (integer prob), or raw decimal odds.
 
@@ -9,14 +9,13 @@ Functions:
 2. devig            — strip vig/juice from sportsbook odds to get fair probabilities
 3. find_edge        — compare fair probability to market price, compute edge + EV
 4. kelly_criterion  — optimal bet sizing from two probabilities (no user estimation)
-5. monte_carlo_sim  — simulate N wealth paths via resampling
-6. max_drawdown     — worst peak-to-trough loss from a wealth series
-7. evaluate_bet     — all-in-one: book odds + market price → full risk profile
+5. evaluate_bet     — all-in-one: book odds + market price → full risk profile
+6. find_arbitrage   — detect guaranteed-profit opportunities across sources
+7. parlay_analysis  — multi-leg parlay EV and Kelly analysis
+8. line_movement    — quantify open→close line shifts
 """
 
 from __future__ import annotations
-
-import random
 
 # ============================================================
 # Response Helpers
@@ -309,217 +308,12 @@ def kelly_criterion(request_data: dict) -> dict:
 
 
 # ============================================================
-# 5. Monte Carlo Resampling
-# ============================================================
-
-
-def monte_carlo_sim(request_data: dict) -> dict:
-    """Run Monte Carlo resampling on an empirical return set.
-
-    Takes a set of historical returns and simulates N wealth paths by
-    randomly resampling (with replacement) from those returns.
-
-    Params:
-        returns (str): Comma-separated returns as decimals (e.g. "0.08,-0.04,0.06,-0.03,0.07").
-        n_simulations (int): Number of simulated paths (default: 10000).
-        n_periods (int): Number of periods per path (default: length of returns).
-        initial_bankroll (float): Starting bankroll (default: 1000).
-        seed (int): Random seed for reproducibility (optional).
-    """
-    params = request_data.get("params", {})
-
-    # Parse returns
-    raw = params.get("returns", "")
-    if not raw:
-        return _error(
-            "returns is required (comma-separated decimals, e.g. '0.08,-0.04,0.06')"
-        )
-    try:
-        if isinstance(raw, str):
-            returns = [float(r.strip()) for r in raw.split(",")]
-        elif isinstance(raw, list):
-            returns = [float(r) for r in raw]
-        else:
-            return _error("returns must be a comma-separated string or list of numbers")
-    except (TypeError, ValueError) as e:
-        return _error(f"Invalid returns format: {e}")
-
-    if len(returns) < 2:
-        return _error("Need at least 2 return values")
-
-    n_sims = int(params.get("n_simulations", 10000))
-    n_periods_raw = params.get("n_periods")
-    n_periods = int(n_periods_raw) if n_periods_raw is not None else len(returns)
-    bankroll = float(params.get("initial_bankroll", 1000.0))
-    seed = params.get("seed")
-
-    if n_sims < 1 or n_sims > 100000:
-        return _error("n_simulations must be between 1 and 100,000")
-    if n_periods < 1:
-        return _error("n_periods must be >= 1")
-
-    rng = random.Random(int(seed)) if seed is not None else random.Random()
-
-    # Run simulations
-    final_values = []
-    max_drawdowns = []
-    paths_summary = []  # store subset for visualization
-
-    for j in range(n_sims):
-        # Resample returns with replacement
-        path_returns = [rng.choice(returns) for _ in range(n_periods)]
-
-        # Build wealth path
-        wealth = [bankroll]
-        for r in path_returns:
-            wealth.append(wealth[-1] * (1.0 + r))
-
-        final_values.append(wealth[-1])
-
-        # Compute max drawdown for this path
-        peak = wealth[0]
-        mdd = 0.0
-        for w in wealth[1:]:
-            if w > peak:
-                peak = w
-            dd = (w - peak) / peak if peak != 0 else 0.0
-            if dd < mdd:
-                mdd = dd
-        max_drawdowns.append(mdd)
-
-        # Store first 20 paths for visualization
-        if j < 20:
-            paths_summary.append(
-                {
-                    "path_id": j,
-                    "final_value": round(wealth[-1], 2),
-                    "max_drawdown": round(mdd, 4),
-                    "values": [
-                        round(w, 2) for w in wealth[:: max(1, len(wealth) // 50)]
-                    ],
-                }
-            )
-
-    # Compute statistics
-    final_values.sort()
-    max_drawdowns.sort()
-    n = len(final_values)
-
-    mean_final = sum(final_values) / n
-    median_final = final_values[n // 2]
-    p5 = final_values[int(n * 0.05)]
-    p25 = final_values[int(n * 0.25)]
-    p75 = final_values[int(n * 0.75)]
-    p95 = final_values[int(n * 0.95)]
-    prob_profit = sum(1 for v in final_values if v > bankroll) / n
-    prob_ruin = sum(1 for v in final_values if v <= bankroll * 0.1) / n
-
-    mean_mdd = sum(max_drawdowns) / n
-    median_mdd = max_drawdowns[n // 2]
-    worst_mdd = max_drawdowns[0]  # most negative
-    p5_mdd = max_drawdowns[int(n * 0.05)]
-
-    return _success(
-        {
-            "simulations": n_sims,
-            "periods": n_periods,
-            "initial_bankroll": bankroll,
-            "returns_used": returns,
-            "final_value": {
-                "mean": round(mean_final, 2),
-                "median": round(median_final, 2),
-                "p5": round(p5, 2),
-                "p25": round(p25, 2),
-                "p75": round(p75, 2),
-                "p95": round(p95, 2),
-                "min": round(final_values[0], 2),
-                "max": round(final_values[-1], 2),
-            },
-            "probability_of_profit": round(prob_profit, 4),
-            "probability_of_ruin": round(prob_ruin, 4),
-            "max_drawdown": {
-                "mean": round(mean_mdd, 4),
-                "median": round(median_mdd, 4),
-                "worst": round(worst_mdd, 4),
-                "p5": round(p5_mdd, 4),
-            },
-            "sample_paths": paths_summary,
-        },
-        f"Simulated {n_sims} paths over {n_periods} periods",
-    )
-
-
-# ============================================================
-# 6. Maximum Drawdown (standalone)
-# ============================================================
-
-
-def max_drawdown(request_data: dict) -> dict:
-    """Compute the maximum drawdown from a wealth/equity series.
-
-    Peak: Pt = max(s<=t) Ws
-    Drawdown: DDt = (Wt - Pt) / Pt
-    MDD = min(DDt)
-
-    Params:
-        values (str): Comma-separated wealth values (e.g. "1000,1080,1040,1100,1050").
-    """
-    params = request_data.get("params", {})
-    raw = params.get("values", "")
-    if not raw:
-        return _error("values is required (comma-separated wealth series)")
-    try:
-        if isinstance(raw, str):
-            values = [float(v.strip()) for v in raw.split(",")]
-        elif isinstance(raw, list):
-            values = [float(v) for v in raw]
-        else:
-            return _error("values must be a comma-separated string or list")
-    except (TypeError, ValueError) as e:
-        return _error(f"Invalid values format: {e}")
-
-    if len(values) < 2:
-        return _error("Need at least 2 values")
-
-    peak = values[0]
-    mdd = 0.0
-    mdd_peak_idx = 0
-    mdd_trough_idx = 0
-    current_peak_idx = 0
-
-    drawdown_series = []
-    for i, w in enumerate(values):
-        if w > peak:
-            peak = w
-            current_peak_idx = i
-        dd = (w - peak) / peak if peak != 0 else 0.0
-        drawdown_series.append(round(dd, 6))
-        if dd < mdd:
-            mdd = dd
-            mdd_peak_idx = current_peak_idx
-            mdd_trough_idx = i
-
-    return _success(
-        {
-            "max_drawdown": round(mdd, 6),
-            "max_drawdown_pct": f"{mdd * 100:.2f}%",
-            "peak_value": round(values[mdd_peak_idx], 2),
-            "trough_value": round(values[mdd_trough_idx], 2),
-            "peak_index": mdd_peak_idx,
-            "trough_index": mdd_trough_idx,
-            "drawdown_series": drawdown_series,
-        },
-        f"Max drawdown: {mdd * 100:.2f}%",
-    )
-
-
-# ============================================================
-# 7. Evaluate Bet (all-in-one)
+# 5. Evaluate Bet (all-in-one)
 # ============================================================
 
 
 def evaluate_bet(request_data: dict) -> dict:
-    """Full bet evaluation: convert book odds → de-vig → edge → Kelly → Monte Carlo.
+    """Full bet evaluation: convert book odds → de-vig → edge → Kelly.
 
     Takes sportsbook odds and a prediction market price, computes everything
     without requiring the user to estimate probabilities.
@@ -532,11 +326,6 @@ def evaluate_bet(request_data: dict) -> dict:
         book_format (str): Format of book_odds — "american" (default), "decimal",
                            or "probability".
         outcome (int): Which outcome to evaluate (0-indexed, default: 0 = first).
-        returns (str): Optional historical returns for Monte Carlo simulation.
-        n_simulations (int): Monte Carlo paths (default: 10000).
-        n_periods (int): Periods per path (default: length of returns).
-        initial_bankroll (float): Starting bankroll (default: 1000).
-        seed (int): Random seed (optional).
     """
     params = request_data.get("params", {})
 
@@ -575,55 +364,450 @@ def evaluate_bet(request_data: dict) -> dict:
     if not edge_result["status"]:
         return edge_result
 
-    # Step 5: Monte Carlo (if returns provided)
-    mc_result = None
-    if params.get("returns"):
-        mc_result = monte_carlo_sim(
-            {
-                "params": {
-                    "returns": params.get("returns"),
-                    "n_simulations": params.get("n_simulations", 10000),
-                    "n_periods": params.get("n_periods"),
-                    "initial_bankroll": params.get("initial_bankroll", 1000),
-                    "seed": params.get("seed"),
-                }
-            }
-        )
-        if not mc_result["status"]:
-            return mc_result
-
     # Build response
-    data = {
-        "devig": devig_result["data"],
-        "edge": edge_result["data"],
-    }
-    if mc_result:
-        data["monte_carlo"] = mc_result["data"]
-
-    # Summary
     edge = edge_result["data"]["edge"]
     kelly = edge_result["data"]["kelly_fraction"]
     ev = edge_result["data"]["ev_per_dollar"]
 
-    summary_parts = [
-        f"Fair: {fair_prob:.1%}",
-        f"Market: {market_prob:.1%}",
-        f"Edge: {edge * 100:.2f}%",
-        f"Kelly: {kelly:.4f}",
-        f"EV: {ev * 100:.2f}%",
-    ]
-    if mc_result:
-        prob_profit = mc_result["data"]["probability_of_profit"]
-        mean_mdd = mc_result["data"]["max_drawdown"]["mean"]
-        summary_parts.append(f"P(profit): {prob_profit:.1%}")
-        summary_parts.append(f"Mean MDD: {mean_mdd:.1%}")
-
-    recommendation = "no bet"
-    if kelly > 0:
-        if mc_result and mc_result["data"]["probability_of_profit"] > 0.5 or not mc_result:
-            recommendation = "bet"
-
-    data["recommendation"] = recommendation
-    data["summary"] = " | ".join(summary_parts)
+    data = {
+        "devig": devig_result["data"],
+        "edge": edge_result["data"],
+        "recommendation": "bet" if kelly > 0 else "no bet",
+        "summary": (
+            f"Fair: {fair_prob:.1%} | Market: {market_prob:.1%} | "
+            f"Edge: {edge * 100:.2f}% | Kelly: {kelly:.4f} | EV: {ev * 100:.2f}%"
+        ),
+    }
 
     return _success(data, data["summary"])
+
+
+# ============================================================
+# 6. Arbitrage Detection
+# ============================================================
+
+
+def find_arbitrage(request_data: dict) -> dict:
+    """Detect arbitrage opportunities across outcomes.
+
+    If the sum of market probabilities for all outcomes is less than 1.0,
+    there is a guaranteed-profit arbitrage opportunity. When no arbitrage
+    exists, reports the overround (vig embedded in the prices).
+
+    Params:
+        market_probs (str): Comma-separated market probabilities for ALL outcomes
+                            (0-1 each), e.g. "0.48,0.49" for 2-way or "0.40,0.25,0.30"
+                            for 3-way.
+        labels (str): Optional comma-separated outcome labels, e.g. "home,away".
+    """
+    params = request_data.get("params", {})
+    raw = params.get("market_probs", "")
+    if not raw:
+        return _error("market_probs is required (comma-separated, e.g. '0.48,0.49')")
+
+    try:
+        if isinstance(raw, str):
+            probs = [float(p.strip()) for p in raw.split(",")]
+        elif isinstance(raw, list):
+            probs = [float(p) for p in raw]
+        else:
+            return _error("market_probs must be a comma-separated string or list")
+    except (TypeError, ValueError) as e:
+        return _error(f"Invalid market_probs format: {e}")
+
+    if len(probs) < 2:
+        return _error("Need at least 2 outcome probabilities")
+    if any(p <= 0 or p >= 1 for p in probs):
+        return _error("All probabilities must be between 0 and 1 (exclusive)")
+
+    # Parse labels
+    raw_labels = params.get("labels", "")
+    if raw_labels:
+        if isinstance(raw_labels, str):
+            labels = [l.strip() for l in raw_labels.split(",")]
+        elif isinstance(raw_labels, list):
+            labels = [str(l) for l in raw_labels]
+        else:
+            labels = None
+        if labels and len(labels) != len(probs):
+            return _error(
+                f"labels count ({len(labels)}) must match market_probs count ({len(probs)})"
+            )
+    else:
+        labels = None
+
+    total_implied = sum(probs)
+    arb_found = total_implied < 1.0
+
+    if arb_found:
+        arb_pct = (1.0 / total_implied - 1.0) * 100
+    else:
+        arb_pct = 0.0
+
+    overround_pct = (total_implied - 1.0) * 100
+
+    allocations = []
+    for i, prob in enumerate(probs):
+        alloc_pct = (prob / total_implied) * 100
+        entry = {
+            "outcome": i,
+            "market_prob": prob,
+            "allocation_pct": round(alloc_pct, 2),
+        }
+        if labels:
+            entry["label"] = labels[i]
+        allocations.append(entry)
+
+    data = {
+        "arbitrage_found": arb_found,
+        "total_implied": round(total_implied, 6),
+        "arbitrage_pct": round(arb_pct, 2),
+        "overround_pct": round(overround_pct, 2),
+        "allocations": allocations,
+    }
+
+    if arb_found:
+        msg = f"Arbitrage found: {arb_pct:.2f}% guaranteed ROI"
+    else:
+        msg = f"No arbitrage (overround: {overround_pct:.2f}%)"
+
+    return _success(data, msg)
+
+
+# ============================================================
+# 7. Parlay Analysis
+# ============================================================
+
+
+def parlay_analysis(request_data: dict) -> dict:
+    """Analyze a multi-leg parlay: combined probability, EV, and Kelly.
+
+    Computes the combined fair probability from independent legs, compares
+    to the offered parlay odds, and determines if the parlay is +EV.
+
+    Params:
+        legs (str): Comma-separated fair probabilities per leg (0-1 each),
+                     e.g. "0.58,0.62,0.55".
+        parlay_odds (float): Offered parlay payout (American by default, e.g. 600
+                              for +600, or decimal like 7.0).
+        odds_format (str): Format of parlay_odds — "american" (default) or "decimal".
+        correlation (float): Correlation adjustment (0.0 = independent, max 0.5). Positive
+                              values increase combined probability since correlated legs
+                              are more likely to co-occur (e.g. same-game parlays).
+    """
+    params = request_data.get("params", {})
+
+    # Parse legs
+    raw = params.get("legs", "")
+    if not raw:
+        return _error("legs is required (comma-separated fair probs, e.g. '0.58,0.62,0.55')")
+    try:
+        if isinstance(raw, str):
+            leg_probs = [float(l.strip()) for l in raw.split(",")]
+        elif isinstance(raw, list):
+            leg_probs = [float(l) for l in raw]
+        else:
+            return _error("legs must be a comma-separated string or list")
+    except (TypeError, ValueError) as e:
+        return _error(f"Invalid legs format: {e}")
+
+    if any(p <= 0 or p >= 1 for p in leg_probs):
+        return _error("All leg probabilities must be between 0 and 1 (exclusive)")
+
+    # Parse parlay odds
+    try:
+        parlay_odds = float(params.get("parlay_odds", 0))
+    except (TypeError, ValueError) as e:
+        return _error(f"Invalid parlay_odds: {e}")
+
+    odds_format = str(params.get("odds_format", "american")).lower()
+    if odds_format == "american":
+        implied_prob = _american_to_prob(parlay_odds)
+        offered_american = parlay_odds
+        offered_decimal = _prob_to_decimal(implied_prob)
+    elif odds_format == "decimal":
+        if parlay_odds <= 1.0:
+            return _error("Decimal parlay_odds must be greater than 1.0")
+        implied_prob = _decimal_to_prob(parlay_odds)
+        offered_decimal = parlay_odds
+        offered_american = _prob_to_american(implied_prob)
+    else:
+        return _error(f"Unknown odds_format '{odds_format}'. Use 'american' or 'decimal'")
+
+    # Correlation
+    try:
+        correlation = float(params.get("correlation", 0.0))
+    except (TypeError, ValueError):
+        correlation = 0.0
+    if correlation < 0 or correlation > 0.5:
+        return _error("correlation must be between 0 and 0.5")
+
+    # Combined fair probability
+    # For independent legs: product of probs.
+    # Correlation adjustment: blend between independent (product) and
+    # "perfectly correlated" (min leg prob).  This gives a reasonable
+    # approximation for same-game parlays without requiring a full
+    # copula model.
+    independent_prob = 1.0
+    for p in leg_probs:
+        independent_prob *= p
+    if correlation > 0 and len(leg_probs) >= 2:
+        min_leg = min(leg_probs)
+        combined_adjusted = independent_prob + correlation * (min_leg - independent_prob)
+    else:
+        combined_adjusted = independent_prob
+
+    fair_american = _prob_to_american(combined_adjusted)
+    fair_decimal = _prob_to_decimal(combined_adjusted)
+
+    # Edge and EV
+    edge = combined_adjusted - implied_prob
+    ev_per_dollar = combined_adjusted / implied_prob - 1.0 if implied_prob > 0 else 0.0
+    is_plus_ev = edge > 0
+
+    # Kelly on the parlay
+    kelly = (combined_adjusted - implied_prob) / (1.0 - implied_prob) if implied_prob < 1 else 0.0
+
+    # Build legs detail
+    legs_detail = []
+    for i, p in enumerate(leg_probs):
+        legs_detail.append({
+            "leg": i,
+            "fair_prob": p,
+            "fair_american": round(_prob_to_american(p), 1),
+        })
+
+    data = {
+        "num_legs": len(leg_probs),
+        "legs": legs_detail,
+        "combined_fair_prob": round(combined_adjusted, 6),
+        "fair_parlay_american": round(fair_american, 1),
+        "fair_parlay_decimal": round(fair_decimal, 4),
+        "offered_parlay_american": round(offered_american, 1),
+        "offered_parlay_decimal": round(offered_decimal, 4),
+        "implied_parlay_prob": round(implied_prob, 6),
+        "edge": round(edge, 6),
+        "edge_pct": f"{edge * 100:.2f}%",
+        "ev_per_dollar": round(ev_per_dollar, 6),
+        "is_plus_ev": is_plus_ev,
+        "kelly_fraction": round(kelly, 6),
+        "correlation_applied": correlation,
+    }
+
+    if is_plus_ev:
+        recommendation = f"+EV parlay (edge: {edge * 100:.2f}%)"
+    else:
+        recommendation = f"-EV parlay (edge: {edge * 100:.2f}%). No bet."
+
+    data["recommendation"] = recommendation
+
+    msg = (
+        f"{len(leg_probs)}-leg parlay | "
+        f"Fair: {combined_adjusted:.1%} | "
+        f"Offered: {'+' if offered_american > 0 else ''}{offered_american:.0f} ({implied_prob:.1%}) | "
+        f"Edge: {edge * 100:.2f}% | "
+        f"{'+ EV' if is_plus_ev else '- EV'}"
+    )
+
+    return _success(data, msg)
+
+
+# ============================================================
+# 8. Line Movement Analysis
+# ============================================================
+
+
+def line_movement(request_data: dict) -> dict:
+    """Analyze line movement between open and close.
+
+    Quantifies how a line has moved and classifies the movement. Works with
+    moneyline odds, spread lines, or both. ESPN provides open and close data
+    in its odds structure.
+
+    Params:
+        open_odds (float): Opening American odds (e.g. -140).
+        close_odds (float): Closing American odds (e.g. -160).
+        open_line (float): Opening spread/total line (e.g. -6.5).
+        close_line (float): Closing spread/total line (e.g. -7.5).
+        market_type (str): "moneyline", "spread", or "total" (default: "moneyline").
+    """
+    params = request_data.get("params", {})
+
+    has_ml = params.get("open_odds") is not None and params.get("close_odds") is not None
+    has_spread = params.get("open_line") is not None and params.get("close_line") is not None
+
+    if not has_ml and not has_spread:
+        return _error(
+            "Need at least one pair: open_odds + close_odds, or open_line + close_line"
+        )
+
+    market_type = str(params.get("market_type", "moneyline")).lower()
+    data = {"market_type": market_type}
+
+    prob_shift = 0.0
+    ml_direction = None
+    spread_direction = None
+
+    # Moneyline analysis
+    if has_ml:
+        try:
+            open_odds = float(params["open_odds"])
+            close_odds = float(params["close_odds"])
+        except (TypeError, ValueError) as e:
+            return _error(f"Invalid odds values: {e}")
+
+        open_prob = _american_to_prob(open_odds)
+        close_prob = _american_to_prob(close_odds)
+        prob_shift = close_prob - open_prob
+
+        if prob_shift > 0:
+            direction = "shortened"
+            moved_toward = "favorite"
+        elif prob_shift < 0:
+            direction = "lengthened"
+            moved_toward = "underdog"
+        else:
+            direction = "no movement"
+            moved_toward = "none"
+
+        ml_direction = direction
+
+        data["moneyline"] = {
+            "open_odds": open_odds,
+            "close_odds": close_odds,
+            "open_implied_prob": round(open_prob, 6),
+            "close_implied_prob": round(close_prob, 6),
+            "prob_shift": round(prob_shift, 6),
+            "prob_shift_pct": f"{prob_shift * 100:.2f}%",
+            "direction": direction,
+            "moved_toward": moved_toward,
+        }
+
+    # Spread/total analysis
+    if has_spread:
+        try:
+            open_line = float(params["open_line"])
+            close_line = float(params["close_line"])
+        except (TypeError, ValueError) as e:
+            return _error(f"Invalid line values: {e}")
+
+        line_change = close_line - open_line
+
+        if market_type == "total":
+            if line_change > 0:
+                direction = "total moved up"
+            elif line_change < 0:
+                direction = "total moved down"
+            else:
+                direction = "no movement"
+        else:
+            # Spread: more negative = favorite giving more points
+            if line_change < 0:
+                direction = "moved toward favorite"
+            elif line_change > 0:
+                direction = "moved toward underdog"
+            else:
+                direction = "no movement"
+
+        spread_direction = direction
+
+        data["spread"] = {
+            "open_line": open_line,
+            "close_line": close_line,
+            "line_change": round(line_change, 2),
+            "direction": direction,
+        }
+
+    # Magnitude classification (based on moneyline prob shift if available)
+    abs_shift = abs(prob_shift)
+    if has_ml:
+        if abs_shift < 0.02:
+            magnitude = "small"
+        elif abs_shift < 0.05:
+            magnitude = "moderate"
+        else:
+            magnitude = "large"
+    elif has_spread:
+        abs_line = abs(close_line - open_line)
+        if market_type == "total":
+            # Totals move in larger increments (e.g., 220 → 223)
+            if abs_line <= 1.0:
+                magnitude = "small"
+            elif abs_line <= 3.0:
+                magnitude = "moderate"
+            else:
+                magnitude = "large"
+        else:
+            # Spread: 0.5 = half-point move (minor), 1-2 = moderate, 3+ = large
+            if abs_line <= 0.5:
+                magnitude = "small"
+            elif abs_line <= 2.0:
+                magnitude = "moderate"
+            else:
+                magnitude = "large"
+    else:
+        magnitude = "unknown"
+
+    data["magnitude"] = magnitude
+
+    # Classification
+    if has_ml and has_spread:
+        # Check for reverse line movement (ML and spread move opposite ways)
+        ml_fav = ml_direction == "shortened"
+        spread_fav = spread_direction == "moved toward favorite"
+        if ml_fav != spread_fav and ml_direction != "no movement" and spread_direction != "no movement":
+            classification = "reverse_line_movement"
+        elif magnitude == "large":
+            classification = "steam_move"
+        elif magnitude == "moderate":
+            classification = "sharp_action"
+        else:
+            classification = "minor_adjustment"
+    elif magnitude == "large":
+        classification = "steam_move"
+    elif magnitude == "moderate":
+        classification = "sharp_action"
+    else:
+        classification = "minor_adjustment"
+
+    data["classification"] = classification
+
+    # Build interpretation
+    parts = []
+    if has_ml:
+        sign = "+" if close_odds > 0 else ""
+        parts.append(
+            f"Moneyline moved from {'+' if open_odds > 0 else ''}{open_odds:.0f} "
+            f"to {sign}{close_odds:.0f} ({prob_shift * 100:+.2f}% probability shift)"
+        )
+    if has_spread:
+        parts.append(
+            f"{'Total' if market_type == 'total' else 'Spread'} moved from "
+            f"{open_line} to {close_line} ({line_change:+.1f})"
+        )
+
+    classification_labels = {
+        "steam_move": "Large, one-directional move suggesting coordinated sharp money.",
+        "sharp_action": "Moderate move suggesting professional action.",
+        "minor_adjustment": "Small adjustment, normal market balancing.",
+        "reverse_line_movement": "Moneyline and spread moving in opposite directions — possible sharp vs public split.",
+    }
+    parts.append(classification_labels.get(classification, ""))
+
+    data["interpretation"] = " ".join(parts)
+
+    # Message
+    if has_ml:
+        msg = (
+            f"Line movement: {'+' if open_odds > 0 else ''}{open_odds:.0f} → "
+            f"{'+' if close_odds > 0 else ''}{close_odds:.0f} | "
+            f"Shift: {prob_shift * 100:+.2f}% | "
+            f"{magnitude.title()} ({classification.replace('_', ' ')})"
+        )
+    else:
+        msg = (
+            f"Line movement: {open_line} → {close_line} | "
+            f"{magnitude.title()} ({classification.replace('_', ' ')})"
+        )
+
+    return _success(data, msg)

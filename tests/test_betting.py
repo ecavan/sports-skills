@@ -4,10 +4,11 @@ from sports_skills.betting._calcs import (
     convert_odds,
     devig,
     evaluate_bet,
+    find_arbitrage,
     find_edge,
     kelly_criterion,
-    max_drawdown,
-    monte_carlo_sim,
+    line_movement,
+    parlay_analysis,
 )
 
 # ============================================================
@@ -222,137 +223,6 @@ class TestKellyCriterion:
 
 
 # ============================================================
-# Monte Carlo Simulation
-# ============================================================
-
-
-class TestMonteCarloSim:
-    def test_basic_simulation(self):
-        result = monte_carlo_sim({
-            "params": {
-                "returns": "0.08,-0.04,0.06,-0.03,0.07",
-                "n_simulations": 100,
-                "seed": 42,
-            }
-        })
-        assert result["status"] is True
-        assert result["data"]["simulations"] == 100
-        assert "final_value" in result["data"]
-        assert "max_drawdown" in result["data"]
-        assert "probability_of_profit" in result["data"]
-
-    def test_deterministic_with_seed(self):
-        params = {
-            "returns": "0.05,-0.02,0.03",
-            "n_simulations": 50,
-            "seed": 123,
-        }
-        r1 = monte_carlo_sim({"params": params})
-        r2 = monte_carlo_sim({"params": params})
-        assert r1["data"]["final_value"]["mean"] == r2["data"]["final_value"]["mean"]
-
-    def test_custom_bankroll(self):
-        result = monte_carlo_sim({
-            "params": {
-                "returns": "0.05,-0.02",
-                "n_simulations": 10,
-                "initial_bankroll": 5000,
-                "seed": 1,
-            }
-        })
-        assert result["data"]["initial_bankroll"] == 5000
-
-    def test_sample_paths_included(self):
-        result = monte_carlo_sim({
-            "params": {
-                "returns": "0.05,-0.02,0.03",
-                "n_simulations": 30,
-                "seed": 42,
-            }
-        })
-        assert len(result["data"]["sample_paths"]) == 20  # capped at 20
-
-    def test_missing_returns(self):
-        result = monte_carlo_sim({"params": {}})
-        assert result["status"] is False
-
-    def test_single_return_error(self):
-        result = monte_carlo_sim({"params": {"returns": "0.05"}})
-        assert result["status"] is False
-
-    def test_list_returns(self):
-        result = monte_carlo_sim({
-            "params": {
-                "returns": [0.05, -0.02, 0.03],
-                "n_simulations": 10,
-                "seed": 42,
-            }
-        })
-        assert result["status"] is True
-
-    def test_all_positive_returns_high_profit_prob(self):
-        result = monte_carlo_sim({
-            "params": {
-                "returns": "0.05,0.03,0.08,0.02,0.04",
-                "n_simulations": 1000,
-                "seed": 42,
-            }
-        })
-        assert result["data"]["probability_of_profit"] > 0.9
-
-    def test_excessive_simulations_rejected(self):
-        result = monte_carlo_sim({
-            "params": {"returns": "0.05,-0.02", "n_simulations": 200000}
-        })
-        assert result["status"] is False
-
-
-# ============================================================
-# Maximum Drawdown
-# ============================================================
-
-
-class TestMaxDrawdown:
-    def test_no_drawdown(self):
-        result = max_drawdown({"params": {"values": "100,110,120,130"}})
-        assert result["status"] is True
-        assert result["data"]["max_drawdown"] == 0.0
-
-    def test_known_drawdown(self):
-        # 100 -> 120 -> 90: drawdown = (90-120)/120 = -0.25
-        result = max_drawdown({"params": {"values": "100,120,90"}})
-        assert result["status"] is True
-        assert abs(result["data"]["max_drawdown"] - (-0.25)) < 0.001
-
-    def test_recovery_after_drawdown(self):
-        result = max_drawdown({"params": {"values": "100,120,90,150"}})
-        assert result["status"] is True
-        assert abs(result["data"]["max_drawdown"] - (-0.25)) < 0.001
-
-    def test_peak_and_trough_indices(self):
-        result = max_drawdown({"params": {"values": "100,120,90,150"}})
-        assert result["data"]["peak_index"] == 1  # 120
-        assert result["data"]["trough_index"] == 2  # 90
-
-    def test_drawdown_series_length(self):
-        result = max_drawdown({"params": {"values": "100,110,105,115,108"}})
-        assert len(result["data"]["drawdown_series"]) == 5
-
-    def test_missing_values(self):
-        result = max_drawdown({"params": {}})
-        assert result["status"] is False
-
-    def test_single_value(self):
-        result = max_drawdown({"params": {"values": "100"}})
-        assert result["status"] is False
-
-    def test_list_input(self):
-        result = max_drawdown({"params": {"values": [100, 120, 90]}})
-        assert result["status"] is True
-        assert abs(result["data"]["max_drawdown"] - (-0.25)) < 0.001
-
-
-# ============================================================
 # Evaluate Bet (all-in-one)
 # ============================================================
 
@@ -370,19 +240,6 @@ class TestEvaluateBet:
         assert "edge" in result["data"]
         assert "recommendation" in result["data"]
         assert "summary" in result["data"]
-
-    def test_with_monte_carlo(self):
-        result = evaluate_bet({
-            "params": {
-                "book_odds": "-150,+130",
-                "market_prob": 0.52,
-                "returns": "0.08,-0.04,0.06,-0.03,0.07",
-                "n_simulations": 100,
-                "seed": 42,
-            }
-        })
-        assert result["status"] is True
-        assert "monte_carlo" in result["data"]
 
     def test_no_edge_no_bet(self):
         # If market prob matches fair prob, should be no bet
@@ -439,3 +296,235 @@ class TestEvaluateBet:
             }
         })
         assert result["status"] is False
+
+
+# ============================================================
+# Find Arbitrage
+# ============================================================
+
+
+class TestFindArbitrage:
+    def test_arbitrage_exists(self):
+        # Sum = 0.97 < 1.0 → arbitrage
+        result = find_arbitrage({"params": {"market_probs": "0.48,0.49"}})
+        assert result["status"] is True
+        assert result["data"]["arbitrage_found"] is True
+        assert result["data"]["arbitrage_pct"] > 0
+        assert result["data"]["total_implied"] < 1.0
+
+    def test_no_arbitrage(self):
+        # Sum = 1.05 > 1.0 → no arbitrage
+        result = find_arbitrage({"params": {"market_probs": "0.55,0.50"}})
+        assert result["status"] is True
+        assert result["data"]["arbitrage_found"] is False
+        assert result["data"]["overround_pct"] > 0
+
+    def test_three_way(self):
+        # 3-way soccer market with arb
+        result = find_arbitrage({"params": {"market_probs": "0.35,0.25,0.30"}})
+        assert result["status"] is True
+        assert result["data"]["arbitrage_found"] is True
+        assert len(result["data"]["allocations"]) == 3
+
+    def test_labels(self):
+        result = find_arbitrage({
+            "params": {"market_probs": "0.48,0.49", "labels": "home,away"}
+        })
+        assert result["data"]["allocations"][0]["label"] == "home"
+        assert result["data"]["allocations"][1]["label"] == "away"
+
+    def test_labels_mismatch(self):
+        result = find_arbitrage({
+            "params": {"market_probs": "0.48,0.49", "labels": "home,draw,away"}
+        })
+        assert result["status"] is False
+
+    def test_single_outcome_error(self):
+        result = find_arbitrage({"params": {"market_probs": "0.50"}})
+        assert result["status"] is False
+
+    def test_prob_out_of_range(self):
+        result = find_arbitrage({"params": {"market_probs": "0.50,1.5"}})
+        assert result["status"] is False
+
+    def test_missing_probs(self):
+        result = find_arbitrage({"params": {}})
+        assert result["status"] is False
+
+    def test_allocations_sum_to_100(self):
+        result = find_arbitrage({"params": {"market_probs": "0.48,0.49"}})
+        total_alloc = sum(a["allocation_pct"] for a in result["data"]["allocations"])
+        assert abs(total_alloc - 100.0) < 0.1
+
+    def test_list_input(self):
+        result = find_arbitrage({"params": {"market_probs": [0.48, 0.49]}})
+        assert result["status"] is True
+
+
+# ============================================================
+# Parlay Analysis
+# ============================================================
+
+
+class TestParlayAnalysis:
+    def test_plus_ev_parlay(self):
+        # 3 legs with good odds offered
+        result = parlay_analysis({
+            "params": {"legs": "0.58,0.62,0.55", "parlay_odds": 600}
+        })
+        assert result["status"] is True
+        assert result["data"]["is_plus_ev"] is True
+        assert result["data"]["edge"] > 0
+        assert result["data"]["num_legs"] == 3
+
+    def test_minus_ev_parlay(self):
+        # Low payout relative to fair odds
+        result = parlay_analysis({
+            "params": {"legs": "0.58,0.62,0.55", "parlay_odds": 200}
+        })
+        assert result["status"] is True
+        assert result["data"]["is_plus_ev"] is False
+        assert result["data"]["edge"] < 0
+
+    def test_single_leg(self):
+        result = parlay_analysis({
+            "params": {"legs": "0.60", "parlay_odds": 100}
+        })
+        assert result["status"] is True
+        assert result["data"]["num_legs"] == 1
+
+    def test_correlation_increases_prob(self):
+        # Positive correlation means legs are more likely to all hit together
+        # combined = independent + corr * (min_leg - independent) > independent
+        r1 = parlay_analysis({
+            "params": {"legs": "0.58,0.62", "parlay_odds": 300, "correlation": 0.0}
+        })
+        r2 = parlay_analysis({
+            "params": {"legs": "0.58,0.62", "parlay_odds": 300, "correlation": 0.2}
+        })
+        assert r2["data"]["combined_fair_prob"] > r1["data"]["combined_fair_prob"]
+
+    def test_decimal_odds_format(self):
+        result = parlay_analysis({
+            "params": {"legs": "0.58,0.62", "parlay_odds": 5.0, "odds_format": "decimal"}
+        })
+        assert result["status"] is True
+
+    def test_invalid_leg_prob(self):
+        result = parlay_analysis({
+            "params": {"legs": "0.58,1.5", "parlay_odds": 300}
+        })
+        assert result["status"] is False
+
+    def test_missing_legs(self):
+        result = parlay_analysis({"params": {"parlay_odds": 300}})
+        assert result["status"] is False
+
+    def test_invalid_correlation(self):
+        result = parlay_analysis({
+            "params": {"legs": "0.58,0.62", "parlay_odds": 300, "correlation": 0.8}
+        })
+        assert result["status"] is False
+
+    def test_kelly_fraction_computed(self):
+        result = parlay_analysis({
+            "params": {"legs": "0.58,0.62,0.55", "parlay_odds": 600}
+        })
+        assert "kelly_fraction" in result["data"]
+
+    def test_combined_prob_is_product(self):
+        result = parlay_analysis({
+            "params": {"legs": "0.50,0.50", "parlay_odds": 400}
+        })
+        assert abs(result["data"]["combined_fair_prob"] - 0.25) < 0.001
+
+
+# ============================================================
+# Line Movement
+# ============================================================
+
+
+class TestLineMovement:
+    def test_basic_moneyline_movement(self):
+        result = line_movement({
+            "params": {"open_odds": -140, "close_odds": -160}
+        })
+        assert result["status"] is True
+        assert result["data"]["moneyline"]["prob_shift"] > 0
+        assert result["data"]["moneyline"]["moved_toward"] == "favorite"
+
+    def test_no_movement(self):
+        result = line_movement({
+            "params": {"open_odds": -150, "close_odds": -150}
+        })
+        assert result["status"] is True
+        assert result["data"]["moneyline"]["prob_shift"] == 0
+        assert result["data"]["moneyline"]["direction"] == "no movement"
+
+    def test_underdog_movement(self):
+        result = line_movement({
+            "params": {"open_odds": -150, "close_odds": -130}
+        })
+        assert result["status"] is True
+        assert result["data"]["moneyline"]["prob_shift"] < 0
+        assert result["data"]["moneyline"]["moved_toward"] == "underdog"
+
+    def test_spread_only(self):
+        result = line_movement({
+            "params": {"open_line": -6.5, "close_line": -7.5, "market_type": "spread"}
+        })
+        assert result["status"] is True
+        assert result["data"]["spread"]["line_change"] == -1.0
+        assert result["data"]["spread"]["direction"] == "moved toward favorite"
+
+    def test_total_movement(self):
+        result = line_movement({
+            "params": {"open_line": 220.5, "close_line": 223.5, "market_type": "total"}
+        })
+        assert result["status"] is True
+        assert result["data"]["spread"]["direction"] == "total moved up"
+
+    def test_both_ml_and_spread(self):
+        result = line_movement({
+            "params": {
+                "open_odds": -140,
+                "close_odds": -160,
+                "open_line": -6.5,
+                "close_line": -7.5,
+            }
+        })
+        assert result["status"] is True
+        assert "moneyline" in result["data"]
+        assert "spread" in result["data"]
+
+    def test_large_movement_steam_move(self):
+        # 6%+ probability shift
+        result = line_movement({
+            "params": {"open_odds": -120, "close_odds": -200}
+        })
+        assert result["data"]["magnitude"] == "large"
+        assert result["data"]["classification"] == "steam_move"
+
+    def test_small_movement(self):
+        # < 2% probability shift
+        result = line_movement({
+            "params": {"open_odds": -150, "close_odds": -155}
+        })
+        assert result["data"]["magnitude"] == "small"
+        assert result["data"]["classification"] == "minor_adjustment"
+
+    def test_missing_both_pairs(self):
+        result = line_movement({"params": {"open_odds": -140}})
+        assert result["status"] is False
+
+    def test_reverse_line_movement(self):
+        # ML moves toward favorite but spread moves toward underdog
+        result = line_movement({
+            "params": {
+                "open_odds": -140,
+                "close_odds": -160,
+                "open_line": -7.5,
+                "close_line": -6.5,
+            }
+        })
+        assert result["data"]["classification"] == "reverse_line_movement"

@@ -135,21 +135,22 @@ _REGISTRY = {
         "devig": {"required": ["odds"], "optional": ["format"]},
         "find_edge": {"required": ["fair_prob", "market_prob"]},
         "kelly_criterion": {"required": ["fair_prob", "market_prob"]},
-        "monte_carlo_sim": {
-            "required": ["returns"],
-            "optional": ["n_simulations", "n_periods", "initial_bankroll", "seed"],
-        },
-        "max_drawdown": {"required": ["values"]},
         "evaluate_bet": {
             "required": ["book_odds", "market_prob"],
+            "optional": ["book_format", "outcome"],
+        },
+        "find_arbitrage": {"required": ["market_probs"], "optional": ["labels"]},
+        "parlay_analysis": {
+            "required": ["legs", "parlay_odds"],
+            "optional": ["odds_format", "correlation"],
+        },
+        "line_movement": {
             "optional": [
-                "book_format",
-                "outcome",
-                "returns",
-                "n_simulations",
-                "n_periods",
-                "initial_bankroll",
-                "seed",
+                "open_odds",
+                "close_odds",
+                "open_line",
+                "close_line",
+                "market_type",
             ],
         },
     },
@@ -375,13 +376,20 @@ _INT_PARAMS = {
     "season_type",
     "week",
     "group",
-    "n_simulations",
-    "n_periods",
-    "seed",
 }
 
 # Params that should be parsed as float
-_FLOAT_PARAMS = {"odds", "fair_prob", "market_prob", "initial_bankroll"}
+_FLOAT_PARAMS = {
+    "odds",
+    "fair_prob",
+    "market_prob",
+    "parlay_odds",
+    "open_odds",
+    "close_odds",
+    "open_line",
+    "close_line",
+    "correlation",
+}
 
 # Params that should be parsed as list (comma-separated)
 _LIST_PARAMS = {"tm_player_ids", "token_ids"}
