@@ -5,10 +5,13 @@ import subprocess
 from unittest.mock import MagicMock, patch
 
 from sports_skills.polymarket._cli import (
+    _CONFIG,
+    _build_env,
     _find_binary,
     approve_check,
     cancel_all_orders,
     cli_search_markets,
+    configure,
     create_order,
     ctf_split,
     get_balance,
@@ -137,6 +140,7 @@ class TestRunCli:
             capture_output=True,
             text=True,
             timeout=30,
+            env=None,
         )
 
 
@@ -252,3 +256,62 @@ class TestCommandWrappers:
         mock_run.return_value = {"status": True, "data": {}, "message": ""}
         approve_check(address="0xaddr")
         mock_run.assert_called_once_with("approve", "check", "0xaddr")
+
+
+class TestConfigure:
+    """Test wallet configuration and env passthrough."""
+
+    def setup_method(self):
+        _CONFIG.clear()
+
+    def teardown_method(self):
+        _CONFIG.clear()
+
+    def test_configure_private_key(self):
+        result = configure(private_key="0xabc123")
+        assert result["status"] is True
+        assert _CONFIG["private_key"] == "0xabc123"
+
+    def test_configure_signature_type(self):
+        result = configure(signature_type="eoa")
+        assert result["status"] is True
+        assert _CONFIG["signature_type"] == "eoa"
+
+    def test_configure_invalid_signature_type(self):
+        result = configure(signature_type="invalid")
+        assert result["status"] is False
+        assert "signature_type" in result["message"]
+
+    def test_configure_both(self):
+        configure(private_key="0xkey", signature_type="proxy")
+        assert _CONFIG["private_key"] == "0xkey"
+        assert _CONFIG["signature_type"] == "proxy"
+
+    def test_build_env_empty(self):
+        assert _build_env() is None
+
+    def test_build_env_with_key(self):
+        _CONFIG["private_key"] = "0xtest"
+        env = _build_env()
+        assert env is not None
+        assert env["POLYMARKET_PRIVATE_KEY"] == "0xtest"
+
+    def test_build_env_with_signature_type(self):
+        _CONFIG["private_key"] = "0xtest"
+        _CONFIG["signature_type"] = "eoa"
+        env = _build_env()
+        assert env["POLYMARKET_PRIVATE_KEY"] == "0xtest"
+        assert env["POLYMARKET_SIGNATURE_TYPE"] == "eoa"
+
+    @patch("sports_skills.polymarket._cli._find_binary", return_value="/usr/local/bin/polymarket")
+    @patch("sports_skills.polymarket._cli.subprocess.run")
+    def test_run_cli_passes_env(self, mock_run, mock_find):
+        _CONFIG["private_key"] = "0xsecret"
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout=json.dumps({"ok": True}), stderr=""
+        )
+        run_cli("clob", "balance")
+        call_kwargs = mock_run.call_args
+        env = call_kwargs.kwargs.get("env") or call_kwargs[1].get("env")
+        assert env is not None
+        assert env["POLYMARKET_PRIVATE_KEY"] == "0xsecret"

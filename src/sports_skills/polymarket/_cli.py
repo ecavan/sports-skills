@@ -1,14 +1,30 @@
 """Polymarket CLI subprocess wrapper.
 
-Wraps the ``polymarket`` Rust binary (installed via ``brew install polymarket``)
-as a JSON subprocess.  All commands are invoked with ``-o json`` for structured
-output.  Install the CLI with::
+Wraps the ``polymarket`` Rust binary as a JSON subprocess.  All commands are
+invoked with ``-o json`` for structured output.  Install the CLI with::
+
+    pip install sports-skills[polymarket]
+
+Or via Homebrew::
 
     brew tap Polymarket/polymarket-cli https://github.com/Polymarket/polymarket-cli
     brew install polymarket
+
+For trading commands, configure a wallet via one of:
+
+    # Option 1 — environment variable
+    export POLYMARKET_PRIVATE_KEY=0x...
+
+    # Option 2 — Python SDK
+    from sports_skills import polymarket
+    polymarket.configure(private_key="0x...")
+
+    # Option 3 — CLI config file
+    polymarket wallet import <private-key>
 """
 
 import json
+import os
 import shutil
 import subprocess
 
@@ -30,6 +46,44 @@ def is_cli_available() -> bool:
 
 
 # ============================================================
+# Configuration (wallet / authentication)
+# ============================================================
+
+_CONFIG: dict = {}
+
+
+def configure(
+    *,
+    private_key: str | None = None,
+    signature_type: str | None = None,
+) -> dict:
+    """Configure wallet credentials for trading commands.
+
+    Credentials are passed to the CLI via environment variables (never
+    exposed in process arguments).  This is optional — the CLI also
+    reads ``POLYMARKET_PRIVATE_KEY`` from the shell environment and
+    ``~/.config/polymarket/config.json``.
+
+    Args:
+        private_key: Polygon wallet private key (hex string starting with 0x).
+        signature_type: One of "proxy" (default), "eoa", or "gnosis-safe".
+
+    Returns:
+        Standard envelope confirming configuration was saved.
+    """
+    if private_key is not None:
+        _CONFIG["private_key"] = private_key
+    if signature_type is not None:
+        if signature_type not in ("proxy", "eoa", "gnosis-safe"):
+            return _error("signature_type must be 'proxy', 'eoa', or 'gnosis-safe'")
+        _CONFIG["signature_type"] = signature_type
+    return _success(
+        {"configured": list(_CONFIG.keys())},
+        "Wallet configured for this session.",
+    )
+
+
+# ============================================================
 # Response Helpers (match _connector.py pattern)
 # ============================================================
 
@@ -40,6 +94,18 @@ def _success(data, message=""):
 
 def _error(message, data=None):
     return {"status": False, "data": data, "message": message}
+
+
+def _build_env() -> dict | None:
+    """Build subprocess env dict with any configured credentials."""
+    if not _CONFIG:
+        return None
+    env = os.environ.copy()
+    if "private_key" in _CONFIG:
+        env["POLYMARKET_PRIVATE_KEY"] = _CONFIG["private_key"]
+    if "signature_type" in _CONFIG:
+        env["POLYMARKET_SIGNATURE_TYPE"] = _CONFIG["signature_type"]
+    return env
 
 
 # ============================================================
@@ -61,9 +127,7 @@ def run_cli(*args: str, timeout: int = 30) -> dict:
     if binary is None:
         return _error(
             "polymarket CLI not installed. Install with: "
-            "brew tap Polymarket/polymarket-cli "
-            "https://github.com/Polymarket/polymarket-cli && "
-            "brew install polymarket"
+            "pip install sports-skills[polymarket]"
         )
 
     cmd = [binary, "-o", "json", *args]
@@ -74,6 +138,7 @@ def run_cli(*args: str, timeout: int = 30) -> dict:
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=_build_env(),
         )
     except subprocess.TimeoutExpired:
         return _error(f"CLI command timed out after {timeout}s: {' '.join(args)}")

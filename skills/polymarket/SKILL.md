@@ -35,17 +35,35 @@ prices = polymarket.get_market_prices(token_id="abc123")
 
 **CLI commands** (30+ commands) require the Polymarket CLI binary:
 ```bash
+pip install sports-skills[polymarket]
+```
+
+Or via Homebrew:
+```bash
 brew tap Polymarket/polymarket-cli https://github.com/Polymarket/polymarket-cli
 brew install polymarket
 ```
 
-**Trading commands** additionally require a configured wallet:
+**Trading commands** additionally require a configured wallet. Three options:
+
 ```bash
-polymarket wallet create
+# Option 1 — environment variable
+export POLYMARKET_PRIVATE_KEY=0x...
+```
+
+```python
+# Option 2 — Python SDK (per-session)
+from sports_skills import polymarket
+polymarket.configure(private_key="0x...")
+```
+
+```bash
+# Option 3 — CLI config file (persists across sessions)
+polymarket wallet import <private-key>
 polymarket approve set
 ```
 
-If a CLI command returns "polymarket CLI not installed", install the binary above.
+If a CLI command returns "polymarket CLI not installed", install with `pip install sports-skills[polymarket]`.
 
 ## Important Notes
 

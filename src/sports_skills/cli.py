@@ -88,6 +88,8 @@ _REGISTRY = {
             "optional": ["interval", "fidelity"],
         },
         "get_last_trade_price": {"required": ["token_id"]},
+        # Wallet configuration
+        "configure": {"optional": ["private_key", "signature_type"]},
         # --- CLI commands (require polymarket binary) ---
         # Data & Analytics
         "get_leaderboard": {"optional": ["period", "order_by", "limit"]},

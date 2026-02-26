@@ -29,6 +29,9 @@ from sports_skills.polymarket._cli import (
     cli_sports_teams as _cli_sports_teams,
 )
 from sports_skills.polymarket._cli import (
+    configure as configure,
+)
+from sports_skills.polymarket._cli import (
     create_order as _cli_create_order,
 )
 from sports_skills.polymarket._cli import (
