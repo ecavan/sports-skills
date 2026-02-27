@@ -326,11 +326,27 @@ def get_live_boxscore(request_data):
 
 
 def get_live_playbyplay(request_data):
-    """Get real-time NBA play-by-play from cdn.nba.com."""
+    """Get real-time NBA play-by-play from cdn.nba.com.
+
+    Returns plays in reverse chronological order (most recent first).
+
+    Args:
+        game_id: NBA game ID (required).
+        limit: Maximum number of plays to return (default 25).
+        scoring_only: If true, only return scoring plays (default false).
+
+    Returns:
+        Most recent plays with game context.
+    """
     params = request_data.get("params", {})
     game_id = params.get("game_id")
     if not game_id:
         return {"error": True, "message": "game_id is required"}
+
+    limit = int(params.get("limit", 25))
+    scoring_only = params.get("scoring_only", False)
+    if isinstance(scoring_only, str):
+        scoring_only = scoring_only.lower() in ("true", "1", "yes")
 
     data = _cdn_fetch(
         f"playbyplay/playbyplay_{game_id}.json",
@@ -340,7 +356,26 @@ def get_live_playbyplay(request_data):
     if data.get("error"):
         return data
 
-    return _normalize_cdn_playbyplay(data)
+    result = _normalize_cdn_playbyplay(data)
+    if result.get("error"):
+        return result
+
+    # Reverse to get most recent first
+    actions = result.get("actions", [])
+    actions = list(reversed(actions))
+
+    # Filter scoring plays if requested
+    if scoring_only:
+        actions = [a for a in actions if a.get("scoring_play")]
+
+    # Apply limit
+    actions = actions[:limit]
+
+    result["actions"] = actions
+    result["count"] = len(actions)
+    result["order"] = "most_recent_first"
+
+    return result
 
 
 def get_player_live_stats(request_data):

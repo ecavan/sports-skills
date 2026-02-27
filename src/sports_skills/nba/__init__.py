@@ -281,18 +281,19 @@ def get_live_boxscore(*, game_id: str) -> dict:
     return get_game_summary(event_id=game_id)
 
 
-def get_live_playbyplay(*, game_id: str) -> dict:
-    """Get real-time NBA play-by-play. Primary: cdn.nba.com, Fallback: ESPN.
+def get_live_playbyplay(*, game_id: str, limit: int = 25, scoring_only: bool = False) -> dict:
+    """Get real-time NBA play-by-play (most recent plays first).
 
-    Uses NBA CDN for fastest live updates. Automatically falls back to
-    ESPN play-by-play if CDN is unavailable.
+    Uses NBA CDN for fastest live updates. Returns plays in reverse
+    chronological order so you see what just happened.
 
     Args:
-        game_id: NBA game ID (e.g. "0022400001"). For ESPN fallback,
-                 this is converted to event_id format.
+        game_id: NBA game ID (e.g. "0022400001").
+        limit: Maximum plays to return (default 25).
+        scoring_only: Only return scoring plays (default False).
     """
     try:
-        result = _get_live_playbyplay(_params(game_id=game_id))
+        result = _get_live_playbyplay(_params(game_id=game_id, limit=limit, scoring_only=scoring_only))
         if result and result.get("actions"):
             return wrap(result)
     except Exception:
