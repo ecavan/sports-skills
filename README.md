@@ -32,7 +32,7 @@ A collection of agent skills that wrap **publicly available** sports data source
 
 - **Football**: ESPN, Understat, FPL, Transfermarkt — 21 commands across 13 leagues
 - **NFL**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
-- **NBA**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
+- **NBA**: ESPN + NBA CDN — real-time live scores, play-by-play, box scores, standings, rosters, schedules
 - **WNBA**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
 - **NHL**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
 - **MLB**: ESPN — scores, standings, rosters, schedules, game summaries, leaders, news
@@ -43,6 +43,7 @@ A collection of agent skills that wrap **publicly available** sports data source
 - **Formula 1**: FastF1 open-source library — sessions, lap data, race results
 - **Prediction Markets**: Kalshi and Polymarket public APIs — markets, prices, order books
 - **Sports News**: RSS feeds and Google News — any public feed
+- **Metadata**: TheSportsDB — team logos, player photos, stadium info (100+ leagues)
 
 Each skill is a SKILL.md file that any compatible AI agent can load and use immediately. Data comes from third-party public sources and is subject to their respective terms of use.
 
@@ -58,7 +59,7 @@ Each skill is a SKILL.md file that any compatible AI agent can load and use imme
 |-------|-------|----------|-------------|
 | `football-data` | Football | 21 | ESPN, FPL, Understat, Transfermarkt |
 | `nfl-data` | NFL | 9 | ESPN |
-| `nba-data` | NBA | 9 | ESPN |
+| `nba-data` | NBA | 12 | ESPN, NBA CDN |
 | `wnba-data` | WNBA | 9 | ESPN |
 | `nhl-data` | NHL | 9 | ESPN |
 | `mlb-data` | MLB | 9 | ESPN |
@@ -68,6 +69,7 @@ Each skill is a SKILL.md file that any compatible AI agent can load and use imme
 | `golf-data` | Golf (PGA/LPGA/DP World) | 4 | ESPN |
 | `fastf1` | Formula 1 | 6 | FastF1 (free library) |
 | `sports-news` | Multi-sport | 2 | Any RSS feed, Google News |
+| `metadata` | Multi-sport | 5 | TheSportsDB (free API) |
 
 ### Prediction Markets
 
