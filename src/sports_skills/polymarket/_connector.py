@@ -863,12 +863,13 @@ def get_todays_events(request_data):
     Params:
         sport (str): Sport code (required) — e.g. 'nba', 'epl', 'nfl', 'nhl',
             'mlb', 'bun', 'fl1', 'sea', 'ucl', 'mls', 'atp', 'wta', 'lal'.
-        limit (int): Max events (default: 30, max: 100)
+        limit (int): Max events (default: 50, max: 100). Increase to 100 for
+            leagues with many concurrent matches.
     """
     try:
         params = request_data.get("params", {})
         sport = params.get("sport", "").lower()
-        limit = min(int(params.get("limit", 30)), 100)
+        limit = min(int(params.get("limit", 50)), 100)
 
         if not sport:
             return _error(

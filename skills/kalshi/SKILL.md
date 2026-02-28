@@ -1,7 +1,7 @@
 ---
 name: kalshi
 description: |
-  Kalshi prediction markets — events, series, markets, trades, and candlestick data. Public API, no auth required for reads. US-regulated exchange (CFTC). Covers soccer, basketball, baseball, tennis, NFL, hockey event contracts.
+  Kalshi prediction markets — events, series, markets, trades, and candlestick data. Public API, no auth required for reads. US-regulated exchange (CFTC). Covers football (EPL, UCL, La Liga), basketball, baseball, tennis, NFL, hockey event contracts.
 
   Use when: user asks about Kalshi-specific markets, event contracts, CFTC-regulated prediction markets, or candlestick/OHLC price history on sports outcomes.
   Don't use when: user asks about actual match results, scores, or statistics — use the sport-specific skill: football-data (soccer), nfl-data (NFL), nba-data (NBA), wnba-data (WNBA), nhl-data (NHL), mlb-data (MLB), tennis-data (tennis), golf-data (golf), cfb-data (college football), cbb-data (college basketball), or fastf1 (F1). Don't use for general "who will win" questions unless Kalshi is specifically mentioned — try polymarket first (broader sports coverage). Don't use for news — use sports-news instead.
@@ -12,6 +12,18 @@ metadata:
 ---
 
 # Kalshi — Prediction Markets
+
+## CRITICAL: Always use the `sport` parameter
+
+For single-game markets, ALWAYS pass `sport='<code>'` to `search_markets` and `get_todays_events`.
+Without it, search returns only high-volume futures and misses individual game markets.
+
+```
+WRONG: search_markets(query="Leeds")           → 0 results
+WRONG: search_markets(query="Manchester City") → 0 results
+RIGHT: search_markets(sport='epl', query='Leeds') → returns all Leeds markets
+RIGHT: search_markets(sport='nba', query='Lakers') → returns all Lakers markets
+```
 
 ## Quick Start
 
@@ -47,10 +59,11 @@ kalshi.get_event(event_ticker="KXNBA-26FEB14")
 
 ## Important Notes
 
-- **"Football" = NFL on Kalshi.** Soccer is under "Soccer". Use `KXUCL`, `KXLALIGA`, etc. for soccer leagues.
+- **On Kalshi, "Football" = NFL.** For football (EPL, La Liga, etc.), use sport codes: `epl`, `ucl`, `laliga`, `bundesliga`, `seriea`, `ligue1`, `mls`.
 - **Prices are probabilities.** A `last_price` of 20 means 20% implied probability. Scale is 0-100 (not 0-1 like Polymarket).
 - **Always use `status="open"`** when querying markets, otherwise results include settled/closed markets.
 - **Shared interface with Polymarket:** `search_markets(sport=...)`, `get_todays_events(sport=...)`, and `get_sports_config()` work the same way on both platforms.
+- **Football has multiple series per league.** EPL maps to 5 series (KXEPLGAME, KXEPLTOTAL, KXEPLBTTS, KXEPLSPREAD, KXEPLGOAL). The `sport` parameter queries all of them automatically.
 
 *For detailed reference data, see the files in the `references/` directory.*
 
@@ -107,6 +120,8 @@ kalshi.get_event(event_ticker="KXNBA-26FEB14")
 
 ## Sport Codes
 
+### US Sports
+
 | Sport | Code | Series Ticker |
 |---|---|---|
 | NBA | `nba` | KXNBA |
@@ -117,14 +132,34 @@ kalshi.get_event(event_ticker="KXNBA-26FEB14")
 | College Football | `cfb` | KXCFB |
 | College Basketball | `cbb` | KXCBB |
 
+### Football
+
+| League | Code | Series Tickers |
+|---|---|---|
+| English Premier League | `epl` | KXEPLGAME, KXEPLTOTAL, KXEPLBTTS, KXEPLSPREAD, KXEPLGOAL |
+| Champions League | `ucl` | KXUCL, KXUEFAGAME |
+| La Liga | `laliga` | KXLALIGA |
+| Bundesliga | `bundesliga` | KXBUNDESLIGA |
+| Serie A | `seriea` | KXSERIEA |
+| Ligue 1 | `ligue1` | KXLIGUE1 |
+| MLS | `mls` | KXMLSGAME |
+
 ## Examples
 
 User: "What NBA markets are on Kalshi?"
 1. Call `search_markets(sport='nba')` — same interface as polymarket
 2. Present markets with yes/no prices and volume
 
+User: "Show me Leeds vs Man City odds on Kalshi"
+1. Call `search_markets(sport='epl', query='Leeds')` — searches all EPL series
+2. Present markets with yes/no prices and volume
+
+User: "What EPL games are available on Kalshi?"
+1. Call `get_todays_events(sport='epl')` — returns events across all EPL series
+2. Present events with nested markets
+
 User: "Who will win the Champions League?"
-1. Call `get_markets(series_ticker="KXUCL", status="open")`
+1. Call `search_markets(sport='ucl')` or `get_markets(series_ticker="KXUCL", status="open")`
 2. Sort by `last_price` descending — price = implied probability (e.g., 20 = 20%)
 3. Present top teams with `yes_sub_title`, `last_price`, and `volume`
 
@@ -133,10 +168,15 @@ User: "Show me the price history for this NBA game"
 2. Call `get_market_candlesticks(series_ticker="KXNBA", ticker="...", start_ts=..., end_ts=..., period_interval=60)`
 3. Present OHLC data with volume
 
+## Common Mistakes
+
+- **Not using the `sport` parameter** — `search_markets(query="Leeds")` returns 0 results. Use `search_markets(sport='epl', query='Leeds')` instead.
+- **Confusing NFL with football** — on Kalshi, their "Football" category = NFL. For football (EPL, UCL, etc.), use sport codes `epl`, `ucl`, `laliga`, etc.
+- **Not knowing football is supported** — Kalshi has deep EPL, UCL, and other football markets. Use `get_sports_config()` to see all available sport codes.
+
 ## Error Handling & Fallbacks
 
-- If `search_markets` returns no results for a sport, that sport may not have active markets on Kalshi. Try `get_sports_config()` to see available sports.
+- **If search returns 0 results**, make sure you're using the `sport` parameter. Without it, search misses single-game markets.
 - If series ticker returns no results, call `get_series_list()` to discover available tickers. See `references/series-tickers.md`.
 - If markets are empty, use `status="open"` to filter. Default includes settled/closed markets.
-- If "Football" returns NFL instead of soccer, Kalshi uses "Football" for NFL, "Soccer" for soccer. Use KXUCL, KXLALIGA, etc. for soccer.
 - **Never fabricate market prices or probabilities.** If no market exists, state so.

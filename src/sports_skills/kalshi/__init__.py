@@ -175,8 +175,10 @@ def get_sports_config() -> dict:
     """Get available sport codes and their Kalshi series tickers.
 
     Returns sport codes you can use with search_markets(sport=...) and
-    get_todays_events(sport=...). Examples: 'nba', 'nfl', 'nhl', 'mlb',
-    'wnba', 'cfb', 'cbb'.
+    get_todays_events(sport=...).
+
+    US sports: 'nba', 'nfl', 'nhl', 'mlb', 'wnba', 'cfb', 'cbb'.
+    Football: 'epl', 'ucl', 'laliga', 'bundesliga', 'seriea', 'ligue1', 'mls'.
     """
     return _get_sports_config(_req())
 
@@ -185,7 +187,9 @@ def get_todays_events(*, sport: str, limit: int = 50) -> dict:
     """Get today's events (single-game markets) for a specific sport.
 
     Args:
-        sport: Sport code — 'nba', 'nfl', 'nhl', 'mlb', 'wnba', 'cfb', 'cbb'.
+        sport: Sport code — US sports: 'nba', 'nfl', 'nhl', 'mlb', 'wnba',
+            'cfb', 'cbb'. Football: 'epl', 'ucl', 'laliga', 'bundesliga',
+            'seriea', 'ligue1', 'mls'.
         limit: Max events (default: 50, max: 200).
     """
     return _get_todays_events(_req(sport=sport, limit=limit))
@@ -200,8 +204,13 @@ def search_markets(
 ) -> dict:
     """Search Kalshi markets by sport and/or keyword.
 
+    IMPORTANT: For single-game markets, always pass sport (e.g. sport='epl').
+    Without it, search returns only high-volume futures and misses game markets.
+
     Args:
-        sport: Sport code (e.g. 'nba', 'nfl'). Resolves to series_ticker.
+        sport: Sport code — US sports: 'nba', 'nfl', 'nhl', 'mlb', 'wnba',
+            'cfb', 'cbb'. Football: 'epl', 'ucl', 'laliga', 'bundesliga',
+            'seriea', 'ligue1', 'mls'. Resolves to series_ticker(s).
         query: Keyword to match in event/market titles.
         status: Market status filter (default: 'open').
         limit: Max results (default: 50, max: 200).

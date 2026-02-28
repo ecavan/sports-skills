@@ -22,6 +22,7 @@ logger = logging.getLogger("sports_skills.markets")
 # ============================================================
 
 KALSHI_SERIES = {
+    # US sports
     "nfl": "KXNFL",
     "nba": "KXNBA",
     "mlb": "KXMLB",
@@ -29,11 +30,20 @@ KALSHI_SERIES = {
     "wnba": "KXWNBA",
     "cfb": "KXCFB",
     "cbb": "KXCBB",
+    # Football
+    "epl": "KXEPLGAME",
+    "ucl": "KXUCL",
+    "laliga": "KXLALIGA",
+    "bundesliga": "KXBUNDESLIGA",
+    "seriea": "KXSERIEA",
+    "ligue1": "KXLIGUE1",
+    "mls": "KXMLSGAME",
 }
 
 # Maps common sport codes to Polymarket sport codes for the /sports endpoint.
-# Polymarket covers far more leagues; these are the shared ones with ESPN.
+# Polymarket covers far more leagues; these are the shared ones.
 POLYMARKET_SPORTS = {
+    # US sports (shared with ESPN)
     "nfl": "nfl",
     "nba": "nba",
     "mlb": "mlb",
@@ -41,6 +51,14 @@ POLYMARKET_SPORTS = {
     "wnba": "wnba",
     "cfb": "cfb",
     "cbb": "cbb",
+    # Football
+    "epl": "epl",
+    "ucl": "ucl",
+    "laliga": "lal",
+    "bundesliga": "bun",
+    "seriea": "sea",
+    "ligue1": "fl1",
+    "mls": "mls",
 }
 
 SCOREBOARD_SPORTS = {"nfl", "nba", "mlb", "nhl", "wnba", "cfb", "cbb"}

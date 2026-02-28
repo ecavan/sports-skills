@@ -476,15 +476,26 @@ def get_sports_filters(request_data):
 # Sport-aware convenience commands
 # ============================================================
 
-# Maps common sport codes to Kalshi series tickers
+# Maps common sport codes to Kalshi series tickers.
+# Each sport maps to a list of series tickers to query.
+# Football leagues have multiple series per league (game, total, btts, spread, goal).
 KALSHI_SERIES = {
-    "nfl": "KXNFL",
-    "nba": "KXNBA",
-    "mlb": "KXMLB",
-    "nhl": "KXNHL",
-    "wnba": "KXWNBA",
-    "cfb": "KXCFB",
-    "cbb": "KXCBB",
+    # US sports — single series per sport
+    "nfl": ["KXNFL"],
+    "nba": ["KXNBA"],
+    "mlb": ["KXMLB"],
+    "nhl": ["KXNHL"],
+    "wnba": ["KXWNBA"],
+    "cfb": ["KXCFB"],
+    "cbb": ["KXCBB"],
+    # Football — multiple series per league (game, total, btts, spread, goal)
+    "epl": ["KXEPLGAME", "KXEPLTOTAL", "KXEPLBTTS", "KXEPLSPREAD", "KXEPLGOAL"],
+    "ucl": ["KXUCL", "KXUEFAGAME"],
+    "laliga": ["KXLALIGA"],
+    "bundesliga": ["KXBUNDESLIGA"],
+    "seriea": ["KXSERIEA"],
+    "ligue1": ["KXLIGUE1"],
+    "mls": ["KXMLSGAME"],
 }
 
 
@@ -497,8 +508,8 @@ def get_sports_config(request_data):
     No params required.
     """
     sports = [
-        {"sport": code, "series_ticker": ticker}
-        for code, ticker in sorted(KALSHI_SERIES.items())
+        {"sport": code, "series_tickers": tickers}
+        for code, tickers in sorted(KALSHI_SERIES.items())
     ]
     return _success(
         {"sports": sports, "count": len(sports)},
@@ -513,7 +524,8 @@ def get_todays_events(request_data):
 
     Params:
         sport (str): Sport code (required) — 'nba', 'nfl', 'nhl', 'mlb',
-            'wnba', 'cfb', 'cbb'.
+            'wnba', 'cfb', 'cbb', 'epl', 'ucl', 'laliga', 'bundesliga',
+            'seriea', 'ligue1', 'mls'.
         limit (int): Max events (default: 50, max: 200).
     """
     try:
@@ -527,27 +539,36 @@ def get_todays_events(request_data):
                 f"sport is required. Available: {available}"
             )
 
-        series_ticker = KALSHI_SERIES.get(sport)
-        if not series_ticker:
+        series_tickers = KALSHI_SERIES.get(sport)
+        if not series_tickers:
             available = ", ".join(sorted(KALSHI_SERIES.keys()))
             return _error(f"Unknown sport '{sport}'. Available: {available}")
 
-        query = {
-            "limit": limit,
-            "series_ticker": series_ticker,
-            "status": "open",
-            "with_nested_markets": "true",
-        }
+        # Query all series tickers for this sport and merge results
+        all_events = []
+        seen_tickers = set()
+        for series_ticker in series_tickers:
+            query = {
+                "limit": limit,
+                "series_ticker": series_ticker,
+                "status": "open",
+                "with_nested_markets": "true",
+            }
 
-        response = _request("/events", params=query, ttl=60)
-        err = _check_error(response)
-        if err:
-            return err
+            response = _request("/events", params=query, ttl=60)
+            err = _check_error(response)
+            if err:
+                continue
 
-        events = response.get("events", [])
+            for event in response.get("events", []):
+                event_ticker = event.get("event_ticker", "")
+                if event_ticker not in seen_tickers:
+                    seen_tickers.add(event_ticker)
+                    all_events.append(event)
+
         return _success(
-            {"events": events, "count": len(events), "sport": sport},
-            f"Retrieved {len(events)} {sport.upper()} events",
+            {"events": all_events[:limit], "count": len(all_events[:limit]), "sport": sport},
+            f"Retrieved {len(all_events[:limit])} {sport.upper()} events",
         )
 
     except Exception as e:
@@ -559,7 +580,8 @@ def search_markets(request_data):
 
     Params:
         sport (str): Sport code (e.g. 'nba', 'nfl', 'nhl', 'mlb', 'wnba',
-            'cfb', 'cbb'). Resolves to series_ticker automatically.
+            'cfb', 'cbb', 'epl', 'ucl', 'laliga', 'bundesliga', 'seriea',
+            'ligue1', 'mls'). Resolves to series_ticker(s) automatically.
         query (str): Keyword to match in event/market titles.
         status (str): Market status filter (default: 'open').
         limit (int): Max results (default: 50, max: 200).
@@ -571,30 +593,51 @@ def search_markets(request_data):
         status = params.get("status", "open")
         limit = min(int(params.get("limit", 50)), 200)
 
-        # Resolve sport to series_ticker
-        series_ticker = params.get("series_ticker")
-        if sport and not series_ticker:
-            series_ticker = KALSHI_SERIES.get(sport)
+        # Resolve sport to series_tickers list
+        explicit_ticker = params.get("series_ticker")
+        if explicit_ticker:
+            series_tickers = [explicit_ticker]
+        elif sport:
+            series_tickers = KALSHI_SERIES.get(sport, [])
+        else:
+            series_tickers = []
 
-        # Fetch events with nested markets
-        event_query = {
-            "limit": limit,
-            "status": status,
-            "with_nested_markets": "true",
-        }
-        if series_ticker:
-            event_query["series_ticker"] = series_ticker
+        # Fetch events across all series tickers and merge
+        all_events = []
+        seen_event_tickers = set()
 
-        response = _request("/events", params=event_query, ttl=60)
-        err = _check_error(response)
-        if err:
-            return err
-
-        events = response.get("events", [])
+        if series_tickers:
+            for series_ticker in series_tickers:
+                event_query = {
+                    "limit": limit,
+                    "status": status,
+                    "with_nested_markets": "true",
+                    "series_ticker": series_ticker,
+                }
+                response = _request("/events", params=event_query, ttl=60)
+                if _check_error(response):
+                    continue
+                for event in response.get("events", []):
+                    et = event.get("event_ticker", "")
+                    if et not in seen_event_tickers:
+                        seen_event_tickers.add(et)
+                        all_events.append(event)
+        else:
+            # No sport filter — single query
+            event_query = {
+                "limit": limit,
+                "status": status,
+                "with_nested_markets": "true",
+            }
+            response = _request("/events", params=event_query, ttl=60)
+            err = _check_error(response)
+            if err:
+                return err
+            all_events = response.get("events", [])
 
         # Filter by query if provided
         all_markets = []
-        for event in events:
+        for event in all_events:
             title = event.get("title", "")
             if query and query not in title.lower():
                 # Also check market titles

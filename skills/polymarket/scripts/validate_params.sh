@@ -28,6 +28,6 @@ fi
 
 # Search tips
 if [[ "$COMMAND" == "search_markets" ]]; then
-  echo "TIP: search_markets matches event titles. Use league names (e.g., 'Premier League', 'NBA Finals'), not generic terms like 'soccer'."
+  echo "TIP: search_markets matches event titles. Use league names (e.g., 'Premier League', 'NBA Finals'), not generic terms like 'football'. Use the sport parameter instead (e.g. --sport=epl)."
 fi
 echo "OK"

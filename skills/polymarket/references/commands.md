@@ -1,5 +1,14 @@
 # Valid Commands & Common Mistakes
 
+## CRITICAL: Always use the `sport` parameter
+
+For single-game markets, ALWAYS pass `sport='<code>'` to `search_markets` and `get_todays_events`.
+
+```
+WRONG: search_markets(query="Leeds")           → 0 results
+RIGHT: search_markets(sport='epl', query='Leeds') → returns all Leeds markets
+```
+
 ## Core Commands (no dependencies needed)
 
 These work out of the box:
@@ -54,7 +63,7 @@ sports-skills polymarket get_sports_config
 
 - **Not using the `sport` parameter** — without it, `search_markets` only checks high-volume markets and misses single-game events. Always pass `sport='nba'` (or epl, nfl, etc.) when looking for specific game markets.
 - Using `market_id` where `token_id` is needed — price and orderbook endpoints require the CLOB `token_id`, not the Gamma `market_id`. Always call `get_market_details` first to get `clobTokenIds`.
-- Searching generic terms like "soccer" or "football" without `sport` — use the sport code parameter instead.
+- Searching generic terms like "football" or "Premier League" without `sport` — use the sport code parameter instead (e.g. `sport='epl'`).
 - Forgetting to get the `token_id` before calling price/orderbook endpoints — always fetch market details first.
 
 If you're unsure whether a command exists, check this list. Do not try commands that aren't listed above.

@@ -93,7 +93,7 @@ Spot guaranteed-profit opportunities when prices across sources don't sum to 100
    → Total implied: 0.97 (< 1.0 = arbitrage!)
    → Guaranteed ROI: 3.09%
    → Allocation: 49.5% on home, 50.5% on away
-3. For 3-way soccer markets: `find_arbitrage --market_probs=0.40,0.25,0.30 --labels=home,draw,away`
+3. For 3-way football markets: `find_arbitrage --market_probs=0.40,0.25,0.30 --labels=home,draw,away`
 
 ### Workflow: Parlay Evaluation
 
@@ -130,7 +130,7 @@ Strip the vig/juice from DraftKings odds to see the "true" implied probabilities
    → Each side is 50.0% fair (standard -110/-110 spread/total)
 2. `devig --odds=-200,+170 --format=american`
    → Favorite: 65.2%, Underdog: 34.8%
-3. `devig --odds=-150,+300,+400 --format=american` (3-way soccer)
+3. `devig --odds=-150,+300,+400 --format=american` (3-way football)
    → Home: 47.3%, Draw: 19.8%, Away: 15.7%
 
 ### Workflow: Odds Conversion

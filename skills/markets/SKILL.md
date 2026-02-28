@@ -74,6 +74,8 @@ markets.evaluate_market(sport="nba", event_id="401234567")
 
 ## Supported Sports
 
+### US Sports (with ESPN schedules)
+
 | Sport | Key | Kalshi Series | Polymarket Code |
 |---|---|---|---|
 | NFL | `nfl` | KXNFL | `nfl` |
@@ -83,6 +85,18 @@ markets.evaluate_market(sport="nba", event_id="401234567")
 | WNBA | `wnba` | KXWNBA | `wnba` |
 | College Football | `cfb` | KXCFB | `cfb` |
 | College Basketball | `cbb` | KXCBB | `cbb` |
+
+### Football (prediction markets only — no ESPN schedule)
+
+| League | Key | Kalshi Series | Polymarket Code |
+|---|---|---|---|
+| English Premier League | `epl` | KXEPLGAME | `epl` |
+| Champions League | `ucl` | KXUCL | `ucl` |
+| La Liga | `laliga` | KXLALIGA | `lal` |
+| Bundesliga | `bundesliga` | KXBUNDESLIGA | `bun` |
+| Serie A | `seriea` | KXSERIEA | `sea` |
+| Ligue 1 | `ligue1` | KXLIGUE1 | `fl1` |
+| MLS | `mls` | KXMLSGAME | `mls` |
 
 ## Workflows
 

@@ -1,7 +1,7 @@
 ---
 name: polymarket
 description: |
-  Polymarket sports prediction markets — live odds, prices, order books, events, series, and market search. No auth required. Covers NFL, NBA, MLB, soccer, tennis, cricket, MMA, esports. Supports moneyline, spreads, totals, and player props.
+  Polymarket sports prediction markets — live odds, prices, order books, events, series, and market search. No auth required. Covers NFL, NBA, MLB, football (EPL, UCL, La Liga), tennis, cricket, MMA, esports. Supports moneyline, spreads, totals, and player props.
 
   Use when: user asks about sports betting odds, prediction markets, win probabilities, market sentiment, or "who is favored to win" questions.
   Don't use when: user asks about actual match results, scores, or statistics — use the sport-specific skill: football-data (soccer), nfl-data (NFL), nba-data (NBA), wnba-data (WNBA), nhl-data (NHL), mlb-data (MLB), tennis-data (tennis), golf-data (golf), cfb-data (college football), cbb-data (college basketball), or fastf1 (F1). Don't use for historical match data. Don't use for news — use sports-news instead. Don't confuse with Kalshi — Polymarket focuses on crypto-native prediction markets with deeper sports coverage; Kalshi is a US-regulated exchange with different market structure.
@@ -12,6 +12,18 @@ metadata:
 ---
 
 # Polymarket — Sports Prediction Markets
+
+## CRITICAL: Always use the `sport` parameter
+
+For single-game markets, ALWAYS pass `sport='<code>'` to `search_markets` and `get_todays_events`.
+Without it, search returns only high-volume futures and misses individual game markets.
+
+```
+WRONG: search_markets(query="Leeds")           → 0 results
+WRONG: search_markets(query="Manchester City") → 0 results
+RIGHT: search_markets(sport='epl', query='Leeds') → returns all Leeds markets
+RIGHT: search_markets(sport='nba', query='Lakers') → returns all Lakers markets
+```
 
 ## Quick Start
 
@@ -130,7 +142,7 @@ polymarket.configure(private_key="0x...")
 |---|---|---|---|
 | `get_sports_config` | | | **Available sport codes** (nba, epl, nfl, bun, fl1, etc.) |
 | `get_todays_events` | sport | limit | **Today's events for a league** — sorted by start date |
-| `search_markets` | | query, sport, sports_market_types, tag_id, limit | **Find markets** by sport, keyword, and type |
+| `search_markets` | | query, sport (required for single-game markets), sports_market_types, tag_id, limit | **Find markets** by sport, keyword, and type |
 | `get_sports_markets` | | limit, offset, sports_market_types, game_id, active, closed, order, ascending | Browse all sports markets |
 | `get_sports_events` | | limit, offset, active, closed, order, ascending, series_id | Browse sports events |
 | `get_series` | | limit, offset | List series (leagues) |
