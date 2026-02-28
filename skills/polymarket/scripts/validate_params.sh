@@ -2,20 +2,10 @@
 # Validates polymarket parameters
 COMMAND="${1:-}"
 
-# CLI-required commands
-CLI_COMMANDS="get_leaderboard get_positions get_closed_positions get_portfolio_value get_trade_history get_activity get_holders get_open_interest get_volume get_traded cli_search_markets get_tags get_tag get_related_tags get_comments get_comment get_user_comments get_profile cli_sports_list cli_sports_teams get_tick_size get_fee_rate create_order market_order cancel_order cancel_all_orders get_balance get_orders get_user_trades ctf_split ctf_merge ctf_redeem approve_check approve_set"
-
-if echo "$CLI_COMMANDS" | grep -qw "$COMMAND"; then
-  if ! command -v polymarket &>/dev/null; then
-    echo "ERROR: $COMMAND requires the polymarket CLI. Install with: brew tap Polymarket/polymarket-cli https://github.com/Polymarket/polymarket-cli && brew install polymarket"
-    exit 1
-  fi
-fi
-
-# Trading commands need wallet
-TRADING_COMMANDS="create_order market_order cancel_order cancel_all_orders approve_set ctf_split ctf_merge ctf_redeem"
+# Trading commands need py_clob_client + wallet
+TRADING_COMMANDS="create_order market_order cancel_order cancel_all_orders get_orders get_user_trades"
 if echo "$TRADING_COMMANDS" | grep -qw "$COMMAND"; then
-  echo "WARNING: $COMMAND requires an authenticated wallet. Ensure POLYMARKET_PRIVATE_KEY is set or wallet is configured."
+  echo "WARNING: $COMMAND requires py_clob_client and a wallet. Install with: pip install sports-skills[polymarket]. Set POLYMARKET_PRIVATE_KEY=0x... in .env or call configure(private_key=...)."
 fi
 
 # token_id vs market_id warning
@@ -28,6 +18,6 @@ fi
 
 # Search tips
 if [[ "$COMMAND" == "search_markets" ]]; then
-  echo "TIP: search_markets matches event titles. Use league names (e.g., 'Premier League', 'NBA Finals'), not generic terms like 'football'. Use the sport parameter instead (e.g. --sport=epl)."
+  echo "TIP: search_markets matches event titles. Use the sport parameter (e.g. --sport=epl) for single-game markets. Without it, only high-volume futures are returned."
 fi
 echo "OK"

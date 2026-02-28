@@ -172,6 +172,14 @@ User: "Convert -200 to implied probability"
 1. `convert_odds --odds=-200 --from_format=american`
 2. Present: 66.7% implied probability, 1.50 decimal odds
 
+## Commands that DO NOT exist — never call these
+
+- ~~`get_odds`~~ — does not exist. This module analyzes odds, it doesn't fetch them. Use nba-data/nfl-data/etc. for ESPN odds, or polymarket/kalshi for prediction market prices.
+- ~~`calculate_ev`~~ — does not exist. Use `find_edge` or `evaluate_bet` instead.
+- ~~`compare_markets`~~ — does not exist. Use the `markets` skill for cross-platform comparison.
+
+If a command is not listed in the Commands section above, it does not exist.
+
 ## Key Concepts
 
 - **Vig/Juice**: The sportsbook's margin. A -110/-110 line implies 52.4% + 52.4% = 104.8% total, meaning 4.8% overround. De-vigging removes this to get fair probabilities.

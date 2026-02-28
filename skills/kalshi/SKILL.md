@@ -174,6 +174,14 @@ User: "Show me the price history for this NBA game"
 - **Confusing NFL with football** — on Kalshi, their "Football" category = NFL. For football (EPL, UCL, etc.), use sport codes `epl`, `ucl`, `laliga`, etc.
 - **Not knowing football is supported** — Kalshi has deep EPL, UCL, and other football markets. Use `get_sports_config()` to see all available sport codes.
 
+## Commands that DO NOT exist — never call these
+
+- ~~`get_odds`~~ — does not exist. Use `search_markets` or `get_markets` to find market prices.
+- ~~`get_team_schedule`~~ — does not exist. Kalshi has markets, not schedules. Use the sport-specific skill (nba-data, nfl-data, etc.) for schedules.
+- ~~`get_scores`~~ / ~~`get_results`~~ — does not exist. Kalshi is a prediction market, not a scores provider. Use the sport-specific skill.
+
+If a command is not listed in the Commands Reference section above, it does not exist.
+
 ## Error Handling & Fallbacks
 
 - **If search returns 0 results**, make sure you're using the `sport` parameter. Without it, search misses single-game markets.

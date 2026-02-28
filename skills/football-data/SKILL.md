@@ -165,6 +165,12 @@ Returns `data.results[]` with `team`, `competition`, and `season` for each match
 {"team": {"id": "874", "name": "Corinthians"}, "competition": {"id": "serie-a-brazil", "name": "Serie A Brazil"}, "season": {"id": "serie-a-brazil-2025", "year": "2025"}}
 ```
 
+### search_player
+Search for a football player by name. Returns Transfermarkt and ESPN IDs for use with `get_player_profile` and `get_season_transfers`.
+- `query` (str, required): Player name to search (e.g., "Salah", "Hugo Souza", "Mbappe")
+
+Returns `data.results[]` with matched players, each containing `tm_player_id`, `espn_id`, `name`, `team`, and `competition`.
+
 ### get_team_profile
 Get basic team info (name, crest, venue). **Does not return squad/roster** — use `get_season_leaders` to find PL player IDs, then `get_player_profile` for individual player data.
 - `team_id` (str, required): ESPN team ID
@@ -396,6 +402,7 @@ This is especially important when the agent is responding through messaging plat
 - `get_season_leaders`
 - `get_season_teams`
 - `search_team`
+- `search_player`
 - `get_team_profile`
 - `get_daily_schedule`
 - `get_event_summary`
@@ -418,6 +425,9 @@ This is especially important when the agent is responding through messaging plat
 - ~~`get_transfers`~~ — the correct command is `get_season_transfers` (requires `season_id` + `tm_player_ids`).
 - ~~`get_match_results`~~ / ~~`get_match`~~ — use `get_event_summary` with an `event_id`.
 - ~~`get_player_stats`~~ — use `get_event_players_statistics` for match-level stats, or `get_player_profile` for career data.
+- ~~`get_scores`~~ / ~~`get_results`~~ — does not exist. Use `get_event_summary` with an `event_id`.
+- ~~`get_fixtures`~~ — does not exist. Use `get_daily_schedule` for today's matches or `get_season_schedule` for a full season.
+- ~~`get_league_table`~~ — does not exist. Use `get_season_standings` with a `season_id`.
 
 **Other common mistakes:**
 - Using `get_season_leaders` or `get_missing_players` on non-PL leagues — they return empty. Check the Data Coverage table.

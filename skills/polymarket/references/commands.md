@@ -54,10 +54,14 @@ sports-skills polymarket get_sports_config
 
 ## Commands that DO NOT exist (commonly hallucinated)
 
-- ~~`get_market_odds`~~ / ~~`get_odds`~~ -- market prices ARE the implied probability. Use `get_market_prices(token_id="...")` where price = probability.
-- ~~`get_implied_probability`~~ -- the price IS the implied probability. No conversion needed.
-- ~~`get_current_odds`~~ -- use `get_last_trade_price(token_id="...")` for the most recent price.
-- ~~`get_markets`~~ -- the correct command is `get_sports_markets` (for browsing) or `search_markets` (for searching by keyword/sport).
+- ~~`cli_search_markets`~~ — does not exist. Use `search_markets` instead.
+- ~~`cli_sports_list`~~ / ~~`cli_sports_teams`~~ — do not exist. Use `get_sports_config` and `search_markets(sport=...)`.
+- ~~`get_market_odds`~~ / ~~`get_odds`~~ — market prices ARE the implied probability. Use `get_market_prices(token_id="...")` where price = probability.
+- ~~`get_implied_probability`~~ — the price IS the implied probability. No conversion needed.
+- ~~`get_current_odds`~~ — use `get_last_trade_price(token_id="...")` for the most recent price.
+- ~~`get_markets`~~ — the correct command is `get_sports_markets` (for browsing) or `search_markets` (for searching by keyword/sport).
+- ~~`get_leaderboard`~~ / ~~`get_positions`~~ / ~~`get_holders`~~ / ~~`get_balance`~~ — not available.
+- ~~`get_team_schedule`~~ — this is a football-data command, not polymarket.
 
 ## Other common mistakes
 

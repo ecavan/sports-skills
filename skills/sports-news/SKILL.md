@@ -47,6 +47,17 @@ Derive the current date from the system prompt's date (e.g., `currentDate: 2026-
 - **Never hardcode dates in commands.** Always derive them from the system date.
 - **Always use `sort_by_date=True`** for recency queries to show newest articles first.
 
+## Commands
+
+| Command | Required | Optional | Description |
+|---|---|---|---|
+| `fetch_feed` | url | | Fetch an RSS/Atom feed by URL |
+| `fetch_items` | | google_news, query, url, limit, after, before, sort_by_date | Fetch news items from Google News or an RSS feed |
+
+- **`fetch_items` with `google_news=True`**: requires `query`. Returns Google News articles matching the search.
+- **`fetch_items` with `url`**: fetches items from a specific RSS/Atom feed URL.
+- **`fetch_feed`**: fetches and returns the full feed metadata plus recent entries.
+
 ## Workflows
 
 ### Workflow: Breaking News Check
@@ -76,6 +87,14 @@ User: "Any Champions League news from this week?"
 1. Derive `after` from system date: today minus 7 days
 2. Call `fetch_items(google_news=True, query="Champions League", after=<derived_date>, sort_by_date=True, limit=10)`
 3. Present articles filtered to the last 7 days, sorted newest first
+
+## Commands that DO NOT exist — never call these
+
+- ~~`get_news`~~ — does not exist. Use `fetch_feed` (for RSS) or `fetch_items` (for Google News search).
+- ~~`search_news`~~ — does not exist. Use `fetch_items` with `google_news=True` and a `query` parameter.
+- ~~`get_headlines`~~ — does not exist. Use `fetch_items` with `google_news=True`.
+
+If a command is not listed in the Commands section above, it does not exist.
 
 ## Error Handling & Fallbacks
 

@@ -204,6 +204,15 @@ sports-skills nhl get_futures --limit=10
 sports-skills nhl get_player_stats --player_id=3895074
 ```
 
+## Commands that DO NOT exist — never call these
+
+- ~~`get_odds`~~ / ~~`get_betting_odds`~~ — not available. For prediction market odds, use the polymarket or kalshi skill.
+- ~~`search_teams`~~ — does not exist. Use `get_teams` instead.
+- ~~`get_box_score`~~ — does not exist. Use `get_game_summary` instead.
+- ~~`get_player_ratings`~~ — does not exist. Use `get_player_stats` instead.
+
+If a command is not listed in the Commands section above, it does not exist.
+
 ## Error Handling
 
 When a command fails, **do not surface raw errors to the user**. Instead:

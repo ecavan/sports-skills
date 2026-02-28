@@ -197,6 +197,15 @@ sports-skills golf get_player_overview --player_id=3470
 sports-skills golf get_news --tour=pga
 ```
 
+## Commands that DO NOT exist — never call these
+
+- ~~`get_tournament_results`~~ — does not exist. Use `get_leaderboard` for current/recent tournament scores.
+- ~~`get_rankings`~~ — does not exist. FedEx Cup/world rankings are not available via this API. Use `get_leaderboard` for tournament standings or `get_player_overview` for individual rankings.
+- ~~`get_odds`~~ / ~~`get_betting_odds`~~ — not available. For prediction market odds, use the polymarket or kalshi skill.
+- ~~`search_player`~~ — does not exist. Use `get_leaderboard` to find player IDs from the current field.
+
+If a command is not listed in the Commands section above, it does not exist.
+
 ## Error Handling
 
 When a command fails, **do not surface raw errors to the user**. Instead:

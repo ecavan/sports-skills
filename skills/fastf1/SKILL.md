@@ -60,11 +60,34 @@ Derive the current year from the system prompt's date (e.g., `currentDate: 2026-
 3. `get_season_stats --year=<year>` — season-wide fastest laps, top speeds, points leaders
 4. `get_driver_info --year=<year>` — current grid (driver numbers, teams, nationalities)
 
-### Available Commands
+### Commands Reference
 
-`get_race_schedule`, `get_race_results`, `get_session_data`, `get_driver_info`, `get_team_info`, `get_lap_data`, `get_pit_stops`, `get_speed_data`, `get_championship_standings`, `get_season_stats`, `get_team_comparison`, `get_driver_comparison`, `get_tire_analysis`.
+| Command | Required | Optional | Description |
+|---|---|---|---|
+| `get_race_schedule` | | year | Full season calendar with dates and circuits |
+| `get_race_results` | year, event | | Final race classification (positions, times, points) |
+| `get_session_data` | | session_year, session_name, session_type | Raw session info (Q, FP1, FP2, FP3, R) |
+| `get_driver_info` | | year, driver | Driver details from the grid |
+| `get_team_info` | | year, team | Team info with driver lineup |
+| `get_lap_data` | | year, event, session_type, driver | Lap-by-lap timing with sectors and tire data |
+| `get_pit_stops` | | year, event, driver | Pit stop durations and team averages |
+| `get_speed_data` | | year, event, driver | Speed trap and intermediate speed data |
+| `get_championship_standings` | | year | Driver and constructor championship standings |
+| `get_season_stats` | | year | Aggregate season performance (fastest laps, top speeds) |
+| `get_team_comparison` | | year, team1, team2, event | Team head-to-head: qualifying, race pace, sectors |
+| `get_driver_comparison` | | year, driver1, driver2, event | Driver head-to-head: qualifying H2H, race H2H, pace delta |
+| `get_tire_analysis` | | year, event, driver | Tire strategy, stint lengths, and degradation rates |
 
 For return schemas, parameter details, and valid command lists, read the files in the `references/` directory.
+
+## Commands that DO NOT exist — never call these
+
+- ~~`get_qualifying`~~ / ~~`get_practice`~~ — does not exist. Use `get_session_data` with `session_type="Q"` for qualifying or `session_type="FP1"`/`"FP2"`/`"FP3"` for practice.
+- ~~`get_standings`~~ — does not exist. Use `get_championship_standings` instead.
+- ~~`get_results`~~ — does not exist. Use `get_race_results` instead.
+- ~~`get_calendar`~~ — does not exist. Use `get_race_schedule` instead.
+
+If a command is not listed in the Commands Reference table above, it does not exist.
 
 ## Examples
 

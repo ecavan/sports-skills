@@ -185,6 +185,14 @@ User: "Show me all NFL prediction markets"
 User: "Convert a Polymarket price of 65 cents to American odds"
 → `markets.normalize_price(price=0.65, source="polymarket")`
 
+## Commands that DO NOT exist — never call these
+
+- ~~`get_odds`~~ — does not exist. Use `compare_odds` to see odds across sources, or use the polymarket/kalshi skill directly.
+- ~~`search_markets`~~ — does not exist on the markets module. Use `search_entity` instead. For raw market search, use the polymarket or kalshi skill directly.
+- ~~`get_schedule`~~ — does not exist. Use `get_sport_schedule` instead.
+
+If a command is not listed in the Commands section above, it does not exist.
+
 ## Partial Results
 
 If one source is unavailable (e.g., Kalshi is down), the module returns what it has with warnings:

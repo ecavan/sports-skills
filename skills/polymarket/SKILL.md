@@ -218,6 +218,19 @@ User: "What sports markets are available?"
 1. Call `get_sports_config()` — lists all sport codes
 2. Present the available leagues
 
+## Commands that DO NOT exist — never call these
+
+- ~~`cli_search_markets`~~ — does not exist. Use `search_markets` instead.
+- ~~`cli_sports_list`~~ — does not exist. Use `get_sports_config` instead.
+- ~~`cli_sports_teams`~~ — does not exist. Use `search_markets(sport=...)` instead.
+- ~~`get_market_odds`~~ / ~~`get_odds`~~ / ~~`get_current_odds`~~ — prices ARE probabilities. Use `get_market_prices(token_id=...)`.
+- ~~`get_implied_probability`~~ — the price IS the implied probability.
+- ~~`get_markets`~~ — use `get_sports_markets` (browse) or `search_markets` (search).
+- ~~`get_leaderboard`~~ / ~~`get_positions`~~ / ~~`get_holders`~~ / ~~`get_balance`~~ — not available.
+- ~~`get_team_schedule`~~ — this is a football-data command, not polymarket. Polymarket has `search_markets` and `get_todays_events`.
+
+If a command is not in the Commands Reference table above, it does not exist. Do not guess or try commands not listed.
+
 ## Error Handling & Fallbacks
 
 - **If search returns 0 results**, make sure you're using the `sport` parameter. Without it, search only checks high-volume markets and may miss single-game events.

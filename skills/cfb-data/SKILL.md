@@ -36,6 +36,14 @@ sports-skills cfb get_rankings
 sports-skills cfb get_standings --group=8
 ```
 
+## Choosing the Season
+
+Derive the current year from the system prompt's date (e.g., `currentDate: 2026-02-28` → current year is 2026).
+
+- **If the user specifies a season**, use it as-is.
+- **If the user says "current", "this season", or doesn't specify**: The CFB season runs August–January. If the current month is February–July (offseason), use `season = current_year - 1` (most recently completed season). From August onward, use the current year.
+- **Never hardcode a season.** Always derive it from the system date.
+
 ## Important: College vs. Pro Differences
 
 College football has 750+ FBS teams (vs 32 NFL teams), organized by **conferences** rather than divisions:
@@ -191,6 +199,16 @@ sports-skills cfb get_futures --limit=10
 ```bash
 sports-skills cfb get_team_stats --team_id=333
 ```
+
+## Commands that DO NOT exist — never call these
+
+- ~~`get_odds`~~ / ~~`get_betting_odds`~~ — not available. For prediction market odds, use the polymarket or kalshi skill.
+- ~~`search_teams`~~ — does not exist. Use `get_teams` instead.
+- ~~`get_box_score`~~ — does not exist. Use `get_game_summary` instead.
+- ~~`get_player_ratings`~~ — does not exist. Use `get_player_stats` instead.
+- ~~`get_bcs_rankings`~~ / ~~`get_playoff_rankings`~~ — does not exist. Use `get_rankings` instead.
+
+If a command is not listed in the Commands section above, it does not exist.
 
 ## Error Handling
 

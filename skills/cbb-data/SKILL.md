@@ -36,6 +36,14 @@ sports-skills cbb get_rankings
 sports-skills cbb get_standings --group=23
 ```
 
+## Choosing the Season
+
+Derive the current year from the system prompt's date (e.g., `currentDate: 2026-02-28` → current year is 2026).
+
+- **If the user specifies a season**, use it as-is.
+- **If the user says "current", "this season", or doesn't specify**: The CBB season runs November–April. If the current month is November or December, use `season = current_year + 1`. If January–April, use `season = current_year`. If May–October (offseason), use `season = current_year` (most recently completed season).
+- **Never hardcode a season.** Always derive it from the system date.
+
 ## Important: College vs. Pro Differences
 
 College basketball has 360+ D1 teams (vs 30 NBA teams), organized by **conferences**:
@@ -198,6 +206,16 @@ sports-skills cbb get_futures --limit=10
 ```bash
 sports-skills cbb get_team_stats --team_id=150
 ```
+
+## Commands that DO NOT exist — never call these
+
+- ~~`get_odds`~~ / ~~`get_betting_odds`~~ — not available. For prediction market odds, use the polymarket or kalshi skill.
+- ~~`search_teams`~~ — does not exist. Use `get_teams` instead.
+- ~~`get_box_score`~~ — does not exist. Use `get_game_summary` instead.
+- ~~`get_player_ratings`~~ — does not exist. Use `get_player_stats` instead.
+- ~~`get_ap_poll`~~ — does not exist. Use `get_rankings` instead.
+
+If a command is not listed in the Commands section above, it does not exist.
 
 ## Error Handling
 

@@ -73,6 +73,15 @@ User: "When is the French Open this year?"
 1. Call `get_calendar(tour="atp", year=2026)`
 2. Search results for "Roland Garros" (the French Open's official name)
 
+## Commands that DO NOT exist — never call these
+
+- ~~`get_matches`~~ — does not exist. Use `get_scoreboard` for current match scores.
+- ~~`get_draw`~~ — does not exist. Tournament draw data is not available via this API.
+- ~~`get_head_to_head`~~ — does not exist. Head-to-head records are not available via this API.
+- ~~`get_standings`~~ — does not exist. Tennis uses `get_rankings`, not standings.
+
+If a command is not listed in the Commands section above, it does not exist.
+
 ## Error Handling & Fallbacks
 
 - If `get_scoreboard` returns no matches, tournaments run specific weeks. Use `get_calendar` to find when events are scheduled.
